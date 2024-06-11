@@ -126,3 +126,4 @@ MEDIA_ROOT = BASE_DIR / "media"
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # TODO:add storages configs, auth user model and user login url
+AUTH_USER_MODEL = 'users.User'
