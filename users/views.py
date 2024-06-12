@@ -41,5 +41,5 @@ class UserLoginView(View):
                 login(request, user)
                 messages.success(request, 'logged in successfully')
                 return redirect('home:home')
-            messages.error(request, 'login or password is invalid', extra_tags='danger')
-            return render(request, self.template_name, {'form': form})
+        messages.error(request, 'login or password is invalid', extra_tags='danger')
+        return render(request, self.template_name, {'form': form})
