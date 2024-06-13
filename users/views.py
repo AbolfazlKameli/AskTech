@@ -1,7 +1,8 @@
 from django.contrib import messages
 from django.shortcuts import render, redirect
 from django.views import View
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.mixins import LoginRequiredMixin
 
 from users.models import User
 from .forms import UserRegisterForm, UserLoginForm
@@ -19,6 +20,9 @@ class UserRegisterView(View):
         if form.is_valid():
             cd = form.cleaned_data
             User.objects.create_user(cd['username'], cd['email'], cd['password2'])
+            user = authenticate(request, email=cd['email'], password=cd['password2'])
+            if user:
+                login(request, user)
             messages.success(request, 'registered successfully', extra_tags='success')
             return redirect('home:home')
         messages.error(request, 'enter valid information', extra_tags='danger')
@@ -43,3 +47,10 @@ class UserLoginView(View):
                 return redirect('home:home')
         messages.error(request, 'login or password is invalid', extra_tags='danger')
         return render(request, self.template_name, {'form': form})
+
+
+class UserLogOutView(LoginRequiredMixin, View):
+    def get(self, request):
+        logout(request)
+        messages.success(request, 'logged out', extra_tags='success')
+        return redirect('home:home')
