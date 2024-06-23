@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import User
+from .models import User, OTPCode
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -29,3 +29,9 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         if password1 and password2 and password1 != password2:
             raise serializers.ValidationError('Passwords must match')
         return data
+
+
+class OTPCodeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OTPCode
+        fields = '__all__'
