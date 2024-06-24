@@ -2,6 +2,7 @@ from django.core.mail import send_mail
 from django.conf import settings
 
 
+# TODO: send an HTML email body
 def send_link(email, link):
     send_mail(
         "Verification",

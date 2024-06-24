@@ -1,6 +1,11 @@
+from django.shortcuts import get_object_or_404
 from rest_framework import permissions
+from rest_framework import status
 from rest_framework.generics import ListAPIView, CreateAPIView
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
+from utils import JWT_token
 from .models import User
 from .serializers import UserSerializer, UserRegisterSerializer
 
@@ -16,14 +21,13 @@ class UserRegisterAPI(CreateAPIView):
     serializer_class = UserRegisterSerializer
     permission_classes = [permissions.AllowAny]
 
-    # def post(self, request, *args, **kwargs):
-    #     srz_data = self.serializer_class(data=request.POST)
-    #     if srz_data.is_valid():
-    #         srz_data.create(srz_data.validated_data)
-    #         data = {'data': srz_data.data}
-    #         return Response(data)
-    #     return Response(srz_data.errors)
 
-
-class UserRegisterVerifyAPI(ListAPIView):
-    ...
+class UserRegisterVerifyAPI(APIView):
+    def get(self, request, token):
+        user_id = JWT_token.decode_token(token)
+        user = get_object_or_404(User, pk=user_id)
+        if user.is_active:
+            return Response(data={'message': 'Your account already activated!'}, status=status.HTTP_400_BAD_REQUEST)
+        user.is_active = True
+        user.save()
+        return Response(data={'message': 'Account activated successfully!'})
