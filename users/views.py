@@ -11,18 +11,30 @@ from .serializers import UserSerializer, UserRegisterSerializer
 
 
 class UsersListAPI(ListAPIView):
+    """
+    Returns list of users.\n
+    allowed_method: GET.
+    """
     permission_classes = [permissions.IsAdminUser, ]
     queryset = User.objects.all()
     serializer_class = UserSerializer
 
 
 class UserRegisterAPI(CreateAPIView):
+    """
+    Registers a User.\n
+    allowed_method: POST.
+    """
     model = User
     serializer_class = UserRegisterSerializer
     permission_classes = [permissions.AllowAny]
 
 
 class UserRegisterVerifyAPI(APIView):
+    """
+    Verification view for registration.\n
+    allowed_method: GET.
+    """
     def get(self, request, token):
         user_id = JWT_token.decode_token(token)
         user = get_object_or_404(User, pk=user_id)
