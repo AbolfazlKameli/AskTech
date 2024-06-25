@@ -46,6 +46,14 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         return data
 
 
+class UserLoginSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=True)
+    password = serializers.CharField(required=True, write_only=True)
+
+    # def validate(self, attrs):
+    #     ...
+
+
 class ResendVerificationEmailSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True)
 

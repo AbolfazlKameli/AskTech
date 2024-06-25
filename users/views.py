@@ -1,7 +1,7 @@
 from django.http import Http404
-from django.urls import reverse
-
 from django.shortcuts import get_object_or_404
+from django.urls import reverse
+from django.contrib.auth import login as auth_login, logout, authenticate
 from rest_framework import status
 from rest_framework.generics import ListAPIView, CreateAPIView
 from rest_framework.permissions import IsAdminUser, AllowAny, IsAuthenticated
@@ -10,8 +10,12 @@ from rest_framework.views import APIView
 
 from utils import JWT_token, send_email
 from .models import User
-from .serializers import UserSerializer, UserRegisterSerializer, ResendVerificationEmailSerializer, \
-    ChangePasswordSerializer
+from .serializers import (UserSerializer,
+                          UserRegisterSerializer,
+                          ResendVerificationEmailSerializer,
+                          ChangePasswordSerializer,
+                          UserLoginSerializer,
+                          )
 
 
 class UsersListAPI(ListAPIView):
@@ -55,6 +59,22 @@ class UserRegisterVerifyAPI(APIView):
             return Response(user_id)
 
 
+class UserLoginAPI(APIView):
+    permission_classes = [AllowAny, ]
+    serializer_class = UserLoginSerializer
+
+    def post(self, request):
+        srz_data = self.serializer_class(data=request.POST)
+        if srz_data.is_valid():
+            vd = srz_data.validated_data
+            user = authenticate(email=vd['email'], password=vd['password'])
+            if user is not None:
+                auth_login(self.request, user)
+                return Response({'message': 'login successful'}, status=status.HTTP_200_OK)
+            return Response({'error': 'login or password is invalid'})
+        return Response({'error': srz_data.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+
 class ResendVerificationEmailAPI(APIView):
     permission_classes = [AllowAny, ]
     serializer_class = ResendVerificationEmailSerializer
@@ -89,5 +109,5 @@ class ChangePasswordAPI(APIView):
                 user.set_password(new_password)
                 user.save()
                 return Response({'message': 'Your password has been changed successfully!'}, status=status.HTTP_200_OK)
-            return Response({'error': 'Your old password in nor correct'})
+            return Response({'error': 'Your old password is not correct'})
         return Response({'error': srz_data.errors}, status=status.HTTP_400_BAD_REQUEST)
