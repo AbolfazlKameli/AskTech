@@ -1,7 +1,7 @@
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
-from django.contrib.auth import login as auth_login, logout, authenticate
+from django.contrib.auth import login, logout, authenticate
 from rest_framework import status
 from rest_framework.generics import ListAPIView, CreateAPIView
 from rest_framework.permissions import IsAdminUser, AllowAny, IsAuthenticated
@@ -69,10 +69,26 @@ class UserLoginAPI(APIView):
             vd = srz_data.validated_data
             user = authenticate(email=vd['email'], password=vd['password'])
             if user is not None:
-                auth_login(self.request, user)
-                return Response({'message': 'login successful'}, status=status.HTTP_200_OK)
+                refresh = JWT_token.CustomRefreshToken.for_user(user)
+                url = self.request.build_absolute_uri(
+                    reverse('users:user_login_verify', kwargs={'token': str(refresh)}))
+                send_email.send_link(vd['email'], url)
+                return Response({'message': 'we sent you a email with login url!'}, status=status.HTTP_200_OK)
             return Response({'error': 'login or password is invalid'})
         return Response({'error': srz_data.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UserLoginVerifyAPI(APIView):
+    def get(self, request, token):
+        user_id = JWT_token.decode_token(token)
+        try:
+            user = get_object_or_404(User, pk=user_id)
+            login(request, user)
+            return Response(data={'message': 'login successful!'}, status=status.HTTP_200_OK)
+        except Http404:
+            return Response({'message': 'Login link is invalid!'}, status=status.HTTP_404_NOT_FOUND)
+        except TypeError:
+            return Response(user_id)
 
 
 class ResendVerificationEmailAPI(APIView):

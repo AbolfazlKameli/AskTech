@@ -46,14 +46,6 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         return data
 
 
-class UserLoginSerializer(serializers.Serializer):
-    email = serializers.EmailField(required=True)
-    password = serializers.CharField(required=True, write_only=True)
-
-    # def validate(self, attrs):
-    #     ...
-
-
 class ResendVerificationEmailSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True)
 
@@ -67,6 +59,11 @@ class ResendVerificationEmailSerializer(serializers.Serializer):
             raise serializers.ValidationError({'error': 'Account already activated'})
         attrs['user'] = user
         return super().validate(attrs)
+
+
+class UserLoginSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=True)
+    password = serializers.CharField(required=True, write_only=True)
 
 
 class ChangePasswordSerializer(serializers.Serializer):
