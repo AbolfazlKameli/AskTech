@@ -1,13 +1,14 @@
+from django.contrib.auth import login, authenticate
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
-from django.contrib.auth import login, logout, authenticate
 from rest_framework import status
 from rest_framework.generics import ListAPIView, CreateAPIView
-from rest_framework.permissions import IsAdminUser, AllowAny, IsAuthenticated
+from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from permissions import permissions
 from utils import JWT_token, send_email
 from .models import User
 from .serializers import (UserSerializer,
@@ -35,7 +36,7 @@ class UserRegisterAPI(CreateAPIView):
     """
     model = User
     serializer_class = UserRegisterSerializer
-    permission_classes = [AllowAny, ]
+    permission_classes = [permissions.NotAuthenticated, ]
 
 
 class UserRegisterVerifyAPI(APIView):
@@ -43,6 +44,7 @@ class UserRegisterVerifyAPI(APIView):
     Verification view for registration.\n
     allowed_method: GET.
     """
+    permission_classes = [permissions.NotAuthenticated, ]
 
     def get(self, request, token):
         user_id = JWT_token.decode_token(token)
@@ -60,7 +62,7 @@ class UserRegisterVerifyAPI(APIView):
 
 
 class UserLoginAPI(APIView):
-    permission_classes = [AllowAny, ]
+    permission_classes = [permissions.NotAuthenticated, ]
     serializer_class = UserLoginSerializer
 
     def post(self, request):
@@ -79,6 +81,8 @@ class UserLoginAPI(APIView):
 
 
 class UserLoginVerifyAPI(APIView):
+    permission_classes = [permissions.NotAuthenticated, ]
+
     def get(self, request, token):
         user_id = JWT_token.decode_token(token)
         try:
@@ -92,7 +96,7 @@ class UserLoginVerifyAPI(APIView):
 
 
 class ResendVerificationEmailAPI(APIView):
-    permission_classes = [AllowAny, ]
+    permission_classes = [permissions.NotAuthenticated, ]
     serializer_class = ResendVerificationEmailSerializer
 
     def post(self, request):
@@ -112,7 +116,7 @@ class ResendVerificationEmailAPI(APIView):
 
 
 class ChangePasswordAPI(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, ]
     serializer_class = ChangePasswordSerializer
 
     def put(self, request):
