@@ -1,4 +1,4 @@
-from django.contrib.auth import login, authenticate
+from django.contrib.auth import login, authenticate, logout
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
@@ -105,6 +105,14 @@ class UserLoginVerifyAPI(APIView):
             return Response({'message': 'Login link is invalid!'}, status=status.HTTP_404_NOT_FOUND)
         except TypeError:
             return Response(user_id)
+
+
+class UserLogoutAPI(APIView):
+    permission_classes = [IsAuthenticated, ]
+
+    def get(self, request):
+        logout(self.request)
+        return Response({'message': 'logout successful!'})
 
 
 class ResendVerificationEmailAPI(APIView):
