@@ -1,4 +1,3 @@
-from django.contrib.auth import login, authenticate, logout
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
@@ -15,7 +14,6 @@ from .serializers import (UserSerializer,
                           UserRegisterSerializer,
                           ResendVerificationEmailSerializer,
                           ChangePasswordSerializer,
-                          UserLoginSerializer,
                           )
 
 
@@ -59,60 +57,6 @@ class UserRegisterVerifyAPI(APIView):
             return Response({'message': 'Activation link is invalid!'}, status=status.HTTP_404_NOT_FOUND)
         except TypeError:
             return Response(user_id)
-
-
-class UserLoginAPI(APIView):
-    """
-    Log a user in.\n
-    allowed methods: POST.
-    """
-    permission_classes = [permissions.NotAuthenticated, ]
-    serializer_class = UserLoginSerializer
-
-    def post(self, request):
-        srz_data = self.serializer_class(data=request.POST)
-        if srz_data.is_valid():
-            vd = srz_data.validated_data
-            user = authenticate(email=vd['email'], password=vd['password'])
-            if user is not None:
-                refresh = JWT_token.CustomRefreshToken.for_user(user)
-                self.request.session['user_token'] = {
-                    'access': str(refresh.access_token),
-                    'refresh': str(refresh)
-                }
-                url = self.request.build_absolute_uri(
-                    reverse('users:user_login_verify', kwargs={'token': str(refresh.access_token)}))
-                send_email.send_link(vd['email'], url)
-                return Response({'message': 'we sent you a email with login url!'}, status=status.HTTP_200_OK)
-            return Response({'error': 'login or password is invalid'})
-        return Response({'error': srz_data.errors}, status=status.HTTP_400_BAD_REQUEST)
-
-
-class UserLoginVerifyAPI(APIView):
-    """
-    verifies a user login.\n
-    allowed methods: GET.
-    """
-    permission_classes = [permissions.NotAuthenticated, ]
-
-    def get(self, request, token):
-        user_id = JWT_token.decode_token(token)
-        try:
-            user = get_object_or_404(User, pk=user_id)
-            login(request, user)
-            return Response(data={'message': 'login successful!'}, status=status.HTTP_200_OK)
-        except Http404:
-            return Response({'message': 'Login link is invalid!'}, status=status.HTTP_404_NOT_FOUND)
-        except TypeError:
-            return Response(user_id)
-
-
-class UserLogoutAPI(APIView):
-    permission_classes = [IsAuthenticated, ]
-
-    def get(self, request):
-        logout(self.request)
-        return Response({'message': 'logout successful!'})
 
 
 class ResendVerificationEmailAPI(APIView):
