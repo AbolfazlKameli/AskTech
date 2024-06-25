@@ -6,3 +6,10 @@ class NotAuthenticated(BasePermission):
 
     def has_permission(self, request, view):
         return request.user and not request.user.is_authenticated
+
+
+class IsActiveUser(BasePermission):
+    message = 'Your account is not activated'
+
+    def has_permission(self, request, view):
+        return request.user and request.user.is_active and request.user.is_authenticated
