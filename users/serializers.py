@@ -59,3 +59,20 @@ class ResendVerificationEmailSerializer(serializers.Serializer):
             raise serializers.ValidationError({'error': 'Account already activated'})
         attrs['user'] = user
         return super().validate(attrs)
+
+
+class ChangePasswordSerializer(serializers.Serializer):
+    old_password = serializers.CharField(required=True, write_only=True)
+    new_password = serializers.CharField(required=True, write_only=True)
+    confirm_new_password = serializers.CharField(required=True, write_only=True)
+
+    def validate(self, attrs):
+        new_password = attrs.get('new_password')
+        confirm_password = attrs.get('confirm_new_password')
+        if new_password and confirm_password and new_password != confirm_password:
+            raise serializers.ValidationError({'error': 'Passwords must match'})
+        try:
+            validate_password(new_password)
+        except serializers.ValidationError:
+            raise serializers.ValidationError()
+        return super().validate(attrs)

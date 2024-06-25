@@ -4,13 +4,14 @@ from django.urls import reverse
 from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.generics import ListAPIView, CreateAPIView
-from rest_framework.permissions import IsAdminUser, AllowAny
+from rest_framework.permissions import IsAdminUser, AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from utils import JWT_token, send_email
 from .models import User
-from .serializers import UserSerializer, UserRegisterSerializer, ResendVerificationEmailSerializer
+from .serializers import UserSerializer, UserRegisterSerializer, ResendVerificationEmailSerializer, \
+    ChangePasswordSerializer
 
 
 class UsersListAPI(ListAPIView):
@@ -72,3 +73,21 @@ class ResendVerificationEmailAPI(APIView):
                 status=status.HTTP_200_OK,
             )
         return Response({'errors': srz_data.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ChangePasswordAPI(APIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = ChangePasswordSerializer
+
+    def put(self, request):
+        srz_data = self.serializer_class(data=request.POST)
+        if srz_data.is_valid():
+            user = User.objects.get(id=self.request.user.id)
+            old_password = srz_data.validated_data['old_password']
+            new_password = srz_data.validated_data['new_password']
+            if user.check_password(old_password):
+                user.set_password(new_password)
+                user.save()
+                return Response({'message': 'Your password has been changed successfully!'}, status=status.HTTP_200_OK)
+            return Response({'error': 'Your old password in nor correct'})
+        return Response({'error': srz_data.errors}, status=status.HTTP_400_BAD_REQUEST)
