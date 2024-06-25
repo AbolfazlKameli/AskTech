@@ -1,9 +1,9 @@
-from rest_framework import serializers
 from django.contrib.auth.password_validation import validate_password
 from django.urls import reverse
+from rest_framework import serializers
 
-from .models import User
 from utils import JWT_token, send_email
+from .models import User
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -25,8 +25,6 @@ class UserRegisterSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         request = self.context.get("request")
         email = validated_data.get("email")
-        print('=' * 90)
-        print(validated_data)
         validated_data.pop('password2')
         user = User.objects.create_user(**validated_data)
         token = JWT_token.generate_token(user)
@@ -34,7 +32,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
             reverse('users:user_register_verify', kwargs={'token': token['token']})
         )
         send_email.send_link(email, link)
-        return user
+        return {'id': user.id, 'username': user.username, 'email': user.email}
 
     def validate(self, data):
         password1 = data.get('password')
@@ -46,3 +44,40 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         except serializers.ValidationError:
             raise serializers.ValidationError()
         return data
+
+
+class ResendVerificationEmailSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=True)
+
+    def validate(self, attrs):
+        email = attrs.get('email')
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            raise serializers.ValidationError({'error': 'User does not exist!'})
+        if user.is_active:
+            raise serializers.ValidationError({'error': 'Account already activated'})
+        attrs['user'] = user
+        return attrs
+
+
+class UserLoginSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=True)
+    password = serializers.CharField(required=True, write_only=True)
+
+
+class ChangePasswordSerializer(serializers.Serializer):
+    old_password = serializers.CharField(required=True, write_only=True)
+    new_password = serializers.CharField(required=True, write_only=True)
+    confirm_new_password = serializers.CharField(required=True, write_only=True)
+
+    def validate(self, attrs):
+        new_password = attrs.get('new_password')
+        confirm_password = attrs.get('confirm_new_password')
+        if new_password and confirm_password and new_password != confirm_password:
+            raise serializers.ValidationError({'error': 'Passwords must match'})
+        try:
+            validate_password(new_password)
+        except serializers.ValidationError:
+            raise serializers.ValidationError()
+        return attrs

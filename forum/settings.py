@@ -145,7 +145,7 @@ SIMPLE_JWT = {
 SPECTACULAR_SETTINGS = {
     'TITLE': 'AskTech',
     'DESCRIPTION': 'a forum about Technology issues',
-    'VERSION': '0.0.1'
+    'VERSION': '0.0.3'
 }
 
 # SMTP
