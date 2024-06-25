@@ -58,7 +58,7 @@ class ResendVerificationEmailSerializer(serializers.Serializer):
         if user.is_active:
             raise serializers.ValidationError({'error': 'Account already activated'})
         attrs['user'] = user
-        return super().validate(attrs)
+        return attrs
 
 
 class UserLoginSerializer(serializers.Serializer):
@@ -80,4 +80,4 @@ class ChangePasswordSerializer(serializers.Serializer):
             validate_password(new_password)
         except serializers.ValidationError:
             raise serializers.ValidationError()
-        return super().validate(attrs)
+        return attrs
