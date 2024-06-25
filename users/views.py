@@ -22,7 +22,7 @@ from .serializers import (UserSerializer,
 class UsersListAPI(ListAPIView):
     """
     Returns list of users.\n
-    allowed_method: GET.
+    allowed methods: GET.
     """
     permission_classes = [IsAdminUser, ]
     queryset = User.objects.all()
@@ -32,7 +32,7 @@ class UsersListAPI(ListAPIView):
 class UserRegisterAPI(CreateAPIView):
     """
     Registers a User.\n
-    allowed_method: POST.
+    allowed methods: POST.
     """
     model = User
     serializer_class = UserRegisterSerializer
@@ -42,7 +42,7 @@ class UserRegisterAPI(CreateAPIView):
 class UserRegisterVerifyAPI(APIView):
     """
     Verification view for registration.\n
-    allowed_method: GET.
+    allowed methods: GET.
     """
     permission_classes = [permissions.NotAuthenticated, ]
 
@@ -62,6 +62,10 @@ class UserRegisterVerifyAPI(APIView):
 
 
 class UserLoginAPI(APIView):
+    """
+    Log a user in.\n
+    allowed methods: POST.
+    """
     permission_classes = [permissions.NotAuthenticated, ]
     serializer_class = UserLoginSerializer
 
@@ -72,8 +76,12 @@ class UserLoginAPI(APIView):
             user = authenticate(email=vd['email'], password=vd['password'])
             if user is not None:
                 refresh = JWT_token.CustomRefreshToken.for_user(user)
+                self.request.session['user_token'] = {
+                    'access': str(refresh.access_token),
+                    'refresh': str(refresh)
+                }
                 url = self.request.build_absolute_uri(
-                    reverse('users:user_login_verify', kwargs={'token': str(refresh)}))
+                    reverse('users:user_login_verify', kwargs={'token': str(refresh.access_token)}))
                 send_email.send_link(vd['email'], url)
                 return Response({'message': 'we sent you a email with login url!'}, status=status.HTTP_200_OK)
             return Response({'error': 'login or password is invalid'})
@@ -81,6 +89,10 @@ class UserLoginAPI(APIView):
 
 
 class UserLoginVerifyAPI(APIView):
+    """
+    verifies a user login.\n
+    allowed methods: GET.
+    """
     permission_classes = [permissions.NotAuthenticated, ]
 
     def get(self, request, token):
@@ -96,6 +108,10 @@ class UserLoginVerifyAPI(APIView):
 
 
 class ResendVerificationEmailAPI(APIView):
+    """
+    makes a new token and send it with email.\n
+    allowed methods: POST.
+    """
     permission_classes = [permissions.NotAuthenticated, ]
     serializer_class = ResendVerificationEmailSerializer
 
@@ -116,6 +132,10 @@ class ResendVerificationEmailAPI(APIView):
 
 
 class ChangePasswordAPI(APIView):
+    """
+    Changes a user password.\n
+    allowed methods: POST.
+    """
     permission_classes = [IsAuthenticated, ]
     serializer_class = ChangePasswordSerializer
 
@@ -128,6 +148,6 @@ class ChangePasswordAPI(APIView):
             if user.check_password(old_password):
                 user.set_password(new_password)
                 user.save()
-                return Response({'message': 'Your password has been changed successfully!'}, status=status.HTTP_200_OK)
-            return Response({'error': 'Your old password is not correct'})
+                return Response({'message': 'Your password changed successfully!'}, status=status.HTTP_200_OK)
+            return Response({'error': 'Your old password is not correct'}, status=status.HTTP_400_BAD_REQUEST)
         return Response({'error': srz_data.errors}, status=status.HTTP_400_BAD_REQUEST)
