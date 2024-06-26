@@ -2,7 +2,7 @@ from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from rest_framework import status
-from rest_framework.generics import ListAPIView, CreateAPIView, RetrieveAPIView
+from rest_framework.generics import ListAPIView, CreateAPIView, RetrieveUpdateAPIView
 from rest_framework.permissions import IsAdminUser, IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -177,7 +177,7 @@ class BlockTokenAPI(APIView):
         return Response(data={'error': srz_data.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
-class UserProfileAPI(RetrieveAPIView):
+class UserProfileAPI(RetrieveUpdateAPIView):
     permission_classes = [permissions.IsOwnerOrReadOnly]
     serializer_class = UserProfileSerializer
     lookup_url_kwarg = 'id'
