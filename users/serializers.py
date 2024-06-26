@@ -94,5 +94,9 @@ class SetPasswordSerializer(serializers.Serializer):
         return attrs
 
 
+class ResetPasswordSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=True)
+
+
 class TokenSerializer(serializers.Serializer):
     refresh = serializers.CharField(required=True, write_only=True)

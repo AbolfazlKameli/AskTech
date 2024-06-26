@@ -19,4 +19,5 @@ urlpatterns = [
     path('register/resend_email/', views.ResendVerificationEmailAPI.as_view(), name='user_register_resend_email'),
     path('change_password/', views.ChangePasswordAPI.as_view(), name='change_password'),
     path('set_password/<str:token>/', views.SetPasswordAPI.as_view(), name='set_password'),
+    path('reset_password/', views.ResetPasswordAPI.as_view(), name='reset_password'),
 ]
