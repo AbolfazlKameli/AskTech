@@ -100,3 +100,9 @@ class ResetPasswordSerializer(serializers.Serializer):
 
 class TokenSerializer(serializers.Serializer):
     refresh = serializers.CharField(required=True, write_only=True)
+
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        exclude = ('password',)

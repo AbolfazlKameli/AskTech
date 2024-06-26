@@ -2,7 +2,7 @@ from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from rest_framework import status
-from rest_framework.generics import ListAPIView, CreateAPIView
+from rest_framework.generics import ListAPIView, CreateAPIView, RetrieveAPIView
 from rest_framework.permissions import IsAdminUser, IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -18,6 +18,7 @@ from .serializers import (UserSerializer,
                           TokenSerializer,
                           SetPasswordSerializer,
                           ResetPasswordSerializer,
+                          UserProfileSerializer,
                           )
 
 
@@ -135,6 +136,10 @@ class SetPasswordAPI(APIView):
 
 
 class ResetPasswordAPI(APIView):
+    """
+    reset user passwrd.
+    allowed methods: POST.
+    """
     permission_classes = [AllowAny, ]
     serializer_class = ResetPasswordSerializer
 
@@ -170,3 +175,11 @@ class BlockTokenAPI(APIView):
             token.blacklist()
             return Response(data={'message': 'Token blocked successfully!'}, status=status.HTTP_200_OK)
         return Response(data={'error': srz_data.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UserProfileAPI(RetrieveAPIView):
+    permission_classes = [permissions.IsOwnerOrReadOnly]
+    serializer_class = UserProfileSerializer
+    lookup_url_kwarg = 'id'
+    lookup_field = 'id'
+    queryset = User.objects.all()
