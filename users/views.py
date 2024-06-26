@@ -1,3 +1,4 @@
+from rest_framework_simplejwt.tokens import RefreshToken
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
@@ -14,6 +15,7 @@ from .serializers import (UserSerializer,
                           UserRegisterSerializer,
                           ResendVerificationEmailSerializer,
                           ChangePasswordSerializer,
+                          TokenSerializer,
                           )
 
 
@@ -103,3 +105,20 @@ class ChangePasswordAPI(APIView):
                 return Response({'message': 'Your password changed successfully!'}, status=status.HTTP_200_OK)
             return Response({'error': 'Your old password is not correct'}, status=status.HTTP_400_BAD_REQUEST)
         return Response({'error': srz_data.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class BlockTokenAPI(APIView):
+    """
+    blocks a deleted token
+    allowed methods: POST.
+    """
+    serializer_class = TokenSerializer
+    permission_classes = [IsAdminUser, ]
+
+    def post(self, request):
+        srz_data = self.serializer_class(data=request.POST)
+        if srz_data.is_valid():
+            token = RefreshToken(request.POST['refresh'])
+            token.blacklist()
+            return Response(data={'message': 'Token blocked successfully!'}, status=status.HTTP_200_OK)
+        return Response(data={'error': srz_data.errors}, status=status.HTTP_400_BAD_REQUEST)

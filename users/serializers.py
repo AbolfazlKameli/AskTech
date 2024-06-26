@@ -76,3 +76,7 @@ class ChangePasswordSerializer(serializers.Serializer):
         except serializers.ValidationError:
             raise serializers.ValidationError()
         return attrs
+
+
+class TokenSerializer(serializers.Serializer):
+    refresh = serializers.CharField(required=True, write_only=True)

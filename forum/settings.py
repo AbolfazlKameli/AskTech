@@ -28,6 +28,17 @@ DEBUG = True
 ALLOWED_HOSTS = []
 
 # Application definition
+LOCAL_APPS = [
+    'home.apps.HomeConfig',
+    'users.apps.UsersConfig',
+]
+
+THIRd_PARTY_APPS = [
+    'rest_framework',
+    'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist',
+    'drf_spectacular',
+]
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -36,14 +47,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    # Local apps
-    'home.apps.HomeConfig',
-    'users.apps.UsersConfig',
-    # third party apps
-    'rest_framework',
-    'rest_framework_simplejwt',
-    'rest_framework_simplejwt.token_blacklist',
-    'drf_spectacular',
+    *LOCAL_APPS,
+    *THIRd_PARTY_APPS,
 ]
 
 MIDDLEWARE = [
