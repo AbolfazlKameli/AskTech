@@ -78,5 +78,21 @@ class ChangePasswordSerializer(serializers.Serializer):
         return attrs
 
 
+class SetPasswordSerializer(serializers.Serializer):
+    new_password = serializers.CharField(required=True, write_only=True)
+    confirm_new_password = serializers.CharField(required=True, write_only=True)
+
+    def validate(self, attrs):
+        new_password = attrs.get('new_password')
+        confirm_new_password = attrs.get('confirm_new_password')
+        if new_password and confirm_new_password and new_password != confirm_new_password:
+            raise serializers.ValidationError('Passwords must match')
+        try:
+            validate_password(new_password)
+        except serializers.ValidationError:
+            raise serializers.ValidationError()
+        return attrs
+
+
 class TokenSerializer(serializers.Serializer):
     refresh = serializers.CharField(required=True, write_only=True)
