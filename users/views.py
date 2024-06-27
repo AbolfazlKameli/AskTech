@@ -40,11 +40,13 @@ class UserRegisterAPI(CreateAPIView):
             vd.pop('password2')
             user = User.objects.create_user(**vd)
             token = JWT_token.generate_token(user)
-            send_email.send_link(vd['email'], request.build_absolute_uri(
+            url = self.request.build_absolute_uri(
                 reverse('users:user_register_verify', kwargs={'token': token['token']})
-            ))
+            )
+            send_email.send_link(vd['email'], url)
             return Response(
-                data={'message': 'we sent you an activation url', 'data': srz_data.data}, status=status.HTTP_200_OK
+                data={'message': 'we sent you an activation url', 'data': srz_data.data},
+                status=status.HTTP_200_OK,
             )
         return Response(
             data={'error': srz_data.errors}, status=status.HTTP_400_BAD_REQUEST
@@ -52,7 +54,6 @@ class UserRegisterAPI(CreateAPIView):
 
 
 # TODO: set expire time for emails.
-# TODO: refactor responses.
 class UserRegisterVerifyAPI(APIView):
     """
     Verification view for registration.\n
