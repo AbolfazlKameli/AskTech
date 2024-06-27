@@ -104,7 +104,7 @@ class ChangePasswordAPI(APIView):
 
 class SetPasswordAPI(APIView):
     """
-    set use password for reset_password.\n
+    set user password for reset_password.\n
     allowed methods: POST.
     """
     permission_classes = [AllowAny, ]
