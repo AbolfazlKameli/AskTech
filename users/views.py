@@ -10,16 +10,8 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from permissions import permissions
 from utils import JWT_token, send_email
+from . import serializers
 from .models import User
-from .serializers import (UserSerializer,
-                          UserRegisterSerializer,
-                          ResendVerificationEmailSerializer,
-                          ChangePasswordSerializer,
-                          TokenSerializer,
-                          SetPasswordSerializer,
-                          ResetPasswordSerializer,
-                          UserProfileSerializer,
-                          )
 
 
 class UsersListAPI(ListAPIView):
@@ -29,7 +21,7 @@ class UsersListAPI(ListAPIView):
     """
     permission_classes = [IsAdminUser, ]
     queryset = User.objects.all()
-    serializer_class = UserSerializer
+    serializer_class = serializers.UserSerializer
 
 
 class UserRegisterAPI(CreateAPIView):
@@ -38,7 +30,7 @@ class UserRegisterAPI(CreateAPIView):
     allowed methods: POST.
     """
     model = User
-    serializer_class = UserRegisterSerializer
+    serializer_class = serializers.UserRegisterSerializer
     permission_classes = [permissions.NotAuthenticated, ]
 
 
@@ -70,7 +62,7 @@ class ResendVerificationEmailAPI(APIView):
     allowed methods: POST.
     """
     permission_classes = [permissions.NotAuthenticated, ]
-    serializer_class = ResendVerificationEmailSerializer
+    serializer_class = serializers.ResendVerificationEmailSerializer
 
     def post(self, request):
         srz_data = self.serializer_class(data=request.POST)
@@ -94,7 +86,7 @@ class ChangePasswordAPI(APIView):
     allowed methods: POST.
     """
     permission_classes = [IsAuthenticated, ]
-    serializer_class = ChangePasswordSerializer
+    serializer_class = serializers.ChangePasswordSerializer
 
     def put(self, request):
         srz_data = self.serializer_class(data=request.POST)
@@ -112,11 +104,11 @@ class ChangePasswordAPI(APIView):
 
 class SetPasswordAPI(APIView):
     """
-    set use password for reset_password.\n
+    set user password for reset_password.\n
     allowed methods: POST.
     """
     permission_classes = [AllowAny, ]
-    serializer_class = SetPasswordSerializer
+    serializer_class = serializers.SetPasswordSerializer
 
     def post(self, request, token):
         srz_data = self.serializer_class(data=request.POST)
@@ -137,11 +129,11 @@ class SetPasswordAPI(APIView):
 
 class ResetPasswordAPI(APIView):
     """
-    reset user passwrd.
+    reset user passwrd.\n
     allowed methods: POST.
     """
     permission_classes = [AllowAny, ]
-    serializer_class = ResetPasswordSerializer
+    serializer_class = serializers.ResetPasswordSerializer
 
     def post(self, request):
         srz_data = self.serializer_class(data=request.POST)
@@ -162,10 +154,10 @@ class ResetPasswordAPI(APIView):
 
 class BlockTokenAPI(APIView):
     """
-    blocks a deleted token
+    blocks a deleted token\n
     allowed methods: POST.
     """
-    serializer_class = TokenSerializer
+    serializer_class = serializers.TokenSerializer
     permission_classes = [IsAdminUser, ]
 
     def post(self, request):
@@ -178,8 +170,13 @@ class BlockTokenAPI(APIView):
 
 
 class UserProfileAPI(RetrieveUpdateAPIView):
+    """
+    Retrieve or update user profile.\n
+    allowed methods: GET, PUT, PATCH.\n
+    GET: Retrieve, PUT: Full update, PATCH:partial update.
+    """
     permission_classes = [permissions.IsOwnerOrReadOnly]
-    serializer_class = UserProfileSerializer
+    serializer_class = serializers.UserProfileSerializer
     lookup_url_kwarg = 'id'
     lookup_field = 'id'
     queryset = User.objects.all()
