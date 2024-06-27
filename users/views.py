@@ -33,7 +33,26 @@ class UserRegisterAPI(CreateAPIView):
     serializer_class = serializers.UserRegisterSerializer
     permission_classes = [permissions.NotAuthenticated, ]
 
+    def create(self, request, *args, **kwargs):
+        srz_data = self.serializer_class(data=request.POST)
+        if srz_data.is_valid():
+            vd = srz_data.validated_data
+            vd.pop('password2')
+            user = User.objects.create_user(**vd)
+            token = JWT_token.generate_token(user)
+            send_email.send_link(vd['email'], request.build_absolute_uri(
+                reverse('users:user_register_verify', kwargs={'token': token['token']})
+            ))
+            return Response(
+                data={'message': 'we sent you an activation url', 'data': srz_data.data}, status=status.HTTP_200_OK
+            )
+        return Response(
+            data={'error': srz_data.errors}, status=status.HTTP_400_BAD_REQUEST
+        )
 
+
+# TODO: set expire time for emails.
+# TODO: refactor responses.
 class UserRegisterVerifyAPI(APIView):
     """
     Verification view for registration.\n
@@ -46,7 +65,7 @@ class UserRegisterVerifyAPI(APIView):
         try:
             user = get_object_or_404(User, pk=user_id)
             if user.is_active:
-                return Response(data={'message': 'Your account already activated!'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(data={'message': 'Your account already active!'}, status=status.HTTP_400_BAD_REQUEST)
             user.is_active = True
             user.save()
             return Response(data={'message': 'Account activated successfully!'})
@@ -58,7 +77,7 @@ class UserRegisterVerifyAPI(APIView):
 
 class ResendVerificationEmailAPI(APIView):
     """
-    makes a new token and send it with email.\n
+    makes a new token and sends it with email.\n
     allowed methods: POST.
     """
     permission_classes = [permissions.NotAuthenticated, ]

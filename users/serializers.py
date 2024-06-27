@@ -1,8 +1,6 @@
 from django.contrib.auth.password_validation import validate_password
-from django.urls import reverse
 from rest_framework import serializers
 
-from utils import JWT_token, send_email
 from .models import User
 
 
@@ -13,26 +11,14 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class UserRegisterSerializer(serializers.ModelSerializer):
-    password2 = serializers.CharField(required=True, write_only=True, min_length=6)
+    password2 = serializers.CharField(required=True, write_only=True, min_length=8)
 
     class Meta:
         model = User
         fields = ('username', 'email', 'password', 'password2')
         extra_kwargs = {
-            'password': {'write_only': True, 'min_length': 6}
+            'password': {'write_only': True, 'min_length': 8}
         }
-
-    def create(self, validated_data):
-        request = self.context.get("request")
-        email = validated_data.get("email")
-        validated_data.pop('password2')
-        user = User.objects.create_user(**validated_data)
-        token = JWT_token.generate_token(user)
-        link = request.build_absolute_uri(
-            reverse('users:user_register_verify', kwargs={'token': token['token']})
-        )
-        send_email.send_link(email, link)
-        return {'id': user.id, 'username': user.username, 'email': user.email}
 
     def validate(self, data):
         password1 = data.get('password')
@@ -56,7 +42,7 @@ class ResendVerificationEmailSerializer(serializers.Serializer):
         except User.DoesNotExist:
             raise serializers.ValidationError({'error': 'User does not exist!'})
         if user.is_active:
-            raise serializers.ValidationError({'error': 'Account already activated'})
+            raise serializers.ValidationError({'error': 'Account already active!'})
         attrs['user'] = user
         return attrs
 
