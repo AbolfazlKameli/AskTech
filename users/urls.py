@@ -11,14 +11,18 @@ token = [
     path('block_token/', views.BlockTokenAPI.as_view(), name='token_block'),
 ]
 
+password = [
+    path('change/', views.ChangePasswordAPI.as_view(), name='change_password'),
+    path('set/<str:token>/', views.SetPasswordAPI.as_view(), name='set_password'),
+    path('reset/', views.ResetPasswordAPI.as_view(), name='reset_password'),
+]
+
 urlpatterns = [
     path('', views.UsersListAPI.as_view(), name='users_list'),
-    path('token/', include(token)),
     path('register/', views.UserRegisterAPI.as_view(), name='user_register'),
     path('register/verify/<str:token>/', views.UserRegisterVerifyAPI.as_view(), name='user_register_verify'),
-    path('register/resend_email/', views.ResendVerificationEmailAPI.as_view(), name='user_register_resend_email'),
-    path('change_password/', views.ChangePasswordAPI.as_view(), name='change_password'),
-    path('set_password/<str:token>/', views.SetPasswordAPI.as_view(), name='set_password'),
-    path('reset_password/', views.ResetPasswordAPI.as_view(), name='reset_password'),
+    path('resend_email/', views.ResendVerificationEmailAPI.as_view(), name='user_register_resend_email'),
     path('profile/<int:id>/', views.UserProfileAPI.as_view(), name='user_profile'),
+    path('token/', include(token)),
+    path('password/', include(password))
 ]
