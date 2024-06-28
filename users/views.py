@@ -36,14 +36,13 @@ class UserRegisterAPI(CreateAPIView):
     def create(self, request, *args, **kwargs):
         srz_data = self.serializer_class(data=request.POST)
         if srz_data.is_valid():
-            vd = srz_data.validated_data
-            vd.pop('password2')
-            user = User.objects.create_user(**vd)
+            srz_data.validated_data.pop('password2')
+            user = User.objects.create_user(**srz_data.validated_data)
             token = JWT_token.generate_token(user)
             url = self.request.build_absolute_uri(
                 reverse('users:user_register_verify', kwargs={'token': token['token']})
             )
-            send_email.send_link(vd['email'], url)
+            send_email.send_link(srz_data.validated_data['email'], url)
             return Response(
                 data={'message': 'we sent you an activation url', 'data': srz_data.data},
                 status=status.HTTP_200_OK,
