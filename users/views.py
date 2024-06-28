@@ -68,17 +68,18 @@ class UserRegisterVerifyAPI(APIView):
             vd = srz_data.validated_data
             token_id = JWT_token.decode_token(token)
             if vd['id'] != token_id:
-                return Response({'error': 'You dont have permission'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    data={'error': 'activation link or email is invalid!'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
             try:
                 user = get_object_or_404(User, id=token_id)
                 user.is_active = True
                 user.save()
-                return Response({'message': 'account activated successfully!'})
+                return Response(data={'message': 'account activated successfully.'}, status=status.HTTP_200_OK)
             except Http404:
-                return Response({'error': 'user not found'}, status=status.HTTP_404_NOT_FOUND)
-            except TypeError:
-                return Response({'error': 'Activation link is invalid'}, status=status.HTTP_400_BAD_REQUEST)
-        return Response({'error': srz_data.errors}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(data={'error': 'user not found!'}, status=status.HTTP_404_NOT_FOUND)
+        return Response(data={'error': srz_data.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class ResendVerificationEmailAPI(APIView):
