@@ -59,7 +59,7 @@ class UserRegisterVerifyAPI(APIView):
     allowed methods: GET.
     """
     permission_classes = [permissions.NotAuthenticated, ]
-
+    http_method_names = ['get', 'post']
     def get(self, request, token):
         user_id = JWT_token.decode_token(token)
         try:
