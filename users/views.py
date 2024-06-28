@@ -56,23 +56,29 @@ class UserRegisterAPI(CreateAPIView):
 class UserRegisterVerifyAPI(APIView):
     """
     Verification view for registration.\n
-    allowed methods: GET.
+    allowed methods: POST.
     """
     permission_classes = [permissions.NotAuthenticated, ]
-    http_method_names = ['get', 'post']
-    def get(self, request, token):
-        user_id = JWT_token.decode_token(token)
-        try:
-            user = get_object_or_404(User, pk=user_id)
-            if user.is_active:
-                return Response(data={'message': 'Your account already active!'}, status=status.HTTP_400_BAD_REQUEST)
-            user.is_active = True
-            user.save()
-            return Response(data={'message': 'Account activated successfully!'})
-        except Http404:
-            return Response({'message': 'Activation link is invalid!'}, status=status.HTTP_404_NOT_FOUND)
-        except TypeError:
-            return Response(user_id)
+    http_method_names = ['post']
+    serializer_class = serializers.UserVerifySerializer
+
+    def post(self, request, token):
+        srz_data = self.serializer_class(data=request.POST)
+        if srz_data.is_valid():
+            vd = srz_data.validated_data
+            token_id = JWT_token.decode_token(token)
+            if vd['id'] != token_id:
+                return Response({'error': 'You dont have permission'}, status=status.HTTP_400_BAD_REQUEST)
+            try:
+                user = get_object_or_404(User, id=token_id)
+                user.is_active = True
+                user.save()
+                return Response({'message': 'account activated successfully!'})
+            except Http404:
+                return Response({'error': 'user not found'}, status=status.HTTP_404_NOT_FOUND)
+            except TypeError:
+                return Response({'error': 'Activation link is invalid'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'error': srz_data.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class ResendVerificationEmailAPI(APIView):
