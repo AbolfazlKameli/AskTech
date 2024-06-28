@@ -33,7 +33,7 @@ LOCAL_APPS = [
     'users.apps.UsersConfig',
 ]
 
-THIRd_PARTY_APPS = [
+THIRD_PARTY_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
@@ -48,7 +48,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     *LOCAL_APPS,
-    *THIRd_PARTY_APPS,
+    *THIRD_PARTY_APPS,
 ]
 
 MIDDLEWARE = [
