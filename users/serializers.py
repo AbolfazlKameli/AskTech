@@ -1,8 +1,6 @@
 from django.contrib.auth.password_validation import validate_password
-from django.urls import reverse
 from rest_framework import serializers
 
-from utils import JWT_token, send_email
 from .models import User
 
 
@@ -13,26 +11,14 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class UserRegisterSerializer(serializers.ModelSerializer):
-    password2 = serializers.CharField(required=True, write_only=True, min_length=6)
+    password2 = serializers.CharField(required=True, write_only=True, min_length=8)
 
     class Meta:
         model = User
         fields = ('username', 'email', 'password', 'password2')
         extra_kwargs = {
-            'password': {'write_only': True, 'min_length': 6}
+            'password': {'write_only': True, 'min_length': 8}
         }
-
-    def create(self, validated_data):
-        request = self.context.get("request")
-        email = validated_data.get("email")
-        validated_data.pop('password2')
-        user = User.objects.create_user(**validated_data)
-        token = JWT_token.generate_token(user)
-        link = request.build_absolute_uri(
-            reverse('users:user_register_verify', kwargs={'token': token['token']})
-        )
-        send_email.send_link(email, link)
-        return {'id': user.id, 'username': user.username, 'email': user.email}
 
     def validate(self, data):
         password1 = data.get('password')
@@ -46,6 +32,25 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         return data
 
 
+class UserVerifySerializer(serializers.Serializer):
+    email = serializers.EmailField(required=True)
+    password = serializers.CharField(required=True, write_only=True)
+
+    def validate(self, attrs):
+        email = attrs.get('email')
+        password = attrs.get('password')
+        try:
+            user = User.objects.get(email__exact=email)
+        except User.DoesNotExist:
+            raise serializers.ValidationError('given email is invalid!')
+        if not user.check_password(password):
+            raise serializers.ValidationError('password is invalid!')
+        if user.is_active:
+            raise serializers.ValidationError('account already is active!')
+        attrs['id'] = user.id
+        return attrs
+
+
 class ResendVerificationEmailSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True)
 
@@ -54,9 +59,9 @@ class ResendVerificationEmailSerializer(serializers.Serializer):
         try:
             user = User.objects.get(email=email)
         except User.DoesNotExist:
-            raise serializers.ValidationError({'error': 'User does not exist!'})
+            raise serializers.ValidationError('User does not exist!')
         if user.is_active:
-            raise serializers.ValidationError({'error': 'Account already activated'})
+            raise serializers.ValidationError('Account already active!')
         attrs['user'] = user
         return attrs
 
@@ -70,7 +75,7 @@ class ChangePasswordSerializer(serializers.Serializer):
         new_password = attrs.get('new_password')
         confirm_password = attrs.get('confirm_new_password')
         if new_password and confirm_password and new_password != confirm_password:
-            raise serializers.ValidationError({'error': 'Passwords must match'})
+            raise serializers.ValidationError('Passwords must match')
         try:
             validate_password(new_password)
         except serializers.ValidationError:
