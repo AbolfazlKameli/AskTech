@@ -48,7 +48,8 @@ class UserRegisterAPI(CreateAPIView):
                 status=status.HTTP_200_OK,
             )
         return Response(
-            data={'error': srz_data.errors}, status=status.HTTP_400_BAD_REQUEST
+            data={'error': srz_data.errors},
+            status=status.HTTP_400_BAD_REQUEST
         )
 
 
@@ -100,10 +101,10 @@ class ResendVerificationEmailAPI(APIView):
             )
             send_email.send_link(user.email, url)
             return Response(
-                {"message: The activation email has been sent again successfully"},
+                data={"message: The activation email has been sent again successfully"},
                 status=status.HTTP_200_OK,
             )
-        return Response({'errors': srz_data.errors}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(data={'errors': srz_data.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class ChangePasswordAPI(APIView):
@@ -123,9 +124,9 @@ class ChangePasswordAPI(APIView):
             if user.check_password(old_password):
                 user.set_password(new_password)
                 user.save()
-                return Response({'message': 'Your password changed successfully!'}, status=status.HTTP_200_OK)
-            return Response({'error': 'Your old password is not correct'}, status=status.HTTP_400_BAD_REQUEST)
-        return Response({'error': srz_data.errors}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(data={'message': 'Your password changed successfully!'}, status=status.HTTP_200_OK)
+            return Response(data={'error': 'Your old password is not correct'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(data={'error': srz_data.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class SetPasswordAPI(APIView):
@@ -142,15 +143,15 @@ class SetPasswordAPI(APIView):
         try:
             user = get_object_or_404(User, id=user_id)
         except Http404:
-            return Response({'error': 'Activation link is invalid'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(data={'error': 'Activation link is invalid'}, status=status.HTTP_400_BAD_REQUEST)
         except TypeError:
             return Response(user_id)
         if srz_data.is_valid():
             new_password = srz_data.validated_data['new_password']
             user.set_password(new_password)
             user.save()
-            return Response({'message': 'Password changed successfully'}, status=status.HTTP_200_OK)
-        return Response({'error': srz_data.errors}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(data={'message': 'Password changed successfully'}, status=status.HTTP_200_OK)
+        return Response(data={'error': srz_data.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class ResetPasswordAPI(APIView):
@@ -167,15 +168,15 @@ class ResetPasswordAPI(APIView):
             try:
                 user = get_object_or_404(User, email=srz_data.validated_data['email'])
             except Http404:
-                return Response({'error': 'user with this Email not found!'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(data={'error': 'user with this Email not found!'}, status=status.HTTP_400_BAD_REQUEST)
 
             token = JWT_token.generate_token(user)
             url = self.request.build_absolute_uri(
                 reverse('users:set_password', kwargs={'token': token['token']})
             )
             send_email.send_link(user.email, url)
-            return Response({'message': 'sent you a change password link!'}, status=status.HTTP_200_OK)
-        return Response({'error': srz_data.errors}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(data={'message': 'sent you a change password link!'}, status=status.HTTP_200_OK)
+        return Response(data={'error': srz_data.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class BlockTokenAPI(APIView):

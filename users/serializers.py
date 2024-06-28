@@ -59,9 +59,9 @@ class ResendVerificationEmailSerializer(serializers.Serializer):
         try:
             user = User.objects.get(email=email)
         except User.DoesNotExist:
-            raise serializers.ValidationError({'error': 'User does not exist!'})
+            raise serializers.ValidationError('User does not exist!')
         if user.is_active:
-            raise serializers.ValidationError({'error': 'Account already active!'})
+            raise serializers.ValidationError('Account already active!')
         attrs['user'] = user
         return attrs
 
@@ -75,7 +75,7 @@ class ChangePasswordSerializer(serializers.Serializer):
         new_password = attrs.get('new_password')
         confirm_password = attrs.get('confirm_new_password')
         if new_password and confirm_password and new_password != confirm_password:
-            raise serializers.ValidationError({'error': 'Passwords must match'})
+            raise serializers.ValidationError('Passwords must match')
         try:
             validate_password(new_password)
         except serializers.ValidationError:
