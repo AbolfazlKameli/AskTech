@@ -53,7 +53,6 @@ class UserRegisterAPI(CreateAPIView):
         )
 
 
-# TODO: set expire time for emails.
 class UserRegisterVerifyAPI(APIView):
     """
     Verification view for registration.\n
@@ -65,7 +64,7 @@ class UserRegisterVerifyAPI(APIView):
     def get(self, request, token):
         decrypted_token = JWT_token.decode_token(token)
         try:
-            user = get_object_or_404(User, id=decrypted_token['user_id'])
+            user = get_object_or_404(User, id=decrypted_token)
             if user.is_active:
                 return Response(data={'message': 'this account already is active'}, status=status.HTTP_200_OK)
             user.is_active = True
@@ -135,7 +134,7 @@ class SetPasswordAPI(APIView):
         srz_data = self.serializer_class(data=request.POST)
         decrypted_token = JWT_token.decode_token(token)
         try:
-            user = get_object_or_404(User, id=decrypted_token['user_id'])
+            user = get_object_or_404(User, id=decrypted_token)
         except Http404:
             return Response(data={'error': 'Activation link is invalid'}, status=status.HTTP_400_BAD_REQUEST)
         except TypeError:
