@@ -6,7 +6,7 @@ from users.models import User
 class Question(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='questions')
     title = models.CharField(max_length=500)
-    body = models.CharField(max_length=10000)
+    body = models.TextField()
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now_add=True)
 
