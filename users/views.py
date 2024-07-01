@@ -63,9 +63,9 @@ class UserRegisterVerifyAPI(APIView):
     http_method_names = ['get']
 
     def get(self, request, token):
-        user_id = JWT_token.decode_token(token)
+        decrypted_token = JWT_token.decode_token(token)
         try:
-            user = get_object_or_404(User, id=user_id)
+            user = get_object_or_404(User, id=decrypted_token['user_id'])
             if user.is_active:
                 return Response(data={'message': 'this account already is active'}, status=status.HTTP_200_OK)
             user.is_active = True
@@ -133,13 +133,13 @@ class SetPasswordAPI(APIView):
 
     def post(self, request, token):
         srz_data = self.serializer_class(data=request.POST)
-        user_id = JWT_token.decode_token(token)
+        decrypted_token = JWT_token.decode_token(token)
         try:
-            user = get_object_or_404(User, id=user_id)
+            user = get_object_or_404(User, id=decrypted_token['user_id'])
         except Http404:
             return Response(data={'error': 'Activation link is invalid'}, status=status.HTTP_400_BAD_REQUEST)
         except TypeError:
-            return Response(user_id)
+            return Response(decrypted_token['user_id'])
         if srz_data.is_valid():
             new_password = srz_data.validated_data['new_password']
             user.set_password(new_password)

@@ -19,7 +19,7 @@ def generate_token(user):
 def decode_token(token):
     try:
         decoded_data = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
-        return decoded_data['user_id']
+        return decoded_data
     except jwt.ExpiredSignatureError:
         return {'error': 'Activation link has expired!'}
     except jwt.InvalidTokenError:
