@@ -32,25 +32,6 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         return data
 
 
-class UserVerifySerializer(serializers.Serializer):
-    email = serializers.EmailField(required=True)
-    password = serializers.CharField(required=True, write_only=True)
-
-    def validate(self, attrs):
-        email = attrs.get('email')
-        password = attrs.get('password')
-        try:
-            user = User.objects.get(email__exact=email)
-        except User.DoesNotExist:
-            raise serializers.ValidationError('given email is invalid!')
-        if not user.check_password(password):
-            raise serializers.ValidationError('password is invalid!')
-        if user.is_active:
-            raise serializers.ValidationError('account already is active!')
-        attrs['id'] = user.id
-        return attrs
-
-
 class ResendVerificationEmailSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True)
 
