@@ -27,7 +27,7 @@ def decode_token(token):
         now = datetime.now(tz=timezone('Asia/Tehran')).timestamp()
         if now > expire_time:
             return {'error': 'Activation link has expired!'}
-        return decoded_data['user_id']
+        return decoded_data
     except jwt.ExpiredSignatureError:
         return {'error': 'Activation link has expired!'}
     except jwt.InvalidTokenError:
