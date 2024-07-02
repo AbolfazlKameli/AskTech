@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
@@ -67,6 +69,8 @@ class UserRegisterVerifyAPI(APIView):
             user = get_object_or_404(User, id=decrypted_token['user_id'])
             if user.is_active:
                 return Response(data={'message': 'this account already is active'}, status=status.HTTP_200_OK)
+            if datetime.now().timestamp() > decrypted_token['expire']:
+                return Response({'error': 'Activation link has expired!'})
             user.is_active = True
             user.save()
             return Response(data={'message': 'Account activated successfully'}, status=status.HTTP_200_OK)
