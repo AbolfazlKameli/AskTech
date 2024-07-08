@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import timedelta
 
 from django.http import Http404
 from django.shortcuts import get_object_or_404
@@ -40,7 +40,7 @@ class UserRegisterAPI(CreateAPIView):
         if srz_data.is_valid():
             srz_data.validated_data.pop('password2')
             user = User.objects.create_user(**srz_data.validated_data)
-            token = JWT_token.generate_token(user)
+            token = JWT_token.generate_token(user, timedelta(minutes=1))
             url = self.request.build_absolute_uri(
                 reverse('users:user_register_verify', kwargs={'token': token['token']})
             )
@@ -69,8 +69,6 @@ class UserRegisterVerifyAPI(APIView):
             user = get_object_or_404(User, id=decrypted_token['user_id'])
             if user.is_active:
                 return Response(data={'message': 'this account already is active'}, status=status.HTTP_200_OK)
-            if datetime.now().timestamp() > decrypted_token['expire']:
-                return Response({'error': 'Activation link has expired!'})
             user.is_active = True
             user.save()
             return Response(data={'message': 'Account activated successfully'}, status=status.HTTP_200_OK)
@@ -78,6 +76,8 @@ class UserRegisterVerifyAPI(APIView):
             return Response(data={'error': 'Activation URL is invalid'}, status=status.HTTP_404_NOT_FOUND)
         except TypeError:
             return Response(data={'error': 'Token is invalid'}, status=status.HTTP_400_BAD_REQUEST)
+        except KeyError:
+            return Response({'error': 'Activation link has expired!'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class ResendVerificationEmailAPI(APIView):
@@ -92,7 +92,7 @@ class ResendVerificationEmailAPI(APIView):
         srz_data = self.serializer_class(data=request.POST)
         if srz_data.is_valid():
             user = srz_data.validated_data['user']
-            token = JWT_token.generate_token(user)
+            token = JWT_token.generate_token(user, timedelta(minutes=1))
             url = self.request.build_absolute_uri(
                 reverse('users:user_register_verify', kwargs={'token': token['token']})
             )
@@ -166,8 +166,7 @@ class ResetPasswordAPI(APIView):
                 user = get_object_or_404(User, email=srz_data.validated_data['email'])
             except Http404:
                 return Response(data={'error': 'user with this Email not found!'}, status=status.HTTP_400_BAD_REQUEST)
-
-            token = JWT_token.generate_token(user)
+            token = JWT_token.generate_token(user, timedelta(minutes=1))
             url = self.request.build_absolute_uri(
                 reverse('users:set_password', kwargs={'token': token['token']})
             )
