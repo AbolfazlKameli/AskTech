@@ -9,6 +9,7 @@ class Question(models.Model):
     body = models.TextField()
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now_add=True)
+    slug = models.SlugField(max_length=30)
 
     # TODO: add answers and tags or categories.
 
