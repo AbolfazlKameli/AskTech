@@ -10,6 +10,22 @@ from . import serializers
 from .models import Question
 
 
+class QuestionCreateAPI(CreateAPIView):
+    serializer_class = serializers.QuestionSerializer
+    permission_classes = [IsAuthenticated, ]
+
+    def create(self, request, *args, **kwargs):
+        srz_data = self.serializer_class(data=self.request.POST)
+        if srz_data.is_valid():
+            slug = slugify(srz_data.validated_data['title'][:30])
+            srz_data.save(slug=slug, owner=self.request.user)
+            return Response(
+                data={'data': srz_data.data, 'message': 'created successfully'},
+                status=status.HTTP_201_CREATED
+            )
+        return Response(data={'error': srz_data.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+
 class QuestionListAPI(ListAPIView):
     """
     this view returns all questions.\n
@@ -44,7 +60,7 @@ class QuestionDetailUpdateDestroyAPI(RetrieveUpdateDestroyAPIView):
         srz_question = self.serializer_class(question)
         answers = question.answers.all().order_by('-created')
         srz_answers = serializers.AnswerSerializer(answers, many=True)
-        return Response({'question': srz_question.data, 'answers': srz_answers.data}, status=status.HTTP_200_OK)
+        return Response(data={'question': srz_question.data, 'answers': srz_answers.data}, status=status.HTTP_200_OK)
 
     def update(self, request, *args, **kwargs):
         instance = self.get_object()

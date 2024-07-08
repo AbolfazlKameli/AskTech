@@ -7,6 +7,9 @@ class QuestionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Question
         exclude = ('slug',)
+        extra_kwargs = {
+            'owner': {'read_only': True, 'required': False}
+        }
 
 
 class AnswerSerializer(serializers.ModelSerializer):
