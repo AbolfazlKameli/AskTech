@@ -1,6 +1,10 @@
-from rest_framework.generics import ListAPIView
+from django.utils.text import slugify
+from rest_framework import status
+from rest_framework.generics import ListAPIView, RetrieveUpdateDestroyAPIView
 from rest_framework.permissions import AllowAny
+from rest_framework.response import Response
 
+from permissions import permissions
 from utils import paginators
 from . import serializers
 from .models import Question
@@ -22,3 +26,25 @@ class QuestionListAPI(ListAPIView):
         response.headers['host'] = 'localhost'
         response.headers['user'] = request.user
         return response
+
+
+class QuestionDetailUpdateDestroyAPI(RetrieveUpdateDestroyAPIView):
+    """
+    this view can retrieve, update and delete a question.\n
+    allowed methods: GET, PUT, PATCH, DELETE.
+    """
+    permission_classes = [permissions.IsOwnerOrReadOnly, ]
+    queryset = Question.objects.all()
+    serializer_class = serializers.QuestionSerializer
+    lookup_field = 'slug'
+    lookup_url_kwarg = 'slug'
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        srz_data = self.serializer_class(instance, data=self.request.data, partial=True)
+        if srz_data.is_valid():
+            vd = srz_data.validated_data
+            vd['slug'] = slugify(srz_data.validated_data['title'][:30])
+            srz_data.save()
+            return Response(srz_data.data, status=status.HTTP_200_OK)
+        return Response(srz_data.errors, status=status.HTTP_400_BAD_REQUEST)
