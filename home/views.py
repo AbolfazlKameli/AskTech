@@ -1,14 +1,14 @@
 from django.utils.text import slugify
 from rest_framework import status
 from rest_framework.generics import ListAPIView, RetrieveUpdateDestroyAPIView, CreateAPIView, UpdateAPIView, \
-    RetrieveAPIView
+    RetrieveAPIView, DestroyAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
 from permissions import permissions
 from utils import paginators
 from . import serializers
-from .models import Question
+from .models import Question, Answer
 
 
 class QuestionListAPI(ListAPIView):
@@ -29,6 +29,7 @@ class QuestionListAPI(ListAPIView):
         return response
 
 
+# TODO: debug and test question CRUD
 class QuestionCreateAPI(CreateAPIView):
     """
     this view creates a question.
@@ -89,7 +90,7 @@ class QuestionUpdateAPI(UpdateAPIView):
         return Response(srz_data.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class QuestionDestroyAPI(RetrieveUpdateDestroyAPIView):
+class QuestionDestroyAPI(DestroyAPIView):
     """
     this view can delete a question.\n
     allowed methods: DELETE.
@@ -101,6 +102,7 @@ class QuestionDestroyAPI(RetrieveUpdateDestroyAPIView):
     lookup_url_kwarg = 'slug'
 
 
+# TODO: debug and test and complete answer CRUD.
 class AnswerCreateAPI(CreateAPIView):
     """
     this view creates an answer.\n
@@ -116,3 +118,9 @@ class AnswerCreateAPI(CreateAPIView):
             srz_data.save(question=question, owner=self.request.user)
             return Response({'message': 'created successfully'}, status=status.HTTP_201_CREATED)
         return Response({'error': srz_data.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class AnswerDestroyAPI(DestroyAPIView):
+    permission_classes = [permissions.IsOwnerOrReadOnly, ]
+    queryset = Answer.objects.all()
+    serializer_class = serializers.QuestionSerializer

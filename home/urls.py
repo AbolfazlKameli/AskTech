@@ -10,4 +10,5 @@ urlpatterns = [
     path('question_update/<slug:slug>/', views.QuestionUpdateAPI.as_view(), name='question_update'),
     path('question_delete/<slug:slug>/', views.QuestionDestroyAPI.as_view(), name='question_delete'),
     path('answer/<slug:slug>/', views.AnswerCreateAPI.as_view(), name='answer_create'),
+    path('answer_delete/<pk:pk>/', views.AnswerDestroyAPI.as_view(), name='answer_delete'),
 ]
