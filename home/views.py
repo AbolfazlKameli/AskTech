@@ -58,6 +58,10 @@ class QuestionDetailUpdateDestroyAPI(RetrieveUpdateDestroyAPIView):
 
 
 class AnswerCreateAPI(CreateAPIView):
+    """
+    this view creates an answer.\n
+    allowed methods: POST.
+    """
     permission_classes = [IsAuthenticated, ]
     serializer_class = serializers.AnswerSerializer
 
