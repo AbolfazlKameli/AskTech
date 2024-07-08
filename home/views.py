@@ -44,7 +44,7 @@ class QuestionDetailUpdateDestroyAPI(RetrieveUpdateDestroyAPIView):
         srz_question = self.serializer_class(question)
         answers = question.answers.all()
         srz_answers = serializers.AnswerSerializer(answers, many=True)
-        return Response({'question': srz_question.data, 'answers': srz_answers.data})
+        return Response({'question': srz_question.data, 'answers': srz_answers.data}, status=status.HTTP_200_OK)
 
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
