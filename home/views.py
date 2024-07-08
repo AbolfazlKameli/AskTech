@@ -39,6 +39,13 @@ class QuestionDetailUpdateDestroyAPI(RetrieveUpdateDestroyAPIView):
     lookup_field = 'slug'
     lookup_url_kwarg = 'slug'
 
+    def retrieve(self, request, *args, **kwargs):
+        question = self.get_object()
+        srz_question = self.serializer_class(question)
+        answers = question.answers.all()
+        srz_answers = serializers.AnswerSerializer(answers, many=True)
+        return Response({'question': srz_question.data, 'answers': srz_answers.data})
+
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
         srz_data = self.serializer_class(instance, data=self.request.data, partial=True)
