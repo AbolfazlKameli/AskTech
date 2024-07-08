@@ -9,9 +9,20 @@ class Question(models.Model):
     body = models.TextField()
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now_add=True)
-    slug = models.SlugField(max_length=30)
+    slug = models.SlugField(max_length=30, blank=True, null=True)
 
-    # TODO: add answers and tags or categories.
+    # TODO: add and tags or categories.
 
     def __str__(self):
         return f'{self.user} - {self.title[:30]}...'
+
+
+class Answer(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='user')
+    question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='question')
+    body = models.TextField()
+    created = models.DateTimeField(auto_now_add=True)
+    modified = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f'{self.user} - {self.body[:20]}... - {self.question}'
