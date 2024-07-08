@@ -11,7 +11,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from permissions import permissions
-from utils import JWT_token, send_email
+from utils import JWT_token, send_email, paginators
 from . import serializers
 from .models import User
 
@@ -24,6 +24,7 @@ class UsersListAPI(ListAPIView):
     permission_classes = [IsAdminUser, ]
     queryset = User.objects.all()
     serializer_class = serializers.UserSerializer
+    pagination_class = paginators.StandardPageNumberPagination
 
 
 class UserRegisterAPI(CreateAPIView):
