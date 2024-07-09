@@ -5,9 +5,7 @@ from . import views
 
 app_name = 'home'
 urlpatterns = [
-    path('create_answer/<slug:question_slug>/', views.AnswerCreateAPI.as_view(), name='answer_create'),
-    path('answer_update/<int:answer_id>/', views.AnswerUpdateAPI.as_view(), name='answer_update'),
-    path('answer_delete/<int:pk>/', views.AnswerDestroyAPI.as_view(), name='answer_delete'),
+    path('', views.HomeAPI.as_view(), name='home'),
 ]
 
 router = routers.SimpleRouter()

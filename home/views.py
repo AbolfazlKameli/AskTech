@@ -6,12 +6,27 @@ from rest_framework.generics import (CreateAPIView,
                                      )
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 
 from permissions import permissions
 from utils import paginators
 from . import serializers
 from .models import Question, Answer
+
+
+class HomeAPI(APIView):
+    """Home page."""
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        return Response({'message': 'this is home page'}, status=status.HTTP_200_OK)
+
+    def options(self, request, *args, **kwargs):
+        response = super().options(request, *args, **kwargs)
+        response.headers['host'] = 'localhost'
+        response.headers['user'] = request.user
+        return response
 
 
 class QuestionViewSet(ModelViewSet):
