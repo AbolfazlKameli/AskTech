@@ -11,6 +11,9 @@ class Question(models.Model):
     modified = models.DateTimeField(auto_now=True)
     slug = models.SlugField(max_length=30, blank=True, null=True, unique=True)
 
+    class Meta:
+        ordering = ('-modified', '-created')
+
     # TODO: add and tags or categories.
 
     def __str__(self):
