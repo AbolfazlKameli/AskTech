@@ -1,4 +1,5 @@
 from django.utils.text import slugify
+from drf_spectacular.utils import extend_schema, OpenApiParameter
 from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -90,6 +91,8 @@ class AnswerViewSet(ModelViewSet):
             permission_classes = [permissions.IsOwnerOrReadOnly]
         return [permission() for permission in permission_classes]
 
+    @extend_schema(parameters=[
+        OpenApiParameter(name='question_slug', type=str, location=OpenApiParameter.QUERY, description='question slug')])
     def create(self, request, *args, **kwargs):
         """creates an answer object."""
         srz_data = self.get_serializer(data=self.request.POST)
