@@ -1,7 +1,11 @@
 from django.utils.text import slugify
 from rest_framework import status
-from rest_framework.generics import ListAPIView, RetrieveUpdateDestroyAPIView, CreateAPIView, UpdateAPIView, \
-    RetrieveAPIView, DestroyAPIView
+from rest_framework.generics import (ListAPIView,
+                                     CreateAPIView,
+                                     UpdateAPIView,
+                                     RetrieveAPIView,
+                                     DestroyAPIView
+                                     )
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
@@ -32,7 +36,7 @@ class QuestionListAPI(ListAPIView):
 # TODO: debug and test question CRUD
 class QuestionCreateAPI(CreateAPIView):
     """
-    this view creates a question.
+    this view creates a question.\n
     allowed_methods: POST.
     """
     serializer_class = serializers.QuestionSerializer
@@ -84,7 +88,7 @@ class QuestionUpdateAPI(UpdateAPIView):
         instance = self.get_object()
         srz_data = self.serializer_class(instance, data=self.request.data, partial=True)
         if srz_data.is_valid():
-            slug = slugify(srz_data.validated_data['title'][:30])
+            slug = slugify(srz_data.validated_data.get('title', instance.title)[:30])
             srz_data.save(slug=slug)
             return Response(srz_data.data, status=status.HTTP_200_OK)
         return Response(srz_data.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -105,7 +109,7 @@ class QuestionDestroyAPI(DestroyAPIView):
 # TODO: debug and test and complete answer CRUD.
 class AnswerCreateAPI(CreateAPIView):
     """
-    this view creates an answer.\n
+    this view creates an answer.after answer create operation complete redirect user to question page.\n
     allowed methods: POST.
     """
     permission_classes = [IsAuthenticated, ]
@@ -114,13 +118,17 @@ class AnswerCreateAPI(CreateAPIView):
     def create(self, request, *args, **kwargs):
         srz_data = self.serializer_class(data=self.request.POST)
         if srz_data.is_valid():
-            question = Question.objects.get(slug__exact=kwargs['slug'])
+            question = Question.objects.get(slug__exact=kwargs['question_slug'])
             srz_data.save(question=question, owner=self.request.user)
             return Response({'message': 'created successfully'}, status=status.HTTP_201_CREATED)
         return Response({'error': srz_data.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class AnswerDestroyAPI(DestroyAPIView):
+    """
+    this views deletes an answer.\n
+    allowed_methods: DELETE.
+    """
     permission_classes = [permissions.IsOwnerOrReadOnly, ]
     queryset = Answer.objects.all()
     serializer_class = serializers.QuestionSerializer
