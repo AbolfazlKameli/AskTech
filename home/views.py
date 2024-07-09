@@ -1,13 +1,12 @@
 from django.utils.text import slugify
 from rest_framework import status
-from rest_framework.generics import (ListAPIView,
-                                     CreateAPIView,
+from rest_framework.generics import (CreateAPIView,
                                      UpdateAPIView,
-                                     RetrieveAPIView,
                                      DestroyAPIView
                                      )
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.viewsets import ModelViewSet
 
 from permissions import permissions
 from utils import paginators
@@ -15,34 +14,24 @@ from . import serializers
 from .models import Question, Answer
 
 
-class QuestionListAPI(ListAPIView):
-    """
-    this view returns all questions.\n
-    allowed methods: GET.
-    """
-    permission_classes = [AllowAny, ]
-    queryset = Question.objects.all().order_by('-created')
+class QuestionViewSet(ModelViewSet):
     serializer_class = serializers.QuestionSerializer
-    pagination_class = paginators.StandardPageNumberPagination
+    queryset = Question.objects.all()
     lookup_field = 'slug'
+    lookup_url_kwarg = 'slug'
+    pagination_class = paginators.StandardPageNumberPagination
 
-    def options(self, request, *args, **kwargs):
-        response = super().options(request, *args, **kwargs)
-        response.headers['host'] = 'localhost'
-        response.headers['user'] = request.user
-        return response
-
-
-class QuestionCreateAPI(CreateAPIView):
-    """
-    this view creates a question.\n
-    allowed_methods: POST.
-    """
-    serializer_class = serializers.QuestionSerializer
-    permission_classes = [IsAuthenticated, ]
+    def get_permissions(self):
+        if self.action == 'list' or self.action == 'retrieve':
+            permission_classes = [AllowAny]
+        elif self.action == 'create':
+            permission_classes = [IsAuthenticated]
+        else:
+            permission_classes = [permissions.IsOwnerOrReadOnly]
+        return [permission() for permission in permission_classes]
 
     def create(self, request, *args, **kwargs):
-        srz_data = self.serializer_class(data=self.request.POST)
+        srz_data = self.get_serializer(data=self.request.POST)
         if srz_data.is_valid():
             slug = slugify(srz_data.validated_data['title'][:30])
             srz_data.save(slug=slug, owner=self.request.user)
@@ -52,57 +41,21 @@ class QuestionCreateAPI(CreateAPIView):
             )
         return Response(data={'error': srz_data.errors}, status=status.HTTP_400_BAD_REQUEST)
 
-
-class QuestionDetailAPI(RetrieveAPIView):
-    """
-    this view can retrieve a question.\n
-    allowed methods: GET.
-    """
-    permission_classes = [AllowAny, ]
-    queryset = Question.objects.all()
-    serializer_class = serializers.QuestionSerializer
-    lookup_field = 'slug'
-    lookup_url_kwarg = 'slug'
-
     def retrieve(self, request, *args, **kwargs):
         question = self.get_object()
-        srz_question = self.serializer_class(question)
-        answers = question.answers.all().order_by('-created')
+        srz_question = self.get_serializer(question)
+        answers = question.answers.all()
         srz_answers = serializers.AnswerSerializer(answers, many=True)
-        return Response(data={'question': srz_question.data, 'answers': srz_answers.data}, status=status.HTTP_200_OK)
-
-
-class QuestionUpdateAPI(UpdateAPIView):
-    """
-    this view can update a question.\n
-    allowed methods: PUT, PATCH.
-    """
-    permission_classes = [permissions.IsOwnerOrReadOnly, ]
-    queryset = Question.objects.all()
-    serializer_class = serializers.QuestionSerializer
-    lookup_field = 'slug'
-    lookup_url_kwarg = 'slug'
+        return Response({'question': srz_question.data, 'answers': srz_answers.data}, status=status.HTTP_200_OK)
 
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
-        srz_data = self.serializer_class(instance, data=self.request.data, partial=True)
+        srz_data = self.get_serializer(instance=instance, data=self.request.data, partial=True)
         if srz_data.is_valid():
             slug = slugify(srz_data.validated_data.get('title', instance.title)[:30])
             srz_data.save(slug=slug)
             return Response(srz_data.data, status=status.HTTP_200_OK)
         return Response(srz_data.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-class QuestionDestroyAPI(DestroyAPIView):
-    """
-    this view can delete a question.\n
-    allowed methods: DELETE.
-    """
-    permission_classes = [permissions.IsOwnerOrReadOnly, ]
-    queryset = Question.objects.all()
-    serializer_class = serializers.QuestionSerializer
-    lookup_field = 'slug'
-    lookup_url_kwarg = 'slug'
 
 
 class AnswerCreateAPI(CreateAPIView):
