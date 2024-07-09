@@ -15,6 +15,11 @@ from .models import Question, Answer
 
 
 class QuestionViewSet(ModelViewSet):
+    """
+    question CRUD operations ModelViewSet.\n
+    list(this operation): pattern: question/, method: GET.\n
+    delete: pattern: {prefix}/{lookup(slug)}, method: DELETE.
+    """
     serializer_class = serializers.QuestionSerializer
     queryset = Question.objects.all()
     lookup_field = 'slug'
@@ -31,6 +36,10 @@ class QuestionViewSet(ModelViewSet):
         return [permission() for permission in permission_classes]
 
     def create(self, request, *args, **kwargs):
+        """
+        creates a question object.\n
+        pattern: question/, method: POST.
+        """
         srz_data = self.get_serializer(data=self.request.POST)
         if srz_data.is_valid():
             slug = slugify(srz_data.validated_data['title'][:30])
@@ -42,6 +51,10 @@ class QuestionViewSet(ModelViewSet):
         return Response(data={'error': srz_data.errors}, status=status.HTTP_400_BAD_REQUEST)
 
     def retrieve(self, request, *args, **kwargs):
+        """
+        shows detail of one question object.\n
+        pattern: question/{slug}, method: GET.
+        """
         question = self.get_object()
         srz_question = self.get_serializer(question)
         answers = question.answers.all()
@@ -49,6 +62,10 @@ class QuestionViewSet(ModelViewSet):
         return Response({'question': srz_question.data, 'answers': srz_answers.data}, status=status.HTTP_200_OK)
 
     def update(self, request, *args, **kwargs):
+        """
+        updates one question object.\n
+        pattern: question/{slug}, method: PUT, PATCH.
+        """
         instance = self.get_object()
         srz_data = self.get_serializer(instance=instance, data=self.request.data, partial=True)
         if srz_data.is_valid():
@@ -60,7 +77,7 @@ class QuestionViewSet(ModelViewSet):
 
 class AnswerCreateAPI(CreateAPIView):
     """
-    this view creates an answer.after answer create operation complete redirect user to question page.\n
+    this view creates an answer. after answer create operation complete redirect user to question page.\n
     allowed methods: POST.
     """
     permission_classes = [IsAuthenticated, ]
