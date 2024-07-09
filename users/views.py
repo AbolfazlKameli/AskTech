@@ -72,7 +72,11 @@ class UserRegisterVerifyAPI(APIView):
                 return Response(data={'message': 'this account already is active'}, status=status.HTTP_200_OK)
             user.is_active = True
             user.save()
-            return Response(data={'message': 'Account activated successfully'}, status=status.HTTP_200_OK)
+            token = JWT_token.generate_token(user)
+            return Response(data={'message': 'Account activated successfully',
+                                  'token': token['token'], 'refresh': token['refresh']},
+                            status=status.HTTP_200_OK
+                            )
         except Http404:
             return Response(data={'error': 'Activation URL is invalid'}, status=status.HTTP_404_NOT_FOUND)
         except TypeError:
