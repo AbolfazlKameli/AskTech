@@ -33,7 +33,6 @@ class QuestionListAPI(ListAPIView):
         return response
 
 
-# TODO: debug and test question CRUD
 class QuestionCreateAPI(CreateAPIView):
     """
     this view creates a question.\n
@@ -106,7 +105,6 @@ class QuestionDestroyAPI(DestroyAPIView):
     lookup_url_kwarg = 'slug'
 
 
-# TODO: debug and test and complete answer CRUD.
 class AnswerCreateAPI(CreateAPIView):
     """
     this view creates an answer.after answer create operation complete redirect user to question page.\n
@@ -120,8 +118,27 @@ class AnswerCreateAPI(CreateAPIView):
         if srz_data.is_valid():
             question = Question.objects.get(slug__exact=kwargs['question_slug'])
             srz_data.save(question=question, owner=self.request.user)
-            return Response({'message': 'created successfully'}, status=status.HTTP_201_CREATED)
-        return Response({'error': srz_data.errors}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(data={'message': 'created successfully'}, status=status.HTTP_201_CREATED)
+        return Response(data={'error': srz_data.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class AnswerUpdateAPI(UpdateAPIView):
+    """
+    this views updates an answer.\n
+    allowed_methods: PUT, PATCH.
+    """
+    permission_classes = [permissions.IsOwnerOrReadOnly, ]
+    queryset = Answer.objects.all()
+    serializer_class = serializers.AnswerSerializer
+    lookup_url_kwarg = 'answer_id'
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        srz_data = self.serializer_class(instance, data=request.data, partial=True)
+        if srz_data.is_valid():
+            srz_data.save()
+            return Response(data={'message': 'updated successfully'}, status=status.HTTP_200_OK)
+        return Response(data={'error': srz_data.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class AnswerDestroyAPI(DestroyAPIView):
