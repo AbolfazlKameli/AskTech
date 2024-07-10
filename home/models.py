@@ -9,7 +9,7 @@ class Question(models.Model):
     body = models.TextField()
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
-    slug = models.SlugField(max_length=30, blank=True, null=True, unique=True)
+    slug = models.SlugField(max_length=50)
 
     class Meta:
         ordering = ('-modified', '-created')

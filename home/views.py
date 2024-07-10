@@ -37,12 +37,10 @@ class QuestionViewSet(ModelViewSet):
 
     def get_permissions(self):
         if self.action == 'list' or self.action == 'retrieve':
-            permission_classes = [AllowAny]
+            return [AllowAny()]
         elif self.action == 'create':
-            permission_classes = [IsAuthenticated]
-        else:
-            permission_classes = [permissions.IsOwnerOrReadOnly]
-        return [permission() for permission in permission_classes]
+            return [IsAuthenticated()]
+        return [permissions.IsOwnerOrReadOnly()]
 
     def create(self, request, *args, **kwargs):
         """creates a question object."""
@@ -87,10 +85,8 @@ class AnswerViewSet(ModelViewSet):
 
     def get_permissions(self):
         if self.action == 'create':
-            permission_classes = [IsAuthenticated]
-        else:
-            permission_classes = [permissions.IsOwnerOrReadOnly]
-        return [permission() for permission in permission_classes]
+            return [IsAuthenticated]
+        return [permissions.IsOwnerOrReadOnly]
 
     @extend_schema(parameters=[
         OpenApiParameter(name='question_slug', type=str, location=OpenApiParameter.QUERY, description='question slug')])
