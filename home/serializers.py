@@ -47,12 +47,3 @@ class AnswerCommentSerializer(serializers.ModelSerializer):
     def get_replies(self, obj):
         replies = obj.replies.all()
         return AnswerCommentSerializer(instance=replies, many=True).data
-
-    def create(self, validated_data):
-        request = self.context.get('request')
-        answer_instance = get_object_or_404(Answer, id=request.query_params.get('answer_id'))
-        AnswerComment.objects.create(
-            owner=request.user,
-            answer=answer_instance,
-            body=validated_data['body'],
-        )

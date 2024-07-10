@@ -42,7 +42,6 @@ class QuestionViewSet(ModelViewSet):
             return [IsAuthenticated()]
         return [permissions.IsOwnerOrReadOnly()]
 
-    # TODO: move create method to serializer.
     def create(self, request, *args, **kwargs):
         """creates a question object."""
         srz_data = self.get_serializer(data=self.request.POST)
@@ -89,7 +88,6 @@ class AnswerViewSet(ModelViewSet):
             return [IsAuthenticated()]
         return [permissions.IsOwnerOrReadOnly()]
 
-    # TODO: move create method to serializer.
 
     @extend_schema(parameters=[
         OpenApiParameter(name='question_slug', type=str, location=OpenApiParameter.QUERY, description='question slug')])
@@ -129,7 +127,8 @@ class AnswerCommentViewSet(ModelViewSet):
     def create(self, request, *args, **kwargs):
         srz_data = self.get_serializer(data=self.request.data)
         if srz_data.is_valid():
-            srz_data.create(srz_data.validated_data)
+            answer = get_object_or_404(Answer, id=self.request.query_params['answer_id'])
+            srz_data.save(owner=self.request.user, answer=answer)
             return Response(
                 data={'message': 'created successfully'},
                 status=status.HTTP_201_CREATED
