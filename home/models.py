@@ -14,10 +14,10 @@ class Question(models.Model):
     class Meta:
         ordering = ('-modified', '-created')
 
-    # TODO: add answer comments and tags or categories.
+    # TODO: add tags or categories.
 
     def __str__(self):
-        return f'{self.owner} - {self.title[:30]}...'
+        return f'{self.owner.username} - {self.title[:30]}...'
 
     @property
     def short_title(self):
@@ -39,7 +39,7 @@ class Answer(models.Model):
         ordering = ('-modified', '-created')
 
     def __str__(self):
-        return f'{self.owner} - {self.body[:20]}... - {self.question.title[:30]}'
+        return f'{self.owner.username} - {self.body[:20]}... - {self.question.title[:30]}'
 
     @property
     def short_body(self):
@@ -55,5 +55,8 @@ class AnswerComment(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        ordering = ('-modified', '-created')
+
     def __str__(self):
-        return f'{self.owner} - {self.answer.body[:20]}...'
+        return f'{self.owner.username} - {self.answer.body[:20]}...'
