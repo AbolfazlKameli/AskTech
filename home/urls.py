@@ -11,4 +11,5 @@ urlpatterns = [
 router = routers.SimpleRouter()
 router.register('question', views.QuestionViewSet)
 router.register('answer', views.AnswerViewSet)
+router.register('answer_comments', views.AnswerCommentViewSet)
 urlpatterns += router.urls

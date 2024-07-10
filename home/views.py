@@ -10,7 +10,7 @@ from rest_framework.viewsets import ModelViewSet
 from permissions import permissions
 from utils import paginators
 from . import serializers
-from .models import Question, Answer
+from .models import Question, Answer, AnswerComment
 
 
 class HomeAPI(APIView):
@@ -42,6 +42,7 @@ class QuestionViewSet(ModelViewSet):
             return [IsAuthenticated()]
         return [permissions.IsOwnerOrReadOnly()]
 
+    # TODO: move create method to serializer.
     def create(self, request, *args, **kwargs):
         """creates a question object."""
         srz_data = self.get_serializer(data=self.request.POST)
@@ -85,8 +86,10 @@ class AnswerViewSet(ModelViewSet):
 
     def get_permissions(self):
         if self.action == 'create':
-            return [IsAuthenticated]
-        return [permissions.IsOwnerOrReadOnly]
+            return [IsAuthenticated()]
+        return [permissions.IsOwnerOrReadOnly()]
+
+    # TODO: move create method to serializer.
 
     @extend_schema(parameters=[
         OpenApiParameter(name='question_slug', type=str, location=OpenApiParameter.QUERY, description='question slug')])
@@ -110,3 +113,25 @@ class AnswerViewSet(ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         """deletes an answer object."""
         return super().destroy(request, *args, **kwargs)
+
+
+class AnswerCommentViewSet(ModelViewSet):
+    serializer_class = serializers.AnswerCommentSerializer
+    queryset = AnswerComment.objects.filter(is_reply=False)
+    pagination_class = paginators.StandardPageNumberPagination
+    http_method_names = ['post', 'put', 'patch']
+
+    def get_permissions(self):
+        if self.action == 'create':
+            return [IsAuthenticated()]
+        return [permissions.IsOwnerOrReadOnly()]
+
+    def create(self, request, *args, **kwargs):
+        srz_data = self.get_serializer(data=self.request.data)
+        if srz_data.is_valid():
+            srz_data.create(srz_data.validated_data)
+            return Response(
+                data={'message': 'created successfully'},
+                status=status.HTTP_201_CREATED
+            )
+        return Response({'error': srz_data.errors}, status=status.HTTP_400_BAD_REQUEST)
