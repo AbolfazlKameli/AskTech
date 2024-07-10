@@ -24,7 +24,7 @@ class QuestionAdmin(admin.ModelAdmin):
 
 @admin.register(models.Answer)
 class AnswerAdmin(admin.ModelAdmin):
-    list_display = ('owner', 'short_body', 'question')
+    list_display = ('owner', 'short_body', 'question', 'created')
     search_fields = ('owner__username', 'owner__email', 'body')
     raw_id_fields = ('question', 'owner')
     inlines = (AnswerCommentsInline,)
@@ -32,6 +32,6 @@ class AnswerAdmin(admin.ModelAdmin):
 
 @admin.register(models.AnswerComment)
 class AnswerCommentAdmin(admin.ModelAdmin):
-    list_display = ('owner', 'answer', 'is_reply')
+    list_display = ('owner', 'answer', 'is_reply', 'created', 'id')
     raw_id_fields = ('owner', 'answer', 'reply')
     search_fields = ('owner__username', 'owner__email', 'body', 'reply__body')
