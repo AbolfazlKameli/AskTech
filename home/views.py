@@ -88,7 +88,6 @@ class AnswerViewSet(ModelViewSet):
             return [IsAuthenticated()]
         return [permissions.IsOwnerOrReadOnly()]
 
-
     @extend_schema(parameters=[
         OpenApiParameter(name='question_slug', type=str, location=OpenApiParameter.QUERY, description='question slug')])
     def create(self, request, *args, **kwargs):
@@ -115,7 +114,7 @@ class AnswerViewSet(ModelViewSet):
 
 class AnswerCommentViewSet(ModelViewSet):
     serializer_class = serializers.AnswerCommentSerializer
-    queryset = AnswerComment.objects.filter(is_reply=False)
+    queryset = AnswerComment.objects.all()
     pagination_class = paginators.StandardPageNumberPagination
     http_method_names = ['post', 'put', 'patch']
 

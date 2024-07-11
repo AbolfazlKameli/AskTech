@@ -1,9 +1,8 @@
 import random
 
-from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 
-from .models import Question, Answer, AnswerComment
+from .models import Question, Answer, AnswerComment, CommentReply
 
 
 class QuestionSerializer(serializers.ModelSerializer):
@@ -46,4 +45,10 @@ class AnswerCommentSerializer(serializers.ModelSerializer):
 
     def get_replies(self, obj):
         replies = obj.replies.all()
-        return AnswerCommentSerializer(instance=replies, many=True).data
+        return ReplyCommentSerializer(instance=replies, many=True).data
+
+
+class ReplyCommentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CommentReply
+        fields = '__all__'

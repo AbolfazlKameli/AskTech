@@ -10,7 +10,12 @@ class AnswerInline(admin.StackedInline):
 
 class AnswerCommentsInline(admin.StackedInline):
     model = models.AnswerComment
-    raw_id_fields = ('owner', 'answer', 'reply')
+    raw_id_fields = ('owner', 'answer')
+
+
+class ReplyInline(admin.StackedInline):
+    model = models.CommentReply
+    raw_id_fields = ('owner', 'comment', 'reply')
 
 
 @admin.register(models.Question)
@@ -32,6 +37,10 @@ class AnswerAdmin(admin.ModelAdmin):
 
 @admin.register(models.AnswerComment)
 class AnswerCommentAdmin(admin.ModelAdmin):
-    list_display = ('owner', 'answer', 'is_reply', 'created', 'id')
-    raw_id_fields = ('owner', 'answer', 'reply')
+    list_display = ('owner', 'answer', 'created', 'id')
+    raw_id_fields = ('owner', 'answer')
     search_fields = ('owner__username', 'owner__email', 'body', 'reply__body')
+    inlines = (ReplyInline,)
+
+
+admin.site.register(models.CommentReply)

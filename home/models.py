@@ -50,8 +50,6 @@ class AnswerComment(models.Model):
     owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='answer_comments')
     answer = models.ForeignKey(Answer, on_delete=models.CASCADE, related_name='comments')
     body = models.TextField()
-    reply = models.ForeignKey('self', on_delete=models.CASCADE, related_name='replies', blank=True, null=True)
-    is_reply = models.BooleanField(default=False)
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
 
@@ -60,3 +58,19 @@ class AnswerComment(models.Model):
 
     def __str__(self):
         return f'{self.owner.username} - {self.answer.body[:20]}...'
+
+
+class CommentReply(models.Model):
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='replies')
+    comment = models.ForeignKey(AnswerComment, on_delete=models.CASCADE, related_name='replies')
+    reply = models.ForeignKey('self', on_delete=models.CASCADE, related_name='i_replies', blank=True, null=True)
+    body = models.TextField()
+    created = models.DateTimeField(auto_now_add=True)
+    modified = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ('-modified', '-created')
+        verbose_name_plural = 'replies'
+
+    def __str__(self):
+        return f'{self.owner.username} - {self.comment.body[:5]}...'
