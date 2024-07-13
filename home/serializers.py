@@ -2,11 +2,12 @@ import random
 
 from rest_framework import serializers
 
-from .models import Question, Answer, AnswerComment, CommentReply
+from .models import Question, Answer, AnswerComment, CommentReply, Tag
 
 
 class QuestionSerializer(serializers.ModelSerializer):
     owner = serializers.StringRelatedField(read_only=True, required=False)
+    tag = serializers.SlugRelatedField(many=True, slug_field='name', queryset=Tag.objects.all())
 
     class Meta:
         model = Question
