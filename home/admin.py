@@ -44,3 +44,4 @@ class AnswerCommentAdmin(admin.ModelAdmin):
 
 
 admin.site.register(models.CommentReply)
+admin.site.register(models.Tag)

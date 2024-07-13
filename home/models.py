@@ -1,4 +1,5 @@
 from django.db import models
+from django.urls import reverse
 
 from users.models import User
 
@@ -74,3 +75,19 @@ class CommentReply(models.Model):
 
     def __str__(self):
         return f'{self.owner.username} - {self.body[:10]}...'
+
+
+class Tag(models.Model):
+    sub_tag = models.ForeignKey('self', on_delete=models.CASCADE, blank=True, null=True, related_name='s_tag')
+    is_sub = models.BooleanField(default=False)
+    name = models.CharField(max_length=200)
+    slug = models.SlugField(max_length=250, unique=True)
+
+    class Meta:
+        ordering = ('name',)
+
+    def __str__(self):
+        return f'{self.name}'
+
+    def get_absolute_url(self):
+        return reverse('home:category_filter', args=[self.slug])
