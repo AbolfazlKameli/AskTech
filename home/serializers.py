@@ -34,7 +34,7 @@ class AnswerSerializer(serializers.ModelSerializer):
 
 
 class AnswerCommentSerializer(serializers.ModelSerializer):
-    replies = serializers.SerializerMethodField()
+    replies = serializers.SerializerMethodField(read_only=True)
     owner = serializers.StringRelatedField(read_only=True, required=False)
     answer = serializers.StringRelatedField(read_only=True, required=False)
     reply = serializers.StringRelatedField(read_only=True, required=False)
@@ -49,7 +49,10 @@ class AnswerCommentSerializer(serializers.ModelSerializer):
 
 
 class ReplyCommentSerializer(serializers.ModelSerializer):
-    replies = serializers.SerializerMethodField()
+    replies = serializers.SerializerMethodField(read_only=True)
+    owner = serializers.StringRelatedField(read_only=True, required=False)
+    comment = serializers.StringRelatedField(read_only=True, required=False)
+    reply = serializers.StringRelatedField(read_only=True, required=False)
 
     class Meta:
         model = CommentReply
