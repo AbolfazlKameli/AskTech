@@ -80,7 +80,6 @@ class QuestionViewSet(ModelViewSet):
 class AnswerViewSet(ModelViewSet):
     serializer_class = serializers.AnswerSerializer
     queryset = Answer.objects.all()
-    pagination_class = paginators.StandardPageNumberPagination
     http_method_names = ['post', 'put', 'patch', 'delete']
 
     def get_permissions(self):
@@ -89,7 +88,8 @@ class AnswerViewSet(ModelViewSet):
         return [permissions.IsOwnerOrReadOnly()]
 
     @extend_schema(parameters=[
-        OpenApiParameter(name='question_slug', type=str, location=OpenApiParameter.QUERY, description='question slug')])
+        OpenApiParameter(name='question_slug', type=str, location=OpenApiParameter.QUERY, description='question slug',
+                         required=True)])
     def create(self, request, *args, **kwargs):
         """creates an answer object."""
         srz_data = self.get_serializer(data=self.request.POST)
@@ -115,7 +115,6 @@ class AnswerViewSet(ModelViewSet):
 class AnswerCommentViewSet(ModelViewSet):
     serializer_class = serializers.AnswerCommentSerializer
     queryset = AnswerComment.objects.all()
-    pagination_class = paginators.StandardPageNumberPagination
     http_method_names = ['post', 'put', 'patch', 'delete']
 
     def get_permissions(self):
@@ -135,18 +134,30 @@ class AnswerCommentViewSet(ModelViewSet):
         return Response(data={'error': srz_data.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
-class CreateReply(APIView):
-    permission_classes = [IsAuthenticated]
+class ReplyViewSet(ModelViewSet):
     serializer_class = serializers.ReplyCommentSerializer
+    queryset = CommentReply.objects.all()
+    http_method_names = ['post', 'put', 'patch', 'delete']
 
-    def post(self, request, *args, **kwargs):
-        srz_data = self.serializer_class(data=self.request.data)
+    def get_permissions(self):
+        if self.action == 'create':
+            return [IsAuthenticated()]
+        return [permissions.IsOwnerOrReadOnly()]
+
+    @extend_schema(parameters=[
+        OpenApiParameter(name='comment_id', type=int, location=OpenApiParameter.QUERY, description='comment_id',
+                         required=True),
+        OpenApiParameter(name='reply_id', type=int, location=OpenApiParameter.QUERY, description='reply_id')
+    ])
+    def create(self, request, *args, **kwargs):
+        """created a reply object."""
+        srz_data = self.get_serializer(data=self.request.data)
         if srz_data.is_valid():
-            comment = get_object_or_404(AnswerComment, id=self.request.query_params['comment_id'])
+            comment = get_object_or_404(AnswerComment, id=self.request.query_params.get('comment_id'))
             try:
                 reply = CommentReply.objects.get(id=self.request.query_params.get('reply_id'))
             except CommentReply.DoesNotExist:
                 reply = None
             srz_data.save(owner=self.request.user, comment=comment, reply=reply)
-            return Response({'message': 'created successfully!'}, status=status.HTTP_201_CREATED)
+            return Response(data={'message': 'created successfully!'}, status=status.HTTP_201_CREATED)
         return Response(data={'error': srz_data.errors}, status=status.HTTP_400_BAD_REQUEST)
