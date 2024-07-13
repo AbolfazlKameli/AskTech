@@ -44,11 +44,17 @@ class AnswerCommentSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def get_replies(self, obj):
-        replies = obj.replies.all()
+        replies = obj.replies.filter(reply=None)
         return ReplyCommentSerializer(instance=replies, many=True).data
 
 
 class ReplyCommentSerializer(serializers.ModelSerializer):
+    replies = serializers.SerializerMethodField()
+
     class Meta:
         model = CommentReply
         fields = '__all__'
+
+    def get_replies(self, obj):
+        replies = obj.i_replies.all()
+        return ReplyCommentSerializer(instance=replies, many=True).data

@@ -60,7 +60,7 @@ class QuestionViewSet(ModelViewSet):
         srz_question = self.get_serializer(question)
         answers = question.answers.all()
         srz_answers = serializers.AnswerSerializer(answers, many=True)
-        return Response({'question': srz_question.data, 'answers': srz_answers.data}, status=status.HTTP_200_OK)
+        return Response(data={'question': srz_question.data, 'answers': srz_answers.data}, status=status.HTTP_200_OK)
 
     def update(self, request, *args, **kwargs):
         """updates one question object."""
