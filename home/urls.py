@@ -6,6 +6,7 @@ from . import views
 app_name = 'home'
 urlpatterns = [
     path('', views.HomeAPI.as_view(), name='home'),
+    path('reply/', views.CreateReply.as_view(), name='reply')
 ]
 
 router = routers.SimpleRouter()

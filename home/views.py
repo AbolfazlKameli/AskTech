@@ -10,7 +10,7 @@ from rest_framework.viewsets import ModelViewSet
 from permissions import permissions
 from utils import paginators
 from . import serializers
-from .models import Question, Answer, AnswerComment
+from .models import Question, Answer, AnswerComment, CommentReply
 
 
 class HomeAPI(APIView):
@@ -132,4 +132,21 @@ class AnswerCommentViewSet(ModelViewSet):
                 data={'message': 'created successfully'},
                 status=status.HTTP_201_CREATED
             )
-        return Response({'error': srz_data.errors}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(data={'error': srz_data.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class CreateReply(APIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = serializers.ReplyCommentSerializer
+
+    def post(self, request, *args, **kwargs):
+        srz_data = self.serializer_class(data=self.request.data)
+        if srz_data.is_valid():
+            comment = get_object_or_404(AnswerComment, id=self.request.query_params['comment_id'])
+            try:
+                reply = CommentReply.objects.get(id=self.request.query_params.get('reply_id'))
+            except CommentReply.DoesNotExist:
+                reply = None
+            srz_data.save(owner=self.request.user, comment=comment, reply=reply)
+            return Response({'message': 'created successfully!'}, status=status.HTTP_201_CREATED)
+        return Response(data={'error': srz_data.errors}, status=status.HTTP_400_BAD_REQUEST)
