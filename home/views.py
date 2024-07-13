@@ -116,7 +116,7 @@ class AnswerCommentViewSet(ModelViewSet):
     serializer_class = serializers.AnswerCommentSerializer
     queryset = AnswerComment.objects.all()
     pagination_class = paginators.StandardPageNumberPagination
-    http_method_names = ['post', 'put', 'patch']
+    http_method_names = ['post', 'put', 'patch', 'delete']
 
     def get_permissions(self):
         if self.action == 'create':
