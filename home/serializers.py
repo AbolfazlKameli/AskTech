@@ -24,6 +24,8 @@ class AnswerSerializer(serializers.ModelSerializer):
     owner = serializers.StringRelatedField(read_only=True, required=False)
     question = serializers.StringRelatedField(read_only=True, required=False)
     comments = serializers.SerializerMethodField()
+    likes = serializers.SerializerMethodField()
+    dislikes = serializers.SerializerMethodField()
 
     class Meta:
         model = Answer
@@ -32,6 +34,14 @@ class AnswerSerializer(serializers.ModelSerializer):
     def get_comments(self, obj):
         comments = obj.comments.all()
         return AnswerCommentSerializer(comments, many=True).data
+
+    def get_likes(self, obj):
+        likes = obj.likes.all()
+        return likes.count()
+
+    def get_dislikes(self, obj):
+        dislikes = obj.dislikes.all()
+        return dislikes.count()
 
 
 class AnswerCommentSerializer(serializers.ModelSerializer):

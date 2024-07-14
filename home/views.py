@@ -1,7 +1,8 @@
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, get_list_or_404
 from django.utils.text import slugify
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from rest_framework import status
+from rest_framework.generics import GenericAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -10,21 +11,28 @@ from rest_framework.viewsets import ModelViewSet
 from permissions import permissions
 from utils import paginators
 from . import serializers
-from .models import Question, Answer, AnswerComment, CommentReply
+from .models import Question, Answer, AnswerComment, CommentReply, Tag, Like, Dislike
 
 
-class HomeAPI(APIView):
+class HomeAPI(GenericAPIView):
     """Home page."""
     permission_classes = [AllowAny]
+    pagination_class = paginators.StandardPageNumberPagination
 
-    def get(self, request):
-        return Response({'message': 'this is home page'}, status=status.HTTP_200_OK)
-
-    def options(self, request, *args, **kwargs):
-        response = super().options(request, *args, **kwargs)
-        response.headers['host'] = 'localhost'
-        response.headers['user'] = request.user
-        return response
+    @extend_schema(parameters=[
+        OpenApiParameter(name='tag', type=str, location=OpenApiParameter.QUERY, description='tag'),
+        OpenApiParameter(name='search', type=str, location=OpenApiParameter.QUERY, description='search'),
+    ])
+    def get(self, request, *args, **kwargs):
+        questions = Question.objects.all()
+        if 'tag' in self.request.query_params:
+            tag = get_object_or_404(Tag, slug=self.request.query_params['tag'])
+            questions = tag.questions.all()
+        if self.request.GET.get('search'):
+            questions = get_list_or_404(Question, title__icontains=self.request.GET['search'],
+                                        body__icontains=self.request.GET['search'])
+        srz_data = serializers.QuestionSerializer(questions, many=True)
+        return Response(data={'data': srz_data.data}, status=status.HTTP_200_OK)
 
 
 class QuestionViewSet(ModelViewSet):
@@ -161,3 +169,47 @@ class ReplyViewSet(ModelViewSet):
             srz_data.save(owner=self.request.user, comment=comment, reply=reply)
             return Response(data={'message': 'created successfully!'}, status=status.HTTP_201_CREATED)
         return Response(data={'error': srz_data.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class LikeAPI(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, answer_id):
+        answer = get_object_or_404(Answer, id=answer_id)
+        like = Like.objects.filter(user=self.request.user, answer=answer)
+        if like.exists():
+            like.delete()
+            return Response(data={'message': 'like removed'}, status=status.HTTP_200_OK)
+        like.create(user=self.request.user, answer=answer)
+        return Response(data={'message': 'liked'}, status=status.HTTP_200_OK)
+
+
+class DisLikeAPI(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, answer_id):
+        answer = get_object_or_404(Answer, id=answer_id)
+        dislike = Dislike.objects.filter(user=self.request.user, answer=answer)
+        if dislike.exists():
+            dislike.delete()
+            return Response(data={'message': 'dislike removed'}, status=status.HTTP_200_OK)
+        dislike.create(user=self.request.user, answer=answer)
+        return Response(data={'message': 'disliked'}, status=status.HTTP_200_OK)
+
+
+class AcceptAnswerAPI(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, answer_id):
+        answer = get_object_or_404(Answer, id=answer_id)
+        if request.user.id == answer.question.owner.id:
+            if not answer.accepted and not answer.question.has_accepted_answer():
+                answer.accepted = True
+                answer.owner.score += 1
+                answer.owner.save()
+                answer.save()
+                return Response(data={'message': 'accepted'}, status=status.HTTP_200_OK)
+            return Response(data={'message': 'you can not accept an answer twice or accept two answers'},
+                            status=status.HTTP_400_BAD_REQUEST
+                            )
+        return Response(data={'error': 'only question owner can perform this action'}, status=status.HTTP_403_FORBIDDEN)

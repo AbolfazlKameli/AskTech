@@ -19,6 +19,12 @@ class Question(models.Model):
     def __str__(self):
         return f'{self.owner.username} - {self.title[:30]}...'
 
+    def has_accepted_answer(self):
+        accepted = self.answers.filter(accepted=True)
+        if accepted.exists():
+            return True
+        return False
+
     @property
     def short_title(self):
         return f'{self.title[:30]}...'
@@ -31,6 +37,7 @@ class Question(models.Model):
 class Answer(models.Model):
     owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='answers')
     question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='answers')
+    accepted = models.BooleanField(default=False)
     body = models.TextField()
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
@@ -90,3 +97,19 @@ class Tag(models.Model):
 
     def get_absolute_url(self):
         return reverse('home:category_filter', args=[self.slug])
+
+
+class Like(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='likes')
+    answer = models.ForeignKey(Answer, on_delete=models.CASCADE, related_name='likes')
+
+    def __str__(self):
+        return f'{self.user} - {self.answer.body[:10]}'
+
+
+class Dislike(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='dislikes')
+    answer = models.ForeignKey(Answer, on_delete=models.CASCADE, related_name='dislikes')
+
+    def __str__(self):
+        return f'{self.user} - {self.answer.body[:10]}'
