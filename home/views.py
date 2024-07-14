@@ -1,7 +1,8 @@
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, get_list_or_404
 from django.utils.text import slugify
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from rest_framework import status
+from rest_framework.generics import GenericAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -13,25 +14,25 @@ from . import serializers
 from .models import Question, Answer, AnswerComment, CommentReply, Tag, Like, Dislike
 
 
-class HomeAPI(APIView):
+class HomeAPI(GenericAPIView):
     """Home page."""
     permission_classes = [AllowAny]
+    pagination_class = paginators.StandardPageNumberPagination
 
-    @extend_schema(
-        parameters=[OpenApiParameter(name='tag', type=str, location=OpenApiParameter.QUERY, description='tag')])
+    @extend_schema(parameters=[
+        OpenApiParameter(name='tag', type=str, location=OpenApiParameter.QUERY, description='tag'),
+        OpenApiParameter(name='search', type=str, location=OpenApiParameter.QUERY, description='search'),
+    ])
     def get(self, request, *args, **kwargs):
         questions = Question.objects.all()
         if 'tag' in self.request.query_params:
             tag = get_object_or_404(Tag, slug=self.request.query_params['tag'])
             questions = tag.questions.all()
+        if self.request.GET.get('search'):
+            questions = get_list_or_404(Question, title__icontains=self.request.GET['search'],
+                                        body__icontains=self.request.GET['search'])
         srz_data = serializers.QuestionSerializer(questions, many=True)
-        return Response(data={'message': 'this is home page', 'data': srz_data.data}, status=status.HTTP_200_OK)
-
-    def options(self, request, *args, **kwargs):
-        response = super().options(request, *args, **kwargs)
-        response.headers['host'] = 'localhost'
-        response.headers['user'] = request.user
-        return response
+        return Response(data={'data': srz_data.data}, status=status.HTTP_200_OK)
 
 
 class QuestionViewSet(ModelViewSet):
