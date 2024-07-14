@@ -201,10 +201,14 @@ class AcceptAnswerAPI(APIView):
 
     def post(self, request, answer_id):
         answer = get_object_or_404(Answer, id=answer_id)
-        if request.user.id == answer.question.owner.id and not answer.accepted:
-            answer.accepted = True
-            answer.owner.score += 1
-            answer.owner.save()
-            answer.save()
-            return Response(data={'message': 'accepted'}, status=status.HTTP_200_OK)
-        return Response(data={'error': 'you can not perform this action'}, status=status.HTTP_403_FORBIDDEN)
+        if request.user.id == answer.question.owner.id:
+            if not answer.accepted and not answer.question.has_accepted_answer():
+                answer.accepted = True
+                answer.owner.score += 1
+                answer.owner.save()
+                answer.save()
+                return Response(data={'message': 'accepted'}, status=status.HTTP_200_OK)
+            return Response(data={'message': 'you can not accept an answer twice or accept two answers'},
+                            status=status.HTTP_400_BAD_REQUEST
+                            )
+        return Response(data={'error': 'only question owner can perform this action'}, status=status.HTTP_403_FORBIDDEN)

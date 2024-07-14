@@ -19,6 +19,12 @@ class Question(models.Model):
     def __str__(self):
         return f'{self.owner.username} - {self.title[:30]}...'
 
+    def has_accepted_answer(self):
+        accepted = self.answers.filter(accepted=True)
+        if accepted.exists():
+            return True
+        return False
+
     @property
     def short_title(self):
         return f'{self.title[:30]}...'
