@@ -10,15 +10,22 @@ from rest_framework.viewsets import ModelViewSet
 from permissions import permissions
 from utils import paginators
 from . import serializers
-from .models import Question, Answer, AnswerComment, CommentReply
+from .models import Question, Answer, AnswerComment, CommentReply, Tag
 
 
 class HomeAPI(APIView):
     """Home page."""
     permission_classes = [AllowAny]
 
-    def get(self, request):
-        return Response({'message': 'this is home page'}, status=status.HTTP_200_OK)
+    @extend_schema(
+        parameters=[OpenApiParameter(name='tag', type=str, location=OpenApiParameter.QUERY, description='tag')])
+    def get(self, request, *args, **kwargs):
+        questions = Question.objects.all()
+        if 'tag' in self.request.query_params:
+            tag = get_object_or_404(Tag, slug=self.request.query_params['tag'])
+            questions = tag.questions.all()
+        srz_data = serializers.QuestionSerializer(questions, many=True)
+        return Response(data={'message': 'this is home page', 'data': srz_data.data}, status=status.HTTP_200_OK)
 
     def options(self, request, *args, **kwargs):
         response = super().options(request, *args, **kwargs)
