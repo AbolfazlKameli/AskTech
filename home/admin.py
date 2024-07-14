@@ -45,3 +45,5 @@ class AnswerCommentAdmin(admin.ModelAdmin):
 
 admin.site.register(models.CommentReply)
 admin.site.register(models.Tag)
+admin.site.register(models.Like)
+admin.site.register(models.Dislike)
