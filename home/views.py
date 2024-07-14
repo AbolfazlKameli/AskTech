@@ -10,7 +10,7 @@ from rest_framework.viewsets import ModelViewSet
 from permissions import permissions
 from utils import paginators
 from . import serializers
-from .models import Question, Answer, AnswerComment, CommentReply, Tag
+from .models import Question, Answer, AnswerComment, CommentReply, Tag, Like, Dislike
 
 
 class HomeAPI(APIView):
@@ -168,3 +168,29 @@ class ReplyViewSet(ModelViewSet):
             srz_data.save(owner=self.request.user, comment=comment, reply=reply)
             return Response(data={'message': 'created successfully!'}, status=status.HTTP_201_CREATED)
         return Response(data={'error': srz_data.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class LikeAPI(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, answer_id):
+        answer = get_object_or_404(Answer, id=answer_id)
+        like = Like.objects.filter(user=self.request.user, answer=answer)
+        if like.exists():
+            like.delete()
+            return Response(data={'message': 'like removed'}, status=status.HTTP_200_OK)
+        like.create(user=self.request.user, answer=answer)
+        return Response(data={'message': 'liked'}, status=status.HTTP_200_OK)
+
+
+class DisLikeAPI(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, answer_id):
+        answer = get_object_or_404(Answer, id=answer_id)
+        dislike = Dislike.objects.filter(user=self.request.user, answer=answer)
+        if dislike.exists():
+            dislike.delete()
+            return Response(data={'message': 'dislike removed'}, status=status.HTTP_200_OK)
+        dislike.create(user=self.request.user, answer=answer)
+        return Response(data={'message': 'disliked'}, status=status.HTTP_200_OK)

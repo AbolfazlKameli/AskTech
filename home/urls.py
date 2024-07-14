@@ -6,6 +6,8 @@ from . import views
 app_name = 'home'
 urlpatterns = [
     path('', views.HomeAPI.as_view(), name='home'),
+    path('like/<int:answer_id>/', views.LikeAPI.as_view(), name='answer_like'),
+    path('dislike/<int:answer_id>/', views.DisLikeAPI.as_view(), name='answer_dislike')
 ]
 
 router = routers.SimpleRouter()
