@@ -9,12 +9,12 @@ class UserAdmin(BaseUserAdmin):
     form = UserChangeForm
     add_form = UserCreationForm
 
-    list_display = ('username', 'email', 'id', 'is_active',  'is_admin', 'is_superuser')
+    list_display = ('username', 'email', 'id', 'is_active', 'is_admin', 'is_superuser')
     list_filter = ('is_admin', 'is_superuser')
     readonly_fields = ('last_login',)
 
     fieldsets = (
-        ('Main', {'fields': ('username', 'email', 'password', 'last_login')}),
+        ('Main', {'fields': ('username', 'email', 'password', 'last_login', 'score')}),
         ('Permissions', {'fields': ('is_active', 'is_admin', 'is_superuser', 'groups', 'user_permissions')}),
     )
     add_fieldsets = (
@@ -34,4 +34,3 @@ class UserAdmin(BaseUserAdmin):
 
 
 admin.site.register(User, UserAdmin)
-

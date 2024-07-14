@@ -194,3 +194,17 @@ class DisLikeAPI(APIView):
             return Response(data={'message': 'dislike removed'}, status=status.HTTP_200_OK)
         dislike.create(user=self.request.user, answer=answer)
         return Response(data={'message': 'disliked'}, status=status.HTTP_200_OK)
+
+
+class AcceptAnswerAPI(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, answer_id):
+        answer = get_object_or_404(Answer, id=answer_id)
+        if request.user.id == answer.question.owner.id and not answer.accepted:
+            answer.accepted = True
+            answer.owner.score += 1
+            answer.owner.save()
+            answer.save()
+            return Response(data={'message': 'accepted'}, status=status.HTTP_200_OK)
+        return Response(data={'error': 'you can not perform this action'}, status=status.HTTP_403_FORBIDDEN)
