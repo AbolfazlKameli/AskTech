@@ -115,7 +115,11 @@ class AnswerCommentViewSet(ModelViewSet):
             return [IsAuthenticated()]
         return [permissions.IsOwnerOrReadOnly()]
 
+    @extend_schema(parameters=[
+        OpenApiParameter(name='answer_id', type=str, location=OpenApiParameter.QUERY, description='answer id'),
+    ])
     def create(self, request, *args, **kwargs):
+        """creates a comment object."""
         srz_data = self.get_serializer(data=self.request.data)
         if srz_data.is_valid():
             answer = get_object_or_404(Answer, id=self.request.query_params['answer_id'])
@@ -159,7 +163,8 @@ class ReplyViewSet(ModelViewSet):
 class LikeAPI(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, answer_id):
+    def post(self, request, answer_id):
+        """add a like for each answer"""
         answer = get_object_or_404(Answer, id=answer_id)
         like = Like.objects.filter(user=self.request.user, answer=answer)
         if like.exists():
@@ -172,7 +177,8 @@ class LikeAPI(APIView):
 class DisLikeAPI(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, answer_id):
+    def post(self, request, answer_id):
+        """add a dislike for each answer"""
         answer = get_object_or_404(Answer, id=answer_id)
         dislike = Dislike.objects.filter(user=self.request.user, answer=answer)
         if dislike.exists():
@@ -186,6 +192,7 @@ class AcceptAnswerAPI(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, answer_id):
+        """accept an answer object"""
         answer = get_object_or_404(Answer, id=answer_id)
         if request.user.id == answer.question.owner.id:
             if not answer.accepted and not answer.question.has_accepted_answer():
