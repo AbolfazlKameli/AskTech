@@ -91,6 +91,13 @@ DATABASES = {
     }
 }
 
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379",
+    }
+}
+
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
 
@@ -151,7 +158,7 @@ SIMPLE_JWT = {
 SPECTACULAR_SETTINGS = {
     'TITLE': 'AskTech',
     'DESCRIPTION': 'a forum about Technology issues',
-    'VERSION': '0.0.3',
+    'VERSION': '1.0.0',
     'is_superuser': True,
     'is_authenticated': True
 }

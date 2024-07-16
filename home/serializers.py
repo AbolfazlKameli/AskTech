@@ -15,6 +15,8 @@ class QuestionSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         question = Question.objects.filter(title=attrs.get('title'))
+        request = self.context.get('request')
+        attrs['owner'] = request.user
         if question.exists():
             attrs['title'] += str(random.randint(1, 10000))
         return attrs

@@ -82,7 +82,7 @@ class UserRegisterVerifyAPI(APIView):
         except TypeError:
             return Response(data={'error': 'Token is invalid'}, status=status.HTTP_400_BAD_REQUEST)
         except KeyError:
-            return Response({'error': 'Activation link has expired!'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(data={'error': 'Activation link has expired!'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class ResendVerificationEmailAPI(APIView):
@@ -148,6 +148,8 @@ class SetPasswordAPI(APIView):
             return Response(data={'error': 'Activation link is invalid'}, status=status.HTTP_400_BAD_REQUEST)
         except TypeError:
             return Response(decrypted_token['user_id'])
+        except KeyError:
+            return Response(data={'error': 'Activation link has expired!'}, status=status.HTTP_400_BAD_REQUEST)
         if srz_data.is_valid():
             new_password = srz_data.validated_data['new_password']
             user.set_password(new_password)
