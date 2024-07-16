@@ -1,5 +1,6 @@
 from django.db import models
 from django.urls import reverse
+from django.utils.text import slugify
 
 from users.models import User
 
@@ -18,6 +19,10 @@ class Question(models.Model):
 
     def __str__(self):
         return f'{self.owner.username} - {self.title[:30]}...'
+
+    def save(self, *args, **kwargs):
+        self.slug = slugify(self.title[:30])
+        return super().save(*args, **kwargs)
 
     def has_accepted_answer(self):
         accepted = self.answers.filter(accepted=True)

@@ -1,5 +1,4 @@
 from django.shortcuts import get_object_or_404, get_list_or_404
-from django.utils.text import slugify
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from rest_framework import status
 from rest_framework.generics import GenericAPIView
@@ -52,15 +51,7 @@ class QuestionViewSet(ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         """creates a question object."""
-        srz_data = self.get_serializer(data=self.request.POST)
-        if srz_data.is_valid():
-            slug = slugify(srz_data.validated_data['title'][:30])
-            srz_data.save(slug=slug, owner=self.request.user)
-            return Response(
-                data={'data': srz_data.data, 'message': 'created successfully'},
-                status=status.HTTP_201_CREATED
-            )
-        return Response(data={'error': srz_data.errors}, status=status.HTTP_400_BAD_REQUEST)
+        return super().create(request, *args, **kwargs)
 
     def retrieve(self, request, *args, **kwargs):
         """shows detail of one question object."""
@@ -72,13 +63,7 @@ class QuestionViewSet(ModelViewSet):
 
     def update(self, request, *args, **kwargs):
         """updates one question object."""
-        instance = self.get_object()
-        srz_data = self.get_serializer(instance=instance, data=self.request.data, partial=True)
-        if srz_data.is_valid():
-            slug = slugify(srz_data.validated_data.get('title', instance.title)[:30])
-            srz_data.save(slug=slug)
-            return Response(srz_data.data, status=status.HTTP_200_OK)
-        return Response(srz_data.errors, status=status.HTTP_400_BAD_REQUEST)
+        return super().update(request, *args, **kwargs)
 
     def destroy(self, request, *args, **kwargs):
         """deletes an answer object."""
