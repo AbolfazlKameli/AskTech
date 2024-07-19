@@ -135,6 +135,10 @@ STATIC_URL = '/static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # TODO:add storages configs
+# Media Files
+MEDIA_ROOT = 'media/'
+MEDIA_URL = '/media/'
+
 AUTH_USER_MODEL = 'users.User'
 
 # Rest_Framework
