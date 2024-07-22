@@ -202,11 +202,11 @@ class BlockTokenAPI(APIView):
 class UserProfileAPI(RetrieveUpdateDestroyAPIView):
     """
     Retrieve or update user profile.\n
-    allowed methods: GET, PUT, PATCH.\n
-    GET: Retrieve, PUT: Full update, PATCH:partial update.
+    allowed methods: GET, PUT, PATCH, DELETE.\n
+    GET: Retrieve, PUT: Full update, PATCH:partial update, DELETE: delete account.
     """
     permission_classes = [permissions.IsOwnerOrReadOnly]
-    serializer_class = serializers.UserProfileSerializer
+    serializer_class = serializers.UserSerializer
     lookup_url_kwarg = 'id'
     lookup_field = 'id'
     queryset = User.objects.all()

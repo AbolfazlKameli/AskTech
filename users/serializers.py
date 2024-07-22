@@ -8,6 +8,24 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         exclude = ('password',)
+        read_only_fields = ('id', 'last_login', 'is_superuser', 'is_admin', 'groups', 'user_permissions')
+
+    def validate(self, attrs):
+        if not attrs:
+            raise serializers.ValidationError('fields can not be blank.')
+        return attrs
+
+    def validate_username(self, username):
+        users = User.objects.filter(username__exact=username)
+        if users.exists():
+            raise serializers.ValidationError('user with this username already exists.')
+        return username
+
+    def validate_email(self, email):
+        users = User.objects.filter(email__exact=email)
+        if users.exists():
+            raise serializers.ValidationError('user with this Email already exists.')
+        return email
 
 
 class UserRegisterSerializer(serializers.ModelSerializer):
@@ -86,27 +104,3 @@ class ResetPasswordSerializer(serializers.Serializer):
 
 class TokenSerializer(serializers.Serializer):
     refresh = serializers.CharField(required=True, write_only=True)
-
-
-class UserProfileSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        exclude = ('password',)
-        read_only_fields = ('id', 'last_login', 'is_superuser', 'is_admin', 'groups', 'user_permissions')
-
-    def validate(self, attrs):
-        if not attrs:
-            raise serializers.ValidationError('fields can not be blank.')
-        return attrs
-
-    def validate_username(self, username):
-        users = User.objects.filter(username__exact=username)
-        if users.exists():
-            raise serializers.ValidationError('user with this username already exists.')
-        return username
-
-    def validate_email(self, email):
-        users = User.objects.filter(email__exact=email)
-        if users.exists():
-            raise serializers.ValidationError('user with this Email already exists.')
-        return email
