@@ -40,7 +40,7 @@ class UserRegisterAPI(CreateAPIView):
         srz_data = self.serializer_class(data=request.POST)
         if srz_data.is_valid():
             srz_data.validated_data.pop('password2')
-            user = User.objects.create_user(**srz_data.validated_data)
+            user = User.objects.create_user(**srz_data.validated_data, avatar=request.FILES.get('avatar'))
             token = JWT_token.generate_token(user, timedelta(minutes=1))
             url = self.request.build_absolute_uri(
                 reverse('users:user_register_verify', kwargs={'token': token['token']})
