@@ -38,6 +38,7 @@ THIRD_PARTY_APPS = [
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
     'drf_spectacular',
+    'storages'
 ]
 
 INSTALLED_APPS = [
@@ -134,7 +135,10 @@ STATIC_URL = '/static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# TODO:add storages configs
+# Media Files
+MEDIA_ROOT = 'media/'
+MEDIA_URL = '/media/'
+
 AUTH_USER_MODEL = 'users.User'
 
 # Rest_Framework
@@ -171,3 +175,24 @@ EMAIL_HOST_USER = 'bozorgmehrkameli@gmail.com'
 EMAIL_HOST_PASSWORD = '*********'
 EMAIL_USE_TLS = True
 DEFAULT_FROM_EMAIL = 'AskTech'
+
+# ArvanCloud Storage Settings
+STORAGES = {
+    "default": {
+        "BACKEND": "storages.backends.s3.S3Storage",
+        "OPTIONS": {
+        },
+    },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        "OPTIONS": {
+        },
+    },
+}
+
+AWS_S3_ACCESS_KEY_ID = 'f81d5aae-01ea-48d4-8da6-76460825163e'
+AWS_SECRET_ACCESS_KEY = 'ac310fd2b7d11712d36937a80d0d0bfda5a03d0fab86a167ba256674f3447d8d'
+AWS_S3_ENDPOINT_URL = 'https://s3.ir-thr-at1.arvanstorage.ir'
+AWS_STORAGE_BUCKET_NAME = 'django-noob-shop'
+AWS_SERVICE_NAME = 's3'
+AW_S3_FILE_OVERWRITE = False

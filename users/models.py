@@ -7,6 +7,8 @@ from .managers import UserManager
 class User(AbstractBaseUser, PermissionsMixin):
     username = models.CharField(max_length=100, unique=True)
     email = models.EmailField(unique=True)
+    avatar = models.ImageField(upload_to='avatars', blank=True, null=True)
+    bio = models.TextField(max_length=500, blank=True, null=True)
     score = models.IntegerField(default=0)
     is_active = models.BooleanField(default=False)
     is_admin = models.BooleanField(default=False)

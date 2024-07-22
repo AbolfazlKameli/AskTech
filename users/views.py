@@ -4,7 +4,7 @@ from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from rest_framework import status
-from rest_framework.generics import ListAPIView, CreateAPIView, RetrieveUpdateAPIView
+from rest_framework.generics import ListAPIView, CreateAPIView, RetrieveUpdateDestroyAPIView, RetrieveUpdateAPIView
 from rest_framework.permissions import IsAdminUser, IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -40,7 +40,7 @@ class UserRegisterAPI(CreateAPIView):
         srz_data = self.serializer_class(data=request.POST)
         if srz_data.is_valid():
             srz_data.validated_data.pop('password2')
-            user = User.objects.create_user(**srz_data.validated_data)
+            user = User.objects.create_user(**srz_data.validated_data, avatar=request.FILES.get('avatar'))
             token = JWT_token.generate_token(user, timedelta(minutes=1))
             url = self.request.build_absolute_uri(
                 reverse('users:user_register_verify', kwargs={'token': token['token']})
@@ -199,14 +199,14 @@ class BlockTokenAPI(APIView):
         return Response(data={'error': srz_data.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
-class UserProfileAPI(RetrieveUpdateAPIView):
+class UserProfileAPI(RetrieveUpdateDestroyAPIView):
     """
     Retrieve or update user profile.\n
-    allowed methods: GET, PUT, PATCH.\n
-    GET: Retrieve, PUT: Full update, PATCH:partial update.
+    allowed methods: GET, PUT, PATCH, DELETE.\n
+    GET: Retrieve, PUT: Full update, PATCH:partial update, DELETE: delete account.
     """
     permission_classes = [permissions.IsOwnerOrReadOnly]
-    serializer_class = serializers.UserProfileSerializer
+    serializer_class = serializers.UserSerializer
     lookup_url_kwarg = 'id'
     lookup_field = 'id'
     queryset = User.objects.all()
