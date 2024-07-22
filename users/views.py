@@ -4,7 +4,7 @@ from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from rest_framework import status
-from rest_framework.generics import ListAPIView, CreateAPIView, RetrieveUpdateAPIView
+from rest_framework.generics import ListAPIView, CreateAPIView, RetrieveUpdateDestroyAPIView, RetrieveUpdateAPIView
 from rest_framework.permissions import IsAdminUser, IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -199,7 +199,7 @@ class BlockTokenAPI(APIView):
         return Response(data={'error': srz_data.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
-class UserProfileAPI(RetrieveUpdateAPIView):
+class UserProfileAPI(RetrieveUpdateDestroyAPIView):
     """
     Retrieve or update user profile.\n
     allowed methods: GET, PUT, PATCH.\n
