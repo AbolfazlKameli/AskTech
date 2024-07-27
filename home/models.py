@@ -1,5 +1,4 @@
 from django.db import models
-from django.urls import reverse
 from django.utils.text import slugify
 
 from users.models import User
@@ -51,7 +50,7 @@ class Answer(models.Model):
         ordering = ('-modified', '-created')
 
     def __str__(self):
-        return f'{self.owner.username} - {self.body[:20]}... - {self.question.title[:30]}'
+        return f'{self.owner.username} - {self.body[:20]}... - {self.question.title[:30]}...'
 
     @property
     def short_body(self):
@@ -100,21 +99,22 @@ class Tag(models.Model):
     def __str__(self):
         return f'{self.name}'
 
-    def get_absolute_url(self):
-        return reverse('home:category_filter', args=[self.slug])
+    def save(self, *args, **kwargs):
+        self.slug = slugify(self.name)
+        return super().save(*args, **kwargs)
 
 
 class Like(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='likes')
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='likes')
     answer = models.ForeignKey(Answer, on_delete=models.CASCADE, related_name='likes')
 
     def __str__(self):
-        return f'{self.user} - {self.answer.body[:10]}'
+        return f'{self.owner.username} - {self.answer.body[:10]}'
 
 
 class Dislike(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='dislikes')
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='dislikes')
     answer = models.ForeignKey(Answer, on_delete=models.CASCADE, related_name='dislikes')
 
     def __str__(self):
-        return f'{self.user} - {self.answer.body[:10]}'
+        return f'{self.owner.username} - {self.answer.body[:10]}'
