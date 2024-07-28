@@ -1,14 +1,15 @@
+from model_bakery import baker
 from rest_framework.test import APITestCase
 
-from home.models import Tag
-from home.serializers import QuestionSerializer
+from home.models import Tag, Question
+from home.serializers import QuestionSerializer, AnswerSerializer
 from users.models import User
 
 
 class TestQuestionSerializer(APITestCase):
     def setUp(self):
         self.user = User.objects.create_user(username='username', email='email@gmail.com', password='password')
-        self.tag = Tag.objects.create(name='tag')
+        self.tag = baker.make(Tag)
 
     def test_valid_data(self):
         data = {'tag': [self.tag], 'owner': self.user, 'title': 'test_title', 'body': 'test_body'}
@@ -36,3 +37,14 @@ class TestQuestionSerializer(APITestCase):
         serializer = QuestionSerializer(data={})
         self.assertFalse(serializer.is_valid())
         self.assertEqual(len(serializer.errors), 2)
+
+
+class TestAnswerSerializer(APITestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username='username', email='email@gmail.com', password='password')
+        self.question = baker.make(Question, title='test_question')
+
+    def test_valid_data(self):
+        data = {'owner': self.user, 'question': self.question, 'body': 'test_answer'}
+        serializer = AnswerSerializer(data=data)
+        self.assertTrue(serializer.is_valid())
