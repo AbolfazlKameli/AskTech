@@ -5,7 +5,7 @@ from .models import Question, Answer, AnswerComment, CommentReply, Tag
 
 class QuestionSerializer(serializers.ModelSerializer):
     owner = serializers.StringRelatedField(read_only=True, required=False)
-    tag = serializers.SlugRelatedField(many=True, slug_field='name', queryset=Tag.objects.all())
+    tag = serializers.SlugRelatedField(many=True, slug_field='name', queryset=Tag.objects.all(), required=False)
 
     class Meta:
         model = Question

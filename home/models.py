@@ -5,7 +5,7 @@ from users.models import User
 
 
 class Question(models.Model):
-    tag = models.ManyToManyField('Tag', related_name='questions')
+    tag = models.ManyToManyField('Tag', related_name='questions', blank=True)
     owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='questions')
     title = models.CharField(max_length=500)
     body = models.TextField()
