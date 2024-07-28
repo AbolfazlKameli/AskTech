@@ -38,8 +38,6 @@ class QuestionViewSet(ModelViewSet):
     """question CRUD operations ModelViewSet"""
     serializer_class = serializers.QuestionSerializer
     queryset = Question.objects.all()
-    lookup_field = 'slug'
-    lookup_url_kwarg = 'slug'
     pagination_class = paginators.StandardPageNumberPagination
 
     def get_permissions(self):
@@ -51,7 +49,11 @@ class QuestionViewSet(ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         """creates a question object."""
-        return super().create(request, *args, **kwargs)
+        serializer = self.get_serializer(data=self.request.data)
+        if serializer.is_valid():
+            serializer.save(owner=self.request.user)
+            return Response({'message': 'question created successfully!'})
+        return Response({'error': serializer.errors})
 
     def retrieve(self, request, *args, **kwargs):
         """shows detail of one question object."""

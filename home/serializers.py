@@ -1,5 +1,3 @@
-import random
-
 from rest_framework import serializers
 
 from .models import Question, Answer, AnswerComment, CommentReply, Tag
@@ -12,14 +10,6 @@ class QuestionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Question
         exclude = ('slug',)
-
-    def validate(self, attrs):
-        question = Question.objects.filter(title=attrs.get('title'))
-        request = self.context.get('request')
-        attrs['owner'] = request.user
-        if question.exists():
-            attrs['title'] += str(random.randint(1, 10000))
-        return attrs
 
 
 class AnswerSerializer(serializers.ModelSerializer):
