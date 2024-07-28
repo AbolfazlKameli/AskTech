@@ -118,3 +118,13 @@ class Dislike(models.Model):
 
     def __str__(self):
         return f'{self.owner.username} - {self.answer.body[:10]}'
+
+
+class Vote(models.Model):
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='votes')
+    answer = models.ForeignKey(Answer, on_delete=models.CASCADE, related_name='votes')
+    is_like = models.BooleanField(default=False)
+    is_dislike = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f'{self.is_like} - {self.is_dislike}'
