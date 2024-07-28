@@ -169,9 +169,12 @@ class LikeAPI(APIView):
         """add a like for each answer"""
         answer = get_object_or_404(Answer, id=answer_id)
         like = Vote.objects.filter(owner=self.request.user, answer=answer, is_like=True)
+        dislike = Vote.objects.filter(owner=self.request.user, answer=answer, is_dislike=True)
         if like.exists():
             like.delete()
             return Response(data={'message': 'like removed'}, status=status.HTTP_200_OK)
+        if dislike:
+            dislike.delete()
         like.create(owner=self.request.user, answer=answer, is_like=True)
         return Response(data={'message': 'liked'}, status=status.HTTP_200_OK)
 
@@ -183,9 +186,12 @@ class DisLikeAPI(APIView):
         """add a dislike for each answer"""
         answer = get_object_or_404(Answer, id=answer_id)
         dislike = Vote.objects.filter(owner=self.request.user, answer=answer, is_dislike=True)
+        like = Vote.objects.filter(owner=self.request.user, answer=answer, is_like=True)
         if dislike.exists():
             dislike.delete()
             return Response(data={'message': 'dislike removed'}, status=status.HTTP_200_OK)
+        if like.exists():
+            like.delete()
         dislike.create(owner=self.request.user, answer=answer, is_dislike=True)
         return Response(data={'message': 'disliked'}, status=status.HTTP_200_OK)
 
