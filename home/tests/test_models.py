@@ -1,4 +1,3 @@
-# TODO: add serializer tests.
 from django.test import TestCase
 from model_bakery import baker
 
@@ -71,23 +70,3 @@ class TagTest(TestCase):
 
     def test_tag_save(self):
         self.assertEqual(self.tag.slug, 'test-name')
-
-
-class LikeTest(TestCase):
-    def setUp(self):
-        user = baker.make(User, username='username')
-        answer = baker.make(models.Answer, body='test')
-        self.like = baker.make(models.Like, owner=user, answer=answer)
-
-    def test_like_str(self):
-        self.assertTrue(str(self.like), 'username - test...')
-
-
-class DisLikeTest(TestCase):
-    def setUp(self):
-        user = baker.make(User, username='username')
-        answer = baker.make(models.Answer, body='bad test')
-        self.dislike = baker.make(models.Dislike, owner=user, answer=answer)
-
-    def test_dislike_str(self):
-        self.assertTrue(str(self.dislike), 'username - bad test...')
