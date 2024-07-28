@@ -1,5 +1,5 @@
-from rest_framework.test import APISimpleTestCase
 from django.urls import reverse, resolve
+from rest_framework.test import APISimpleTestCase
 
 from home import views
 
