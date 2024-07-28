@@ -1,10 +1,10 @@
-from django.test import SimpleTestCase
+from rest_framework.test import APISimpleTestCase
 from django.urls import reverse, resolve
 
 from home import views
 
 
-class TestUrls(SimpleTestCase):
+class TestUrls(APISimpleTestCase):
     def test_home_url(self):
         home_url = reverse('home:home')
         self.assertEqual(resolve(home_url).func.view_class, views.HomeAPI)
