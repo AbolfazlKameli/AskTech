@@ -104,17 +104,11 @@ class Tag(models.Model):
         return super().save(*args, **kwargs)
 
 
-class Like(models.Model):
-    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='likes')
-    answer = models.ForeignKey(Answer, on_delete=models.CASCADE, related_name='likes')
+class Vote(models.Model):
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='votes')
+    answer = models.ForeignKey(Answer, on_delete=models.CASCADE, related_name='votes')
+    is_like = models.BooleanField(default=False)
+    is_dislike = models.BooleanField(default=False)
 
     def __str__(self):
-        return f'{self.owner.username} - {self.answer.body[:10]}'
-
-
-class Dislike(models.Model):
-    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='dislikes')
-    answer = models.ForeignKey(Answer, on_delete=models.CASCADE, related_name='dislikes')
-
-    def __str__(self):
-        return f'{self.owner.username} - {self.answer.body[:10]}'
+        return 'Like' if self.is_like else 'Dislike'

@@ -18,6 +18,11 @@ class ReplyInline(admin.StackedInline):
     raw_id_fields = ('owner', 'comment', 'reply')
 
 
+class VoteInline(admin.StackedInline):
+    model = models.Vote
+    raw_id_fields = ('owner', 'answer')
+
+
 @admin.register(models.Question)
 class QuestionAdmin(admin.ModelAdmin):
     list_display = ('short_title', 'short_body', 'owner', 'id', 'created')
@@ -32,7 +37,7 @@ class AnswerAdmin(admin.ModelAdmin):
     list_display = ('owner', 'short_body', 'question', 'created')
     search_fields = ('owner__username', 'owner__email', 'body')
     raw_id_fields = ('question', 'owner')
-    inlines = (AnswerCommentsInline,)
+    inlines = (AnswerCommentsInline, VoteInline)
 
 
 @admin.register(models.AnswerComment)
@@ -43,7 +48,4 @@ class AnswerCommentAdmin(admin.ModelAdmin):
     inlines = (ReplyInline,)
 
 
-admin.site.register(models.CommentReply)
 admin.site.register(models.Tag)
-admin.site.register(models.Like)
-admin.site.register(models.Dislike)
