@@ -28,11 +28,11 @@ class AnswerSerializer(serializers.ModelSerializer):
         return AnswerCommentSerializer(comments, many=True).data
 
     def get_likes(self, obj):
-        likes = obj.likes.all()
+        likes = obj.votes.filter(is_like=True)
         return likes.count()
 
     def get_dislikes(self, obj):
-        dislikes = obj.dislikes.all()
+        dislikes = obj.votes.filter(is_dislike=True)
         return dislikes.count()
 
 
