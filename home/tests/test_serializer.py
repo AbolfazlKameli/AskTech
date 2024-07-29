@@ -1,7 +1,7 @@
 from model_bakery import baker
 from rest_framework.test import APITestCase
 
-from home.models import Tag, Question
+from home.models import Tag, Question, AnswerComment, Answer
 from home.serializers import QuestionSerializer, AnswerSerializer
 from users.models import User
 
@@ -48,3 +48,8 @@ class TestAnswerSerializer(APITestCase):
         data = {'owner': self.user, 'question': self.question, 'body': 'test_answer'}
         serializer = AnswerSerializer(data=data)
         self.assertTrue(serializer.is_valid())
+
+    def test_empty_fields(self):
+        serializer = AnswerSerializer(data={})
+        self.assertFalse(serializer.is_valid())
+        self.assertEqual(len(serializer.errors), 1)
