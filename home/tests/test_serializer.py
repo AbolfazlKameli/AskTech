@@ -61,3 +61,14 @@ class TestAnswerSerializer(APITestCase):
         serializer = AnswerSerializer(data={})
         self.assertFalse(serializer.is_valid())
         self.assertEqual(len(serializer.errors), 1)
+        self.assertEqual(len(serializer.validated_data), 0)
+
+    def test_get_comments(self):
+        answer = baker.make(Answer)
+        baker.make(AnswerComment, body='first comment', answer=answer)
+        baker.make(AnswerComment, body='second comment', answer=answer)
+        serializer = AnswerSerializer(instance=answer)
+        data = serializer.data['comments']
+        self.assertEqual(len(data), 2)
+        self.assertEqual(data[0]['body'], 'second comment')
+        self.assertEqual(data[1]['body'], 'first comment')
