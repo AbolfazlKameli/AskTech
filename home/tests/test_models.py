@@ -70,3 +70,4 @@ class TagTest(TestCase):
 
     def test_tag_save(self):
         self.assertEqual(self.tag.slug, 'test-name')
+# TODO: add Vote model tests.
