@@ -83,13 +83,13 @@ class AnswerViewSet(ModelViewSet):
         return [permissions.IsOwnerOrReadOnly()]
 
     @extend_schema(parameters=[
-        OpenApiParameter(name='question_slug', type=str, location=OpenApiParameter.QUERY, description='question slug',
+        OpenApiParameter(name='question_id', type=int, location=OpenApiParameter.QUERY, description='question id',
                          required=True)])
     def create(self, request, *args, **kwargs):
         """creates an answer object."""
         srz_data = self.get_serializer(data=self.request.POST)
         if srz_data.is_valid():
-            question = get_object_or_404(Question, slug__exact=self.request.query_params['question_slug'])
+            question = get_object_or_404(Question, id=request.query_params.get('question_id'))
             srz_data.save(question=question, owner=self.request.user)
             return Response(data={'message': 'created successfully'}, status=status.HTTP_201_CREATED)
         return Response(data={'error': srz_data.errors}, status=status.HTTP_400_BAD_REQUEST)

@@ -4,7 +4,7 @@ from .models import Question, Answer, AnswerComment, CommentReply, Tag
 
 
 class QuestionSerializer(serializers.ModelSerializer):
-    owner = serializers.StringRelatedField(read_only=True, required=False)
+    owner = serializers.StringRelatedField(read_only=True)
     tag = serializers.SlugRelatedField(many=True, slug_field='name', queryset=Tag.objects.all(), required=False)
 
     class Meta:
@@ -13,8 +13,8 @@ class QuestionSerializer(serializers.ModelSerializer):
 
 
 class AnswerSerializer(serializers.ModelSerializer):
-    owner = serializers.StringRelatedField(read_only=True, required=False)
-    question = serializers.StringRelatedField(read_only=True, required=False)
+    owner = serializers.StringRelatedField(read_only=True)
+    question = serializers.StringRelatedField(read_only=True)
     comments = serializers.SerializerMethodField()
     likes = serializers.SerializerMethodField()
     dislikes = serializers.SerializerMethodField()
@@ -38,9 +38,8 @@ class AnswerSerializer(serializers.ModelSerializer):
 
 class AnswerCommentSerializer(serializers.ModelSerializer):
     replies = serializers.SerializerMethodField(read_only=True)
-    owner = serializers.StringRelatedField(read_only=True, required=False)
-    answer = serializers.StringRelatedField(read_only=True, required=False)
-    reply = serializers.StringRelatedField(read_only=True, required=False)
+    owner = serializers.StringRelatedField(read_only=True)
+    answer = serializers.StringRelatedField(read_only=True)
 
     class Meta:
         model = AnswerComment
@@ -53,8 +52,8 @@ class AnswerCommentSerializer(serializers.ModelSerializer):
 
 class ReplyCommentSerializer(serializers.ModelSerializer):
     replies = serializers.SerializerMethodField(read_only=True)
-    owner = serializers.StringRelatedField(read_only=True, required=False)
-    comment = serializers.StringRelatedField(read_only=True, required=False)
+    owner = serializers.StringRelatedField(read_only=True)
+    comment = serializers.StringRelatedField(read_only=True)
     reply = serializers.StringRelatedField(read_only=True, required=False)
 
     class Meta:
