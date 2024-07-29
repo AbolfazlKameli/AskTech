@@ -15,16 +15,22 @@ class TestQuestionSerializer(APITestCase):
         data = {'tag': [self.tag], 'owner': self.user, 'title': 'test_title', 'body': 'test_body'}
         serializer = QuestionSerializer(data=data)
         self.assertTrue(serializer.is_valid())
+        self.assertEqual(len(serializer.validated_data), 3)
+        self.assertEqual(serializer.validated_data['tag'], [self.tag])
+        self.assertEqual(serializer.validated_data['body'], 'test_body')
 
     def test_missing_tag(self):
         data = {'owner': self.user, 'title': 'test_title', 'body': 'test_body'}
         serializer = QuestionSerializer(data=data)
         self.assertTrue(serializer.is_valid())
+        with self.assertRaises(KeyError):
+            return serializer.validated_data['tag']
 
     def test_missing_fields(self):
         data = {'owner': self.user, 'body': 'test_body'}
         serializer = QuestionSerializer(data=data)
         self.assertFalse(serializer.is_valid())
+        self.assertEqual(serializer.errors['title'][0], 'This field is required.')
         self.assertEqual(len(serializer.errors), 1)
 
     def test_invalid_tag(self):
@@ -32,6 +38,7 @@ class TestQuestionSerializer(APITestCase):
         serializer = QuestionSerializer(data=data)
         self.assertFalse(serializer.is_valid())
         self.assertEqual(len(serializer.errors), 1)
+        self.assertEqual(serializer.errors['tag'][0], 'Object with name=test does not exist.')
 
     def test_empty_fields(self):
         serializer = QuestionSerializer(data={})
@@ -48,6 +55,7 @@ class TestAnswerSerializer(APITestCase):
         data = {'owner': self.user, 'question': self.question, 'body': 'test_answer'}
         serializer = AnswerSerializer(data=data)
         self.assertTrue(serializer.is_valid())
+        self.assertEqual(serializer.validated_data['body'], 'test_answer')
 
     def test_empty_fields(self):
         serializer = AnswerSerializer(data={})
