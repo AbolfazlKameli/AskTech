@@ -2,7 +2,7 @@ from model_bakery import baker
 from rest_framework.test import APITestCase
 
 from home.models import Tag, Question, AnswerComment, Answer, Vote, CommentReply
-from home.serializers import QuestionSerializer, AnswerSerializer, AnswerCommentSerializer
+from home.serializers import QuestionSerializer, AnswerSerializer, AnswerCommentSerializer, ReplyCommentSerializer
 from users.models import User
 
 
@@ -113,6 +113,32 @@ class TestAnswerComment(APITestCase):
         baker.make(CommentReply, comment=comment, body='test_body')
         baker.make(CommentReply, comment=comment, body='test_body2')
         data = AnswerCommentSerializer(instance=comment).data['replies']
+        self.assertEqual(len(data), 2)
+        self.assertEqual(data[0]['body'], 'test_body2')
+        self.assertEqual(data[1]['body'], 'test_body')
+
+
+class TestReplyCommentSerializer(APITestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username='username', email='email@gmail.com', password='password')
+        self.comment = baker.make(AnswerComment)
+
+    def test_valid_data(self):
+        data = {'owner': self.user, 'comment': self.comment, 'body': 'test_body'}
+        serializer = ReplyCommentSerializer(data=data)
+        self.assertTrue(serializer.is_valid())
+        self.assertEqual(serializer.validated_data['body'], 'test_body')
+
+    def test_empty_fields(self):
+        serializer = ReplyCommentSerializer(data={})
+        self.assertFalse(serializer.is_valid())
+        self.assertEqual(len(serializer.errors), 1)
+
+    def test_get_replies(self):
+        reply = baker.make(CommentReply)
+        baker.make(CommentReply, reply=reply, body='test_body')
+        baker.make(CommentReply, reply=reply, body='test_body2')
+        data = ReplyCommentSerializer(instance=reply).data['replies']
         self.assertEqual(len(data), 2)
         self.assertEqual(data[0]['body'], 'test_body2')
         self.assertEqual(data[1]['body'], 'test_body')
