@@ -6,7 +6,8 @@ from users.serializers import (
     UserSerializer,
     UserRegisterSerializer,
     ResendVerificationEmailSerializer,
-    ChangePasswordSerializer
+    ChangePasswordSerializer,
+    SetPasswordSerializer
 )
 
 
@@ -157,3 +158,24 @@ class TestChangePasswordSerializer(APITestCase):
         serializer = ChangePasswordSerializer(data={})
         self.assertFalse(serializer.is_valid())
         self.assertEqual(len(serializer.errors), 3)
+
+
+class TestSetPasswordSerializer(APITestCase):
+    def test_valid_data(self):
+        data = {'new_password': 'root13245', 'confirm_new_password': 'root13245'}
+        serializer = SetPasswordSerializer(data=data)
+        self.assertTrue(serializer.is_valid())
+
+    def test_common_password(self):
+        data = {'new_password': 'password', 'confirm_new_password': 'password'}
+        serializer = SetPasswordSerializer(data=data)
+        self.assertFalse(serializer.is_valid())
+        self.assertEqual(len(serializer.errors), 1)
+        self.assertEqual(serializer.errors['non_field_errors'][0], 'This password is too common.')
+
+    def test_passwords_dont_match(self):
+        data = {'new_password': 'root13245', 'confirm_new_password': 'password'}
+        serializer = SetPasswordSerializer(data=data)
+        self.assertFalse(serializer.is_valid())
+        self.assertEqual(len(serializer.errors), 1)
+        self.assertEqual(serializer.errors['non_field_errors'][0], 'Passwords must match')
