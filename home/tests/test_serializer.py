@@ -20,7 +20,7 @@ from users.models import User
 
 class TestQuestionSerializer(APITestCase):
     def setUp(self):
-        self.user = User.objects.create_user(username='username', email='email@gmail.com', password='password')
+        self.user = baker.make(User, username='username', email='email@gmail.com', is_active=True)
         self.tag = baker.make(Tag)
 
     def test_valid_data(self):
@@ -60,7 +60,7 @@ class TestQuestionSerializer(APITestCase):
 
 class TestAnswerSerializer(APITestCase):
     def setUp(self):
-        self.user = User.objects.create_user(username='username', email='email@gmail.com', password='password')
+        self.user = baker.make(User, username='username', email='email@gmail.com', is_active=True)
         self.question = baker.make(Question, title='test_question')
 
     def test_valid_data(self):
@@ -105,7 +105,7 @@ class TestAnswerSerializer(APITestCase):
 
 class TestAnswerComment(APITestCase):
     def setUp(self):
-        self.user = User.objects.create_user(username='username', email='email@gmail.com', password='password')
+        self.user = baker.make(User, username='username', email='email@gmail.com', is_active=True)
         self.answer = baker.make(Answer)
 
     def test_valid_data(self):
@@ -131,7 +131,7 @@ class TestAnswerComment(APITestCase):
 
 class TestReplyCommentSerializer(APITestCase):
     def setUp(self):
-        self.user = User.objects.create_user(username='username', email='email@gmail.com', password='password')
+        self.user = baker.make(User, username='username', email='email@gmail.com', is_active=True)
         self.comment = baker.make(AnswerComment)
 
     def test_valid_data(self):
