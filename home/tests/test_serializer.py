@@ -1,8 +1,20 @@
 from model_bakery import baker
 from rest_framework.test import APITestCase
 
-from home.models import Tag, Question, AnswerComment, Answer, Vote, CommentReply
-from home.serializers import QuestionSerializer, AnswerSerializer, AnswerCommentSerializer, ReplyCommentSerializer
+from home.models import (
+    Tag,
+    Question,
+    AnswerComment,
+    Answer,
+    Vote,
+    CommentReply
+)
+from home.serializers import (
+    QuestionSerializer,
+    AnswerSerializer,
+    AnswerCommentSerializer,
+    ReplyCommentSerializer
+)
 from users.models import User
 
 
@@ -67,8 +79,7 @@ class TestAnswerSerializer(APITestCase):
         answer = baker.make(Answer)
         baker.make(AnswerComment, body='first comment', answer=answer)
         baker.make(AnswerComment, body='second comment', answer=answer)
-        serializer = AnswerSerializer(instance=answer)
-        data = serializer.data['comments']
+        data = AnswerSerializer(instance=answer).data['comments']
         self.assertEqual(len(data), 2)
         self.assertEqual(data[0]['body'], 'second comment')
         self.assertEqual(data[1]['body'], 'first comment')
