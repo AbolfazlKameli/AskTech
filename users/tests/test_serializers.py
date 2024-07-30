@@ -4,7 +4,8 @@ from rest_framework.test import APITestCase
 from users.models import User
 from users.serializers import (
     UserSerializer,
-    UserRegisterSerializer
+    UserRegisterSerializer,
+    ResendVerificationEmailSerializer
 )
 
 
@@ -89,3 +90,27 @@ class TestUserRegisterSerializer(APITestCase):
         serializer = UserRegisterSerializer(data={})
         self.assertFalse(serializer.is_valid())
         self.assertEqual(len(serializer.errors), 4)
+
+
+class TestResendVerificationEmailSerializer(APITestCase):
+    @classmethod
+    def setUpTestData(cls):
+        baker.make(User, username='username', email='email@gmail.com')
+
+    def test_valid_data(self):
+        serializer = ResendVerificationEmailSerializer(data={'email': 'email@gmail.com'})
+        self.assertTrue(serializer.is_valid())
+        self.assertEqual(str(serializer.validated_data['user']), 'username - email@gmail.com')
+
+    def test_invalid_email(self):
+        serializer = ResendVerificationEmailSerializer(data={'email': 'kevin@gmail.com'})
+        self.assertFalse(serializer.is_valid())
+        self.assertEqual(len(serializer.errors), 1)
+        self.assertEqual(serializer.errors['non_field_errors'][0], 'User does not exist!')
+
+    def test_pre_active_user(self):
+        baker.make(User, username='PreActiveUser', email='active@gmail.com', is_active=True)
+        serializer = ResendVerificationEmailSerializer(data={'email': 'active@gmail.com'})
+        self.assertFalse(serializer.is_valid())
+        self.assertEqual(len(serializer.errors), 1)
+        self.assertEqual(serializer.errors['non_field_errors'][0], 'Account already active!')
