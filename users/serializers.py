@@ -70,6 +70,7 @@ class ChangePasswordSerializer(serializers.Serializer):
     new_password = serializers.CharField(required=True, write_only=True)
     confirm_new_password = serializers.CharField(required=True, write_only=True)
 
+    # TODO: add check password to serializers.
     def validate(self, attrs):
         new_password = attrs.get('new_password')
         confirm_password = attrs.get('confirm_new_password')
