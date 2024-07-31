@@ -68,17 +68,21 @@ class TestQuestionViewSet(APITestCase):
         return str(token)
 
     def test_permissions_allowed(self):
-        request = self.factory.get(reverse('home:question-detail', args=[2]))
-        request.user = AnonymousUser()
-        response = QuestionViewSet.as_view({'get': 'retrieve'})(request, pk=2)
+        data = {
+            'title': 'test title',
+            'body': 'test body',
+        }
+        request = self.factory.post(reverse('home:question-detail', args=[2]), data=data,
+                                    HTTP_AUTHORIZATION='Bearer ' + self.token)
+        response = QuestionViewSet.as_view({'post': 'create'})(request, pk=2)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.data), 2)
+        self.assertEqual(len(response.data), 1)
 
     def test_permissions_denied(self):
         request = self.factory.post(reverse('home:question-list'))
         request.user = AnonymousUser()
-        response = QuestionViewSet.as_view({'get': 'create'})(request)
-        self.assertEqual(response.status_code, 405)
+        response = QuestionViewSet.as_view({'post': 'create'})(request)
+        self.assertEqual(response.status_code, 401)
 
     def test_question_list(self):
         request = self.factory.get(reverse('home:question-list'))
@@ -149,10 +153,10 @@ class TestAnswerViewSet(APITestCase):
         return str(token)
 
     def test_permissions_denied(self):
-        request = self.factory.post(reverse('home:answer-viewset-list'))
+        request = self.factory.put(reverse('home:answer-viewset-detail', args=[1]))
         request.user = AnonymousUser()
-        response = AnswerViewSet.as_view({'put': 'update'})(request)
-        self.assertEqual(response.status_code, 405)
+        response = AnswerViewSet.as_view({'put': 'update'})(request, pk=1)
+        self.assertEqual(response.status_code, 401)
 
     def test_answer_create(self):
         data = {
@@ -183,7 +187,6 @@ class TestAnswerViewSet(APITestCase):
         request = self.factory.put(reverse('home:answer-viewset-detail', args=[1]), data=data,
                                    HTTP_AUTHORIZATION='Bearer ' + self.token)
         response = AnswerViewSet.as_view({'put': 'update'})(request, pk=1)
-        print(response.data)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data['body'], 'update testing body')
 
