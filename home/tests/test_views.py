@@ -1,10 +1,14 @@
 from urllib.parse import urlencode
 
+from django.contrib.auth.models import AnonymousUser
 from django.urls import reverse
 from model_bakery import baker
+from rest_framework.test import APIRequestFactory
 from rest_framework.test import APITestCase
 
 from home import models
+from home.views import *
+from users.models import User
 
 
 class TestHomeAPI(APITestCase):
@@ -48,3 +52,28 @@ class TestHomeAPI(APITestCase):
         self.assertEqual(response.status_code, 404)
         self.assertEqual(len(response.data), 1)
         self.assertEqual(response.data['error'], 'question not found.')
+
+
+class TestQuestionViewSet(APITestCase):
+    @classmethod
+    def setUpTestData(cls):
+        baker.make(models.Question, 33)
+
+    def setUp(self):
+        self.factory = APIRequestFactory()
+        self.user = baker.make(User, is_active=True)
+
+    def test_question_list(self):
+        request = self.factory.get(reverse('home:question-list'))
+        request.user = AnonymousUser()
+        response = QuestionViewSet.as_view({'get': 'list'})(request)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data['results']), 20)
+
+    def test_question_list_pagination(self):
+        url = f"{reverse('home:question-list')}?{urlencode({'page': 2})}"
+        request = self.factory.get(url)
+        request.user = AnonymousUser()
+        response = QuestionViewSet.as_view({'get': 'list'})(request)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data['results']), 13)
