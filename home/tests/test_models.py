@@ -70,4 +70,15 @@ class TagTest(TestCase):
 
     def test_tag_save(self):
         self.assertEqual(self.tag.slug, 'test-name')
-# TODO: add Vote model tests.
+
+
+class VoteTest(TestCase):
+    def setUp(self):
+        user = baker.make(User, is_active=True)
+        answer = baker.make(models.Answer)
+        self.like = baker.make(models.Vote, is_like=True, owner=user, answer=answer)
+        self.dislike = baker.make(models.Vote, is_dislike=True, owner=user, answer=answer)
+
+    def test_vote_str(self):
+        self.assertEqual(str(self.like), 'Like')
+        self.assertEqual(str(self.dislike), 'Dislike')

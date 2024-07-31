@@ -42,7 +42,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         password1 = data.get('password')
         password2 = data.get('password2')
         if password1 and password2 and password1 != password2:
-            raise serializers.ValidationError('Passwords must match')
+            raise serializers.ValidationError('Passwords must match.')
         try:
             validate_password(password2)
         except serializers.ValidationError:
