@@ -195,3 +195,59 @@ class TestAnswerViewSet(APITestCase):
                                       HTTP_AUTHORIZATION='Bearer ' + self.token)
         response = AnswerViewSet.as_view({'delete': 'destroy'})(request, pk=1)
         self.assertEqual(response.status_code, 204)
+
+
+class TestAnswerCommentViewSet(APITestCase):
+    def setUp(self):
+        self.factory = APIRequestFactory()
+        self.user = baker.make(User, is_active=True)
+        self.answer = baker.make(Answer)
+        baker.make(AnswerComment, answer=self.answer, owner=self.user)
+        self.token = self.get_JWT_token()
+
+    def get_JWT_token(self):
+        token = AccessToken.for_user(self.user)
+        return str(token)
+
+    def test_permissions_denied(self):
+        request = self.factory.put(reverse('home:answer_comments-detail', args=[1]))
+        request.user = AnonymousUser()
+        response = AnswerCommentViewSet.as_view({'put': 'update'})(request, pk=1)
+        self.assertEqual(response.status_code, 401)
+
+    def test_comment_create(self):
+        data = {
+            'owner': self.user,
+            'body': 'test_body',
+        }
+        url = f"{reverse('home:answer_comments-list')}?{urlencode({'answer_id': 1})}"
+        request = self.factory.post(url, data=data, HTTP_AUTHORIZATION='Bearer ' + self.token)
+        response = AnswerCommentViewSet.as_view({'post': 'create'})(request)
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data['message'], 'created successfully')
+
+    def test_comment_partial_update(self):
+        data = {
+            'body': 'update test',
+        }
+        request = self.factory.patch(reverse('home:answer_comments-detail', args=[1]), data=data,
+                                     HTTP_AUTHORIZATION='Bearer ' + self.token)
+        response = AnswerCommentViewSet.as_view({'patch': 'partial_update'})(request, pk=1)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['body'], 'update test')
+
+    def test_comment_full_update(self):
+        data = {
+            'body': 'update testing body'
+        }
+        request = self.factory.put(reverse('home:answer_comments-detail', args=[1]), data=data,
+                                   HTTP_AUTHORIZATION='Bearer ' + self.token)
+        response = AnswerCommentViewSet.as_view({'put': 'update'})(request, pk=1)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['body'], 'update testing body')
+
+    def test_comment_delete(self):
+        request = self.factory.delete(reverse('home:answer_comments-detail', args=[1]),
+                                      HTTP_AUTHORIZATION='Bearer ' + self.token)
+        response = AnswerCommentViewSet.as_view({'delete': 'destroy'})(request, pk=1)
+        self.assertEqual(response.status_code, 204)
