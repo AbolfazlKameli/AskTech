@@ -1,4 +1,4 @@
-from django.shortcuts import get_object_or_404, get_list_or_404
+from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from rest_framework import status
 from rest_framework.generics import GenericAPIView
@@ -24,12 +24,13 @@ class HomeAPI(GenericAPIView):
     ])
     def get(self, request, *args, **kwargs):
         questions = Question.objects.all()
-        if 'tag' in self.request.query_params:
+        if self.request.query_params.get('tag'):
             tag = get_object_or_404(Tag, slug=self.request.query_params['tag'])
             questions = tag.questions.all()
-        if self.request.GET.get('search'):
-            questions = get_list_or_404(Question, title__icontains=self.request.GET['search'],
-                                        body__icontains=self.request.GET['search'])
+        if self.request.query_params.get('search'):
+            questions = Question.objects.filter(body__icontains=self.request.query_params['search'])
+            if not questions.exists():
+                return Response(data={'error': 'question not found.'}, status=status.HTTP_404_NOT_FOUND)
         srz_data = serializers.QuestionSerializer(questions, many=True)
         return Response(data={'data': srz_data.data}, status=status.HTTP_200_OK)
 
