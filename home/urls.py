@@ -13,7 +13,7 @@ urlpatterns = [
 
 router = routers.SimpleRouter()
 router.register('question', views.QuestionViewSet)
-router.register('answer', views.AnswerViewSet)
-router.register('answer_comments', views.AnswerCommentViewSet)
-router.register('reply', views.ReplyViewSet)
+router.register('answer', views.AnswerViewSet, basename='answer-viewset')
+router.register('answer_comments', views.AnswerCommentViewSet, basename='answer_comments')
+router.register('reply', views.ReplyViewSet, basename='reply')
 urlpatterns += router.urls
