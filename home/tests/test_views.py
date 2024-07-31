@@ -56,14 +56,12 @@ class TestHomeAPI(APITestCase):
 
 
 class TestQuestionViewSet(APITestCase):
-    @classmethod
-    def setUpTestData(cls):
-        baker.make(models.Question, 33)
-
     def setUp(self):
         self.factory = APIRequestFactory()
         self.user = baker.make(User, is_active=True)
         self.tag = baker.make(models.Tag, name='test_tag')
+        baker.make(models.Question, 33, owner=self.user)
+        self.token = self.get_JWT_token()
 
     def get_JWT_token(self):
         token = AccessToken.for_user(self.user)
@@ -104,8 +102,35 @@ class TestQuestionViewSet(APITestCase):
             'title': 'test_title',
             'body': 'test_body',
         }
-        token = self.get_JWT_token()
-        request = self.factory.post('home:question-list', data=data, HTTP_AUTHORIZATION='Bearer ' + token)
+        request = self.factory.post(reverse('home:question-list'), data=data, HTTP_AUTHORIZATION='Bearer ' + self.token)
         response = QuestionViewSet.as_view({'post': 'create'})(request)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data['message'], 'question created successfully!')
+
+    def test_question_partial_update(self):
+        data = {
+            'title': 'update test',
+        }
+        request = self.factory.patch(reverse('home:question-detail', args=[2]), data=data,
+                                     HTTP_AUTHORIZATION='Bearer ' + self.token)
+        response = QuestionViewSet.as_view({'patch': 'partial_update'})(request, pk=2)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['title'], 'update test')
+
+    def test_question_full_update(self):
+        data = {
+            'title': 'update test',
+            'body': 'update testing body'
+        }
+        request = self.factory.put(reverse('home:question-detail', args=[2]), data=data,
+                                   HTTP_AUTHORIZATION='Bearer ' + self.token)
+        response = QuestionViewSet.as_view({'put': 'update'})(request, pk=2)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['title'], 'update test')
+        self.assertEqual(response.data['body'], 'update testing body')
+
+    def test_question_delete(self):
+        request = self.factory.delete(reverse('home:question-detail', args=[2]),
+                                      HTTP_AUTHORIZATION='Bearer ' + self.token)
+        response = QuestionViewSet.as_view({'delete': 'destroy'})(request, pk=2)
+        self.assertEqual(response.status_code, 204)
