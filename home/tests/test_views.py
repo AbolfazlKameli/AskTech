@@ -63,6 +63,19 @@ class TestQuestionViewSet(APITestCase):
         self.factory = APIRequestFactory()
         self.user = baker.make(User, is_active=True)
 
+    def test_permissions_allowed(self):
+        request = self.factory.get(reverse('home:question-detail', args=[2]))
+        request.user = AnonymousUser()
+        response = QuestionViewSet.as_view({'get': 'retrieve'})(request, pk=2)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data), 2)
+
+    def test_permissions_denied(self):
+        request = self.factory.post(reverse('home:question-list'))
+        request.user = AnonymousUser()
+        response = QuestionViewSet.as_view({'get': 'create'})(request)
+        self.assertEqual(response.status_code, 405)
+
     def test_question_list(self):
         request = self.factory.get(reverse('home:question-list'))
         request.user = AnonymousUser()
