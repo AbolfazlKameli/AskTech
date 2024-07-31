@@ -5,6 +5,7 @@ from django.urls import reverse
 from model_bakery import baker
 from rest_framework.test import APIRequestFactory
 from rest_framework.test import APITestCase
+from rest_framework_simplejwt.tokens import AccessToken
 
 from home import models
 from home.views import *
@@ -62,6 +63,11 @@ class TestQuestionViewSet(APITestCase):
     def setUp(self):
         self.factory = APIRequestFactory()
         self.user = baker.make(User, is_active=True)
+        self.tag = baker.make(models.Tag, name='test_tag')
+
+    def get_JWT_token(self):
+        token = AccessToken.for_user(self.user)
+        return str(token)
 
     def test_permissions_allowed(self):
         request = self.factory.get(reverse('home:question-detail', args=[2]))
@@ -90,3 +96,16 @@ class TestQuestionViewSet(APITestCase):
         response = QuestionViewSet.as_view({'get': 'list'})(request)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.data['results']), 13)
+
+    def test_question_create(self):
+        data = {
+            'tag': self.tag,
+            'owner': self.user,
+            'title': 'test_title',
+            'body': 'test_body',
+        }
+        token = self.get_JWT_token()
+        request = self.factory.post('home:question-list', data=data, HTTP_AUTHORIZATION='Bearer ' + token)
+        response = QuestionViewSet.as_view({'post': 'create'})(request)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['message'], 'question created successfully!')
