@@ -53,7 +53,6 @@ class TestUserRegisterAPI(APITestCase):
         baker.make(User, is_active=True, username='username', email='email')
 
     def setUp(self):
-        self.factory = APIRequestFactory()
         self.url = reverse('users:user_register')
         self.valid_data = {
             'username': 'kevin',
@@ -70,9 +69,29 @@ class TestUserRegisterAPI(APITestCase):
 
     @patch('utils.send_email.send_link')
     def test_success_register(self, mock_send_email):
-        response = self.client.post(reverse('users:user_register'), data=self.valid_data)
+        response = self.client.post(self.url, data=self.valid_data)
         self.assertEqual(response.status_code, 200)
         self.assertIn('message', response.data)
         self.assertIn('data', response.data)
         self.assertEqual(User.objects.all().count(), 2)
+        mock_send_email.assert_called_once()
+
+    def test_not_unique_username(self):
+        response = self.client.post(self.url, data=self.invalid_data)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('error', response.data)
+        self.assertIn('username', response.data['error'])
+
+    def test_mismatch_password(self):
+        self.invalid_data['password'] = '<PASSWORD>'
+        self.invalid_data['username'] = 'testuser'
+        response = self.client.post(self.url, data=self.invalid_data)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('error', response.data)
+
+    @patch('utils.send_email.send_link')
+    def test_register_with_avatar(self, mock_send_email):
+        self.valid_data['avatar'] = 'avatar.png'
+        response = self.client.post(self.url, data=self.valid_data)
+        self.assertEqual(response.status_code, 200)
         mock_send_email.assert_called_once()
