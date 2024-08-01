@@ -44,3 +44,22 @@ class TestUsersListAPI(APITestCase):
         response = UsersListAPI.as_view()(request)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.data['results']), 17)
+
+
+class TestUserRegisterAPI(APITestCase):
+    @classmethod
+    def setUpTestData(cls):
+        baker.make(User, is_active=True)
+
+    def setUp(self):
+        self.factory = APIRequestFactory()
+
+    def test_success_register(self):
+        data = {
+            'username': 'username',
+            'email': 'email@gmail.com',
+            'password': 'asdF@123',
+            'password2': 'asdF@123'
+        }
+        response = self.client.post(reverse('users:user_register'), data)
+        self.assertEqual(response.status_code, 200)
