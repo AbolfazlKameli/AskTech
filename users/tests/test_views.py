@@ -19,14 +19,10 @@ class TestUsersListAPI(APITestCase):
         self.user = baker.make(User, username='username', email='email@gmail.com', password='password', is_active=True)
         self.not_active_user = baker.make(User, username='not_active', email='not_active@gmail.com',
                                           password='password')
-        self.user_token = self.get_JWT_token(self.user)
+        self.user_token = str(AccessToken.for_user(self.user))
         self.admin = baker.make(User, username='admin', email='admin@gmail.com', password='admin', is_active=True,
                                 is_admin=True)
-        self.admin_token = self.get_JWT_token(self.admin)
-
-    def get_JWT_token(self, user):
-        token = AccessToken.for_user(user)
-        return str(token)
+        self.admin_token = str(AccessToken.for_user(self.admin))
 
     def test_permission_denied(self):
         request = self.factory.get(reverse('users:users_list'), HTTP_AUTHORIZATION='Bearer ' + self.user_token)
