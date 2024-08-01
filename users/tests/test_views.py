@@ -91,3 +91,41 @@ class TestUserRegisterAPI(APITestCase):
         response = self.client.post(self.url, data=self.valid_data)
         self.assertEqual(response.status_code, 200)
         mock_send_email.assert_called_once()
+
+
+class TestUserRegisterVerificationAPI(APITestCase):
+    def setUp(self):
+        self.url = reverse('users:user_register_verify', args=['invalid_token'])
+        self.user = baker.make(User, is_active=False)
+        self.token = JWT_token.generate_token(self.user)
+
+    def test_account_activation_success(self):
+        response = self.client.get(self.url.replace('invalid_token', self.token['token']))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('message', response.data)
+        self.assertEqual(response.data['message'], 'Account activated successfully')
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.is_active)
+
+    def test_account_already_active(self):
+        self.user.is_active = True
+        self.user.save()
+        response = self.client.get(self.url.replace('invalid_token', self.token['token']))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('message', response.data)
+        self.assertEqual(response.data['message'], 'this account already is active')
+
+# TODO: fix token expire time.
+# def test_invalid_token(self):
+#     response = self.client.get(self.url)
+#     self.assertEqual(response.status_code, 400)
+#     self.assertIn('error', response.data)
+#     print(response.data)
+#     self.assertEqual(response.data['error'], 'Activation link has expired!')
+#
+# def test_expired_token(self):
+#     expired_token = self.create_expired_token()
+#     response = self.client.get(self.url.replace('invalid_token', expired_token))
+#     self.assertEqual(response.status_code, 400)
+#     self.assertIn('error', response.data)
+#     self.assertEqual(response.data['error'], 'Activation link has expired!')
