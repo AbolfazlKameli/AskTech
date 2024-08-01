@@ -1,3 +1,4 @@
+from unittest.mock import patch
 from urllib.parse import urlencode
 
 from model_bakery import baker
@@ -49,17 +50,29 @@ class TestUsersListAPI(APITestCase):
 class TestUserRegisterAPI(APITestCase):
     @classmethod
     def setUpTestData(cls):
-        baker.make(User, is_active=True)
+        baker.make(User, is_active=True, username='username', email='email')
 
     def setUp(self):
         self.factory = APIRequestFactory()
-
-    def test_success_register(self):
-        data = {
-            'username': 'username',
-            'email': 'email@gmail.com',
+        self.url = reverse('users:user_register')
+        self.valid_data = {
+            'username': 'kevin',
+            'email': 'kevin@example.com',
             'password': 'asdF@123',
-            'password2': 'asdF@123'
+            'password2': 'asdF@123',
         }
-        response = self.client.post(reverse('users:user_register'), data)
+        self.invalid_data = {
+            'username': 'username',
+            'email': 'amir@example.com',
+            'password': 'asdF@123',
+            'password2': 'asdF@123',
+        }
+
+    @patch('utils.send_email.send_link')
+    def test_success_register(self, mock_send_email):
+        response = self.client.post(reverse('users:user_register'), data=self.valid_data)
         self.assertEqual(response.status_code, 200)
+        self.assertIn('message', response.data)
+        self.assertIn('data', response.data)
+        self.assertEqual(User.objects.all().count(), 2)
+        mock_send_email.assert_called_once()
