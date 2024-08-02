@@ -5,12 +5,13 @@ from urllib.parse import urlencode
 import jwt
 from django.conf import settings
 from model_bakery import baker
-from rest_framework.test import APIRequestFactory
-from rest_framework.test import APITestCase
+from rest_framework.test import APIRequestFactory, APITestCase
 from rest_framework_simplejwt.tokens import AccessToken
 
 from users.views import *
 
+
+# TODO: make test better.
 
 class TestUsersListAPI(APITestCase):
     @classmethod
@@ -183,3 +184,25 @@ class TestResendVerificationEmailAPI(APITestCase):
         self.assertIn('errors', response.data)
         self.assertEqual(response.data['errors']['non_field_errors'][0], 'Account already active!')
         mock_send_email.assert_not_called()
+
+
+class TestChangePasswordAPI(APITestCase):
+    def setUp(self):
+        self.user = baker.make(User, is_active=True, password='kmk13245', username='username', email='email@gmail.com')
+        self.token = JWT_token.generate_token(self.user)['token']
+        self.url = reverse('users:change_password')
+        self.valid_data = {
+            'old_password': 'kmk13245',
+            'new_password': 'asdF@123',
+            'confirm_new_password': 'asdF@123',
+        }
+        self.invalid_data = {
+            'old_password': 'invalid_password',
+            'new_password': 'asdF@123',
+            'confirm_new_password': 'asdF@123',
+        }
+
+    def test_successful_change_password(self):
+        response = self.client.put(self.url, data=self.valid_data, HTTP_AUTHORIZATION='Bearer ' + self.token)
+        self.user.refresh_from_db()
+        self.assertEqual(response.status_code, 200)

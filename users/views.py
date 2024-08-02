@@ -119,7 +119,7 @@ class ChangePasswordAPI(APIView):
     serializer_class = serializers.ChangePasswordSerializer
 
     def put(self, request):
-        srz_data = self.serializer_class(data=request.POST)
+        srz_data = self.serializer_class(data=request.data)
         if srz_data.is_valid():
             user = User.objects.get(id=self.request.user.id)
             old_password = srz_data.validated_data['old_password']
