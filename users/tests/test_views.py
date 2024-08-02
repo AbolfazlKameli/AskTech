@@ -1,6 +1,9 @@
+from datetime import datetime
 from unittest.mock import patch
 from urllib.parse import urlencode
 
+import jwt
+from django.conf import settings
 from model_bakery import baker
 from rest_framework.test import APIRequestFactory
 from rest_framework.test import APITestCase
@@ -99,6 +102,13 @@ class TestUserRegisterVerificationAPI(APITestCase):
         self.user = baker.make(User, is_active=False)
         self.token = JWT_token.generate_token(self.user)
 
+    def create_expired_token(self):
+        payload = {
+            'user_id': self.user.id,
+            'exp': datetime.now() - timedelta(days=34)
+        }
+        return jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
+
     def test_account_activation_success(self):
         response = self.client.get(self.url.replace('invalid_token', self.token['token']))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -115,17 +125,24 @@ class TestUserRegisterVerificationAPI(APITestCase):
         self.assertIn('message', response.data)
         self.assertEqual(response.data['message'], 'this account already is active')
 
-# TODO: fix token expire time.
-# def test_invalid_token(self):
-#     response = self.client.get(self.url)
-#     self.assertEqual(response.status_code, 400)
-#     self.assertIn('error', response.data)
-#     print(response.data)
-#     self.assertEqual(response.data['error'], 'Activation link has expired!')
-#
-# def test_expired_token(self):
-#     expired_token = self.create_expired_token()
-#     response = self.client.get(self.url.replace('invalid_token', expired_token))
-#     self.assertEqual(response.status_code, 400)
-#     self.assertIn('error', response.data)
-#     self.assertEqual(response.data['error'], 'Activation link has expired!')
+    @patch('users.views.get_object_or_404')
+    def test_activation_url_invalid(self, mock_jwt_decode_token):
+        mock_jwt_decode_token.side_effect = Http404
+        response = self.client.get(self.url.replace('invalid_token', self.token['token']))
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertIn('error', response.data)
+        self.assertEqual(response.data['error'], 'Activation URL is invalid')
+
+    def test_invalid_token(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('error', response.data)
+        print(response.data)
+        self.assertEqual(response.data['error'], 'Activation link is invalid!')
+
+    def test_expired_token(self):
+        expired_token = self.create_expired_token()
+        response = self.client.get(self.url.replace('invalid_token', expired_token))
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('error', response.data)
+        self.assertEqual(response.data['error'], 'Activation link has expired!')
