@@ -66,14 +66,16 @@ class TestUserRegisterAPI(APITestCase):
             'password2': 'asdF@123',
         }
 
+    @patch('utils.JWT_token.generate_token')
     @patch('utils.send_email.send_link')
-    def test_success_register(self, mock_send_email):
+    def test_success_register(self, mock_send_email, mock_generate_token):
         response = self.client.post(self.url, data=self.valid_data)
         self.assertEqual(response.status_code, 200)
         self.assertIn('message', response.data)
         self.assertIn('data', response.data)
         self.assertEqual(User.objects.all().count(), 2)
         mock_send_email.assert_called_once()
+        mock_generate_token.assert_called_once()
 
     def test_not_unique_username(self):
         response = self.client.post(self.url, data=self.invalid_data)
@@ -137,7 +139,6 @@ class TestUserRegisterVerificationAPI(APITestCase):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 400)
         self.assertIn('error', response.data)
-        print(response.data)
         self.assertEqual(response.data['error'], 'Activation link is invalid!')
 
     def test_expired_token(self):
@@ -146,3 +147,39 @@ class TestUserRegisterVerificationAPI(APITestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn('error', response.data)
         self.assertEqual(response.data['error'], 'Activation link has expired!')
+
+
+class TestResendVerificationEmailAPI(APITestCase):
+    def setUp(self):
+        self.url = reverse('users:user_register_resend_email')
+        self.user = baker.make(User, is_active=False, email='email@gmail.com')
+        self.active_user = baker.make(User, is_active=True, email='active_user@gmail.com')
+
+    @patch('utils.JWT_token.generate_token')
+    @patch('utils.send_email.send_link')
+    def test_successful_send_email(self, mock_send_email, mock_generate_token):
+        data = {'email': 'email@gmail.com'}
+        response = self.client.post(self.url, data=data)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('message', response.data)
+        self.assertEqual(response.data['message'], 'The activation email has been sent again successfully')
+        mock_send_email.assert_called_once()
+        mock_generate_token.assert_called_once()
+
+    @patch('utils.send_email.send_link')
+    def test_invalid_email(self, mock_send_email):
+        data = {'email': 'does_not_exists_user_email@gmail.com'}
+        response = self.client.post(self.url, data=data)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('errors', response.data)
+        self.assertEqual(response.data['errors']['non_field_errors'][0], 'User does not exist!')
+        mock_send_email.assert_not_called()
+
+    @patch('utils.send_email.send_link')
+    def test_active_user_email(self, mock_send_email):
+        data = {'email': 'active_user@gmail.com'}
+        response = self.client.post(self.url, data=data)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('errors', response.data)
+        self.assertEqual(response.data['errors']['non_field_errors'][0], 'Account already active!')
+        mock_send_email.assert_not_called()

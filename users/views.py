@@ -1,5 +1,6 @@
 from datetime import timedelta
 
+from django.db import transaction
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
@@ -103,7 +104,7 @@ class ResendVerificationEmailAPI(APIView):
             )
             send_email.send_link(user.email, url)
             return Response(
-                data={"message: The activation email has been sent again successfully"},
+                data={"message": "The activation email has been sent again successfully"},
                 status=status.HTTP_200_OK,
             )
         return Response(data={'errors': srz_data.errors}, status=status.HTTP_400_BAD_REQUEST)
