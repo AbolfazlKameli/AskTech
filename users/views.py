@@ -67,22 +67,22 @@ class UserRegisterVerifyAPI(APIView):
     def get(self, request, token):
         decrypted_token = JWT_token.decode_token(token)
         try:
-            user = get_object_or_404(User, id=decrypted_token['user_id'])
-            if user.is_active:
-                return Response(data={'message': 'this account already is active'}, status=status.HTTP_200_OK)
-            user.is_active = True
-            user.save()
-            token = JWT_token.generate_token(user)
-            return Response(data={'message': 'Account activated successfully',
-                                  'token': token['token'], 'refresh': token['refresh']},
-                            status=status.HTTP_200_OK
-                            )
+            user = get_object_or_404(User, id=decrypted_token)
         except Http404:
             return Response(data={'error': 'Activation URL is invalid'}, status=status.HTTP_404_NOT_FOUND)
         except TypeError:
-            return Response(data={'error': 'Token is invalid'}, status=status.HTTP_400_BAD_REQUEST)
-        except KeyError:
-            return Response(data={'error': 'Activation link has expired!'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(data=decrypted_token, status=status.HTTP_400_BAD_REQUEST)
+        if user.is_active:
+            return Response(data={'message': 'this account already is active'}, status=status.HTTP_200_OK)
+        user.is_active = True
+        user.save()
+        token = JWT_token.generate_token(user)
+        return Response(data={
+            'message': 'Account activated successfully',
+            'token': token['token'],
+            'refresh': token['refresh']},
+            status=status.HTTP_200_OK
+        )
 
 
 class ResendVerificationEmailAPI(APIView):
@@ -143,13 +143,11 @@ class SetPasswordAPI(APIView):
         srz_data = self.serializer_class(data=request.POST)
         decrypted_token = JWT_token.decode_token(token)
         try:
-            user = get_object_or_404(User, id=decrypted_token['user_id'])
+            user = get_object_or_404(User, id=decrypted_token)
         except Http404:
             return Response(data={'error': 'Activation link is invalid'}, status=status.HTTP_400_BAD_REQUEST)
         except TypeError:
-            return Response(decrypted_token['user_id'])
-        except KeyError:
-            return Response(data={'error': 'Activation link has expired!'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(decrypted_token)
         if srz_data.is_valid():
             new_password = srz_data.validated_data['new_password']
             user.set_password(new_password)
