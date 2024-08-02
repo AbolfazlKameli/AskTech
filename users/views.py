@@ -43,7 +43,7 @@ class UserRegisterAPI(CreateAPIView):
             user = User.objects.create_user(**srz_data.validated_data, avatar=request.FILES.get('avatar'))
             token = JWT_token.generate_token(user, timedelta(minutes=1))
             url = self.request.build_absolute_uri(
-                reverse('users:user_register_verify', kwargs={'token': token['token']})
+                reverse('users:user_register_verify', kwargs={'token': token['refresh']})
             )
             send_email.send_link(srz_data.validated_data['email'], url)
             return Response(
@@ -99,7 +99,7 @@ class ResendVerificationEmailAPI(APIView):
             user = srz_data.validated_data['user']
             token = JWT_token.generate_token(user, timedelta(minutes=1))
             url = self.request.build_absolute_uri(
-                reverse('users:user_register_verify', kwargs={'token': token['token']})
+                reverse('users:user_register_verify', kwargs={'token': token['refresh']})
             )
             send_email.send_link(user.email, url)
             return Response(
@@ -175,7 +175,7 @@ class ResetPasswordAPI(APIView):
                 return Response(data={'error': 'user with this Email not found!'}, status=status.HTTP_400_BAD_REQUEST)
             token = JWT_token.generate_token(user, timedelta(minutes=1))
             url = self.request.build_absolute_uri(
-                reverse('users:set_password', kwargs={'token': token['token']})
+                reverse('users:set_password', kwargs={'token': token['refresh']})
             )
             send_email.send_link(user.email, url)
             return Response(data={'message': 'sent you a change password link!'}, status=status.HTTP_200_OK)

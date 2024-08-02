@@ -1,7 +1,17 @@
 from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from .models import User
+
+
+class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
+    @classmethod
+    def get_token(cls, user, lifetime=None):
+        token = super().get_token(user)
+        if lifetime:
+            token.set_exp(claim='exp', lifetime=lifetime)
+        return token
 
 
 class UserSerializer(serializers.ModelSerializer):
