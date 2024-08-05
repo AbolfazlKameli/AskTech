@@ -240,3 +240,31 @@ class TestSetPasswordAPI(APITestCase):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data['error'], 'Activation link is invalid')
         self.assertFalse(self.user.check_password(data['new_password']))
+
+
+class TestResetPasswordAPI(APITestCase):
+    def setUp(self):
+        self.user = baker.make(User, is_active=True, email='email@gmail.com')
+        self.url = reverse('users:reset_password')
+
+    @patch('utils.JWT_token.generate_token')
+    @patch('utils.send_email.send_link')
+    def test_successful_reset(self, mock_send_email, mock_generate_token):
+        data = {'email': 'email@gmail.com'}
+        response = self.client.post(self.url, data=data)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['message'], 'sent you a change password link!')
+        mock_send_email.assert_called_once()
+        mock_generate_token.assert_called_once()
+
+    @patch('utils.JWT_token.generate_token')
+    @patch('utils.send_email.send_link')
+    @patch('users.views.get_object_or_404')
+    def test_invalid_email(self, mock_get_object, mock_send_email, mock_generate_token):
+        mock_get_object.side_effect = Http404
+        data = {'email': 'email@gmail.com'}
+        response = self.client.post(self.url, data=data)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data['error'], 'user with this Email not found!')
+        mock_send_email.assert_not_called()
+        mock_generate_token.assert_not_called()
