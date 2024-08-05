@@ -292,3 +292,33 @@ class TestBlockTokenAPI(APITestCase):
         response = self.client.post(self.url, data)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data['error'], 'token is invalid!')
+
+
+class TestUserProfileAPI(APITestCase):
+    def setUp(self):
+        self.user = baker.make(User, is_active=True)
+        self.token = JWT_token.generate_token(self.user)['token']
+
+    def test_retrieve_user_profile_GET(self):
+        url = reverse('users:user_profile', args=[self.user.id])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['username'], self.user.username)
+
+    def test_retrieve_user_profile_not_found(self):
+        url = reverse('users:user_profile', args=[23])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.data['detail'], 'No User matches the given query.')
+
+    def test_unauthorized_update_user_profile(self):
+        url = reverse('users:user_profile', args=[1])
+        response = self.client.put(url)
+        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.data['detail'], 'Authentication credentials were not provided.')
+
+    def test_partial_update_user_profile(self):
+        data = {'username': 'new_username'}
+        url = reverse('users:user_profile', args=[1])
+        response = self.client.patch(url, data, HTTP_AUTHORIZATION='Bearer ' + self.token)
+        self.assertEqual(response.status_code, 200)
