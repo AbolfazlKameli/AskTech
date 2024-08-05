@@ -3,11 +3,13 @@ from unittest.mock import patch
 from urllib.parse import urlencode
 
 import jwt
+import rest_framework_simplejwt.tokens
 from django.conf import settings
 from model_bakery import baker
 from rest_framework.test import APIRequestFactory, APITestCase
 from rest_framework_simplejwt.tokens import AccessToken
 
+import users.views
 from users.views import *
 
 
@@ -268,3 +270,25 @@ class TestResetPasswordAPI(APITestCase):
         self.assertEqual(response.data['error'], 'user with this Email not found!')
         mock_send_email.assert_not_called()
         mock_generate_token.assert_not_called()
+
+
+class TestBlockTokenAPI(APITestCase):
+    def setUp(self):
+        self.user = baker.make(User, is_active=True)
+        self.token = JWT_token.generate_token(self.user)['refresh']
+        self.invalid_token = 'invalid.token.alksdjfadffeygfhasjf'
+        self.url = reverse('users:token_block')
+
+    @patch('rest_framework_simplejwt.tokens.BlacklistMixin.blacklist')
+    def test_successful_block_token(self, mock_black_list):
+        data = {'refresh': self.token}
+        response = self.client.post(self.url, data)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['message'], 'Token blocked successfully!')
+        mock_black_list.assert_called_once()
+
+    def test_block_invalid_token(self):
+        data = {'refresh': self.invalid_token}
+        response = self.client.post(self.url, data)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data['error'], 'token is invalid!')
