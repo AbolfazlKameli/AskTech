@@ -11,7 +11,7 @@ from rest_framework_simplejwt.tokens import AccessToken
 from users.views import *
 
 
-# TODO: make test better.
+# TODO: add utils tests.
 
 class TestUsersListAPI(APITestCase):
     @classmethod
@@ -215,3 +215,28 @@ class TestChangePasswordAPI(APITestCase):
         response = self.client.put(self.url, data=self.invalid_data, HTTP_AUTHORIZATION='Bearer ' + self.token)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data['error'], 'Your old password is not correct')
+
+
+class TestSetPasswordAPI(APITestCase):
+    def setUp(self):
+        self.user = baker.make(User, is_active=True)
+        self.token = JWT_token.generate_token(self.user)
+        self.url = reverse('users:set_password', args=[self.token['refresh']])
+
+    def test_successful_set_password(self):
+        data = {'new_password': 'asdF@123', 'confirm_new_password': 'asdF@123'}
+        response = self.client.post(self.url, data)
+        self.user.refresh_from_db()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['message'], 'Password changed successfully')
+        self.assertTrue(self.user.check_password(data['new_password']))
+
+    @patch('users.views.get_object_or_404')
+    def test_invalid_token_user(self, mock_not_found):
+        data = {'new_password': 'asdF@123', 'confirm_new_password': 'asdF@123'}
+        mock_not_found.side_effect = Http404
+        response = self.client.post(self.url, data)
+        self.user.refresh_from_db()
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data['error'], 'Activation link is invalid')
+        self.assertFalse(self.user.check_password(data['new_password']))
