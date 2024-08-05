@@ -1,6 +1,5 @@
 from datetime import timedelta
 
-from django.db import transaction
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
@@ -9,7 +8,7 @@ from rest_framework.generics import ListAPIView, CreateAPIView, RetrieveUpdateDe
 from rest_framework.permissions import IsAdminUser, IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 
 from permissions import permissions
 from utils import JWT_token, send_email, paginators
@@ -192,7 +191,10 @@ class BlockTokenAPI(APIView):
     def post(self, request):
         srz_data = self.serializer_class(data=request.POST)
         if srz_data.is_valid():
-            token = RefreshToken(request.POST['refresh'])
+            try:
+                token = RefreshToken(request.POST['refresh'])
+            except TokenError:
+                return Response(data={'error': 'token is invalid!'}, status=status.HTTP_400_BAD_REQUEST)
             token.blacklist()
             return Response(data={'message': 'Token blocked successfully!'}, status=status.HTTP_200_OK)
         return Response(data={'error': srz_data.errors}, status=status.HTTP_400_BAD_REQUEST)
