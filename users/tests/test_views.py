@@ -188,7 +188,9 @@ class TestResendVerificationEmailAPI(APITestCase):
 
 class TestChangePasswordAPI(APITestCase):
     def setUp(self):
-        self.user = baker.make(User, is_active=True, password='kmk13245', username='username', email='email@gmail.com')
+        self.user = baker.make(User, is_active=True)
+        self.user.set_password('kmk13245')
+        self.user.save()
         self.token = JWT_token.generate_token(self.user)['token']
         self.url = reverse('users:change_password')
         self.valid_data = {
@@ -206,3 +208,10 @@ class TestChangePasswordAPI(APITestCase):
         response = self.client.put(self.url, data=self.valid_data, HTTP_AUTHORIZATION='Bearer ' + self.token)
         self.user.refresh_from_db()
         self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['message'], 'Your password changed successfully!')
+        self.assertTrue(self.user.check_password(self.valid_data['new_password']))
+
+    def test_invalid_old_password(self):
+        response = self.client.put(self.url, data=self.invalid_data, HTTP_AUTHORIZATION='Bearer ' + self.token)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data['error'], 'Your old password is not correct')
