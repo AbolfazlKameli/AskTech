@@ -16,6 +16,7 @@ from . import serializers
 from .models import User
 
 
+# TODO: make some operations async with celery.
 class UsersListAPI(ListAPIView):
     """
     Returns list of users.\n
@@ -200,15 +201,36 @@ class BlockTokenAPI(APIView):
         return Response(data={'error': srz_data.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
-# TODO: fix email update bug. send an activation email to new email address
 class UserProfileAPI(RetrieveUpdateDestroyAPIView):
     """
     Retrieve or update user profile.\n
-    allowed methods: GET, PUT, PATCH, DELETE.\n
-    GET: Retrieve, PUT: Full update, PATCH:partial update, DELETE: delete account.
+    allowed methods: GET, PATCH, DELETE.\n
+    GET: Retrieve, PATCH:partial update, DELETE: delete account.
     """
     permission_classes = [permissions.IsOwnerOrReadOnly]
     serializer_class = serializers.UserSerializer
     lookup_url_kwarg = 'id'
     lookup_field = 'id'
-    queryset = User.objects.all()
+    queryset = User.objects.filter(is_active=True)
+    http_method_names = ['get', 'patch', 'delete']
+
+    def partial_update(self, request, *args, **kwargs):
+        user = self.get_object()
+        serializer = self.get_serializer(instance=user, data=request.data, partial=True)
+        if serializer.is_valid():
+            if 'email' in serializer.validated_data:
+                token = JWT_token.generate_token(user, timedelta(minutes=1))
+                user.is_active = False
+                user.save()
+                url = self.request.build_absolute_uri(
+                    reverse('users:user_register_verify', kwargs={'token': token['refresh']})
+                )
+                send_email.send_link(serializer.validated_data['email'], url)
+                serializer.save()
+                return Response(
+                    data={'message': 'send a verification url on your new email address and other changes saved.'},
+                    status=status.HTTP_200_OK
+                )
+            serializer.save()
+            return Response(data={'message': 'updated profile successfully'}, status=status.HTTP_200_OK)
+        return Response(data={'test': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
