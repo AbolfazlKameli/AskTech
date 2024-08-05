@@ -187,7 +187,7 @@ class BlockTokenAPI(APIView):
     allowed methods: POST.
     """
     serializer_class = serializers.TokenSerializer
-    permission_classes = [IsAdminUser, ]
+    permission_classes = [AllowAny, ]
 
     def post(self, request):
         srz_data = self.serializer_class(data=request.POST)
