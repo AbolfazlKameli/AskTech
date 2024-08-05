@@ -1,4 +1,5 @@
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
+from django.core.validators import FileExtensionValidator
 from django.db import models
 
 from .managers import UserManager
@@ -7,7 +8,12 @@ from .managers import UserManager
 class User(AbstractBaseUser, PermissionsMixin):
     username = models.CharField(max_length=100, unique=True)
     email = models.EmailField(unique=True)
-    avatar = models.ImageField(upload_to='avatars', blank=True, null=True)
+    avatar = models.ImageField(
+        upload_to='avatars',
+        blank=True,
+        null=True,
+        validators=[FileExtensionValidator(['png', 'jpg', 'jpeg'])]
+    )
     bio = models.TextField(max_length=500, blank=True, null=True)
     score = models.IntegerField(default=0)
     is_active = models.BooleanField(default=False)
@@ -26,4 +32,4 @@ class User(AbstractBaseUser, PermissionsMixin):
         return self.is_admin
 
     class Meta:
-        ordering = ('email', )
+        ordering = ('email',)
