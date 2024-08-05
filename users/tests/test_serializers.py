@@ -127,13 +127,6 @@ class TestChangePasswordSerializer(APITestCase):
         serializer = ChangePasswordSerializer(data=data)
         self.assertTrue(serializer.is_valid())
 
-    # def test_invalid_password(self):
-    #     data = {'old_password': 'wrong_password', 'new_password': 'root13245', 'confirm_new_password': 'root13245'}
-    #     serializer = ChangePasswordSerializer(data=data)
-    #     self.assertFalse(serializer.is_valid())
-    #     self.assertEqual(len(serializer.errors), 1)
-    #     self.assertEqual(serializer.errors['non_field_errors'][0], 'Passwords must match')
-
     def test_common_password(self):
         data = {'old_password': 'password', 'new_password': 'password', 'confirm_new_password': 'password'}
         serializer = ChangePasswordSerializer(data=data)
