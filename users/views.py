@@ -148,7 +148,7 @@ class SetPasswordAPI(APIView):
         except Http404:
             return Response(data={'error': 'Activation link is invalid'}, status=status.HTTP_400_BAD_REQUEST)
         except TypeError:
-            return Response(decrypted_token)
+            return Response(decrypted_token, status=status.HTTP_400_BAD_REQUEST)
         if srz_data.is_valid():
             new_password = srz_data.validated_data['new_password']
             user.set_password(new_password)
