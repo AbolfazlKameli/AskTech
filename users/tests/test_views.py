@@ -3,13 +3,11 @@ from unittest.mock import patch
 from urllib.parse import urlencode
 
 import jwt
-import rest_framework_simplejwt.tokens
 from django.conf import settings
 from model_bakery import baker
 from rest_framework.test import APIRequestFactory, APITestCase
 from rest_framework_simplejwt.tokens import AccessToken
 
-import users.views
 from users.views import *
 
 
