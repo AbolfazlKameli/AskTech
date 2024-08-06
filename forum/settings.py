@@ -13,6 +13,8 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 from datetime import timedelta
 from pathlib import Path
 
+from decouple import config
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -20,10 +22,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-qfu(576-yf!1g^x#8#kqy%it+5#uejxvcm+!hd7^mi403!a-q='
+SECRET_KEY = config('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = config('DEBUG', cast=bool, default=True)
 
 ALLOWED_HOSTS = []
 
@@ -95,7 +97,7 @@ DATABASES = {
 CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.redis.RedisCache",
-        "LOCATION": "redis://127.0.0.1:6379",
+        "LOCATION": config('REDIS_LOCATION', default="redis://127.0.0.1:6379"),
     }
 }
 
@@ -122,14 +124,14 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'Asia/Tehran'
+TIME_ZONE = config('TIME_ZONE', default='UTC')
 
 USE_I18N = True
 
 USE_TZ = True
 
 STATIC_URL = '/static/'
-DOMAIN = '127.0.0.1:8000'
+DOMAIN = config('DOMAIN', default="127.0.0.1:8000")
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
@@ -169,12 +171,12 @@ SPECTACULAR_SETTINGS = {
 
 # SMTP
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
-EMAIL_HOST_USER = 'bozorgmehrkameli@gmail.com'
-EMAIL_HOST_PASSWORD = '*********'
-EMAIL_USE_TLS = True
-DEFAULT_FROM_EMAIL = 'AskTech'
+EMAIL_HOST = config('EMAIL_HOST')
+EMAIL_PORT = config('EMAIL_PORT')
+EMAIL_HOST_USER = config('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
+EMAIL_USE_TLS = config('EMAIL_USE_TLS')
+DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL')
 
 # ArvanCloud Storage Settings
 STORAGES = {
@@ -190,19 +192,19 @@ STORAGES = {
     },
 }
 
-AWS_S3_ACCESS_KEY_ID = 'f81d5aae-01ea-48d4-8da6-76460825163e'
-AWS_SECRET_ACCESS_KEY = 'ac310fd2b7d11712d36937a80d0d0bfda5a03d0fab86a167ba256674f3447d8d'
-AWS_S3_ENDPOINT_URL = 'https://s3.ir-thr-at1.arvanstorage.ir'
-AWS_STORAGE_BUCKET_NAME = 'django-noob-shop'
-AWS_SERVICE_NAME = 's3'
-AW_S3_FILE_OVERWRITE = False
+AWS_S3_ACCESS_KEY_ID = config('AWS_S3_ACCESS_KEY_ID')
+AWS_SECRET_ACCESS_KEY = config('AWS_SECRET_ACCESS_KEY')
+AWS_S3_ENDPOINT_URL = config('AWS_S3_ENDPOINT_URL')
+AWS_STORAGE_BUCKET_NAME = config('AWS_STORAGE_BUCKET_NAME')
+AWS_SERVICE_NAME = config('AWS_SERVICE_NAME')
+AW_S3_FILE_OVERWRITE = config('AW_S3_FILE_OVERWRITE')
 
 # CELERY configs
 CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 CELERY_BROKER_URL = "amqp://"
 CELERY_RESULT_BACKEND = 'rpc://'
 CELERY_WORKER_PREFETCH_MULTIPLIER = 3
-CELERY_TIMEZONE = 'Asia/Tehran'
+CELERY_TIMEZONE = config('TIME_ZONE')
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'pickle'
 CELERY_ACCEPT_CONTENT = ['json', 'pickle']
