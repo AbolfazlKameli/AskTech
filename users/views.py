@@ -11,9 +11,10 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 
 from permissions import permissions
-from utils import JWT_token, send_email, paginators
+from utils import paginators, JWT_token
 from . import serializers
 from .models import User
+from .tasks import *
 
 
 # TODO: make some operations async with celery.
@@ -42,11 +43,12 @@ class UserRegisterAPI(CreateAPIView):
         if srz_data.is_valid():
             srz_data.validated_data.pop('password2')
             user = User.objects.create_user(**srz_data.validated_data, avatar=request.FILES.get('avatar'))
+            vd = srz_data.validated_data
             token = JWT_token.generate_token(user, timedelta(minutes=1))
             url = self.request.build_absolute_uri(
                 reverse('users:user_register_verify', kwargs={'token': token['refresh']})
             )
-            send_email.send_link(srz_data.validated_data['email'], url)
+            send_verification_email.delay(url, vd['email'])
             return Response(
                 data={'message': 'we sent you an activation url', 'data': srz_data.data},
                 status=status.HTTP_200_OK,
