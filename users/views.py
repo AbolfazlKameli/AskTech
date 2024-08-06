@@ -17,7 +17,6 @@ from .models import User
 from .tasks import *
 
 
-# TODO: make some operations async with celery.
 class UsersListAPI(ListAPIView):
     """
     Returns list of users.\n
@@ -104,7 +103,7 @@ class ResendVerificationEmailAPI(APIView):
             url = self.request.build_absolute_uri(
                 reverse('users:user_register_verify', kwargs={'token': token['refresh']})
             )
-            send_email.send_link(user.email, url)
+            send_verification_email.delay(url, user.email)
             return Response(
                 data={"message": "The activation email has been sent again successfully"},
                 status=status.HTTP_200_OK,
@@ -178,7 +177,7 @@ class ResetPasswordAPI(APIView):
             url = self.request.build_absolute_uri(
                 reverse('users:set_password', kwargs={'token': token['refresh']})
             )
-            send_email.send_link(user.email, url)
+            send_verification_email.delay(url, user.email)
             return Response(data={'message': 'sent you a change password link!'}, status=status.HTTP_200_OK)
         return Response(data={'error': srz_data.errors}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -229,7 +228,7 @@ class UserProfileAPI(RetrieveUpdateDestroyAPIView):
                 url = self.request.build_absolute_uri(
                     reverse('users:user_register_verify', kwargs={'token': token['refresh']})
                 )
-                send_email.send_link(serializer.validated_data['email'], url)
+                send_verification_email.delay(url, serializer.validated_data['email'])
 
             serializer.save()
             message = 'Updated profile successfully.'
