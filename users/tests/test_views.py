@@ -1,13 +1,17 @@
+from datetime import datetime
 from unittest.mock import patch
 from urllib.parse import urlencode
 
+import jwt
+from django.conf import settings
 from model_bakery import baker
-from rest_framework.test import APIRequestFactory
-from rest_framework.test import APITestCase
+from rest_framework.test import APIRequestFactory, APITestCase
 from rest_framework_simplejwt.tokens import AccessToken
 
 from users.views import *
 
+
+# TODO: add utils tests.
 
 class TestUsersListAPI(APITestCase):
     @classmethod
@@ -63,14 +67,16 @@ class TestUserRegisterAPI(APITestCase):
             'password2': 'asdF@123',
         }
 
+    @patch('utils.JWT_token.generate_token')
     @patch('utils.send_email.send_link')
-    def test_success_register(self, mock_send_email):
+    def test_success_register(self, mock_send_email, mock_generate_token):
         response = self.client.post(self.url, data=self.valid_data)
         self.assertEqual(response.status_code, 200)
         self.assertIn('message', response.data)
         self.assertIn('data', response.data)
         self.assertEqual(User.objects.all().count(), 2)
         mock_send_email.assert_called_once()
+        mock_generate_token.assert_called_once()
 
     def test_not_unique_username(self):
         response = self.client.post(self.url, data=self.invalid_data)
@@ -99,6 +105,13 @@ class TestUserRegisterVerificationAPI(APITestCase):
         self.user = baker.make(User, is_active=False)
         self.token = JWT_token.generate_token(self.user)
 
+    def create_expired_token(self):
+        payload = {
+            'user_id': self.user.id,
+            'exp': datetime.now() - timedelta(days=34)
+        }
+        return jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
+
     def test_account_activation_success(self):
         response = self.client.get(self.url.replace('invalid_token', self.token['token']))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -115,17 +128,189 @@ class TestUserRegisterVerificationAPI(APITestCase):
         self.assertIn('message', response.data)
         self.assertEqual(response.data['message'], 'this account already is active')
 
-# TODO: fix token expire time.
-# def test_invalid_token(self):
-#     response = self.client.get(self.url)
-#     self.assertEqual(response.status_code, 400)
-#     self.assertIn('error', response.data)
-#     print(response.data)
-#     self.assertEqual(response.data['error'], 'Activation link has expired!')
-#
-# def test_expired_token(self):
-#     expired_token = self.create_expired_token()
-#     response = self.client.get(self.url.replace('invalid_token', expired_token))
-#     self.assertEqual(response.status_code, 400)
-#     self.assertIn('error', response.data)
-#     self.assertEqual(response.data['error'], 'Activation link has expired!')
+    @patch('users.views.get_object_or_404')
+    def test_activation_url_invalid(self, mock_jwt_decode_token):
+        mock_jwt_decode_token.side_effect = Http404
+        response = self.client.get(self.url.replace('invalid_token', self.token['token']))
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertIn('error', response.data)
+        self.assertEqual(response.data['error'], 'Activation URL is invalid')
+
+    def test_invalid_token(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('error', response.data)
+        self.assertEqual(response.data['error'], 'Activation link is invalid!')
+
+    def test_expired_token(self):
+        expired_token = self.create_expired_token()
+        response = self.client.get(self.url.replace('invalid_token', expired_token))
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('error', response.data)
+        self.assertEqual(response.data['error'], 'Activation link has expired!')
+
+
+class TestResendVerificationEmailAPI(APITestCase):
+    def setUp(self):
+        self.url = reverse('users:user_register_resend_email')
+        self.user = baker.make(User, is_active=False, email='email@gmail.com')
+        self.active_user = baker.make(User, is_active=True, email='active_user@gmail.com')
+
+    @patch('utils.JWT_token.generate_token')
+    @patch('utils.send_email.send_link')
+    def test_successful_send_email(self, mock_send_email, mock_generate_token):
+        data = {'email': 'email@gmail.com'}
+        response = self.client.post(self.url, data=data)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('message', response.data)
+        self.assertEqual(response.data['message'], 'The activation email has been sent again successfully')
+        mock_send_email.assert_called_once()
+        mock_generate_token.assert_called_once()
+
+    @patch('utils.send_email.send_link')
+    def test_invalid_email(self, mock_send_email):
+        data = {'email': 'does_not_exists_user_email@gmail.com'}
+        response = self.client.post(self.url, data=data)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('errors', response.data)
+        self.assertEqual(response.data['errors']['non_field_errors'][0], 'User does not exist!')
+        mock_send_email.assert_not_called()
+
+    @patch('utils.send_email.send_link')
+    def test_active_user_email(self, mock_send_email):
+        data = {'email': 'active_user@gmail.com'}
+        response = self.client.post(self.url, data=data)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('errors', response.data)
+        self.assertEqual(response.data['errors']['non_field_errors'][0], 'Account already active!')
+        mock_send_email.assert_not_called()
+
+
+class TestChangePasswordAPI(APITestCase):
+    def setUp(self):
+        self.user = baker.make(User, is_active=True)
+        self.user.set_password('kmk13245')
+        self.user.save()
+        self.token = JWT_token.generate_token(self.user)['token']
+        self.url = reverse('users:change_password')
+        self.valid_data = {
+            'old_password': 'kmk13245',
+            'new_password': 'asdF@123',
+            'confirm_new_password': 'asdF@123',
+        }
+        self.invalid_data = {
+            'old_password': 'invalid_password',
+            'new_password': 'asdF@123',
+            'confirm_new_password': 'asdF@123',
+        }
+
+    def test_successful_change_password(self):
+        response = self.client.put(self.url, data=self.valid_data, HTTP_AUTHORIZATION='Bearer ' + self.token)
+        self.user.refresh_from_db()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['message'], 'Your password changed successfully!')
+        self.assertTrue(self.user.check_password(self.valid_data['new_password']))
+
+    def test_invalid_old_password(self):
+        response = self.client.put(self.url, data=self.invalid_data, HTTP_AUTHORIZATION='Bearer ' + self.token)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data['error'], 'Your old password is not correct')
+
+
+class TestSetPasswordAPI(APITestCase):
+    def setUp(self):
+        self.user = baker.make(User, is_active=True)
+        self.token = JWT_token.generate_token(self.user)
+        self.url = reverse('users:set_password', args=[self.token['refresh']])
+
+    def test_successful_set_password(self):
+        data = {'new_password': 'asdF@123', 'confirm_new_password': 'asdF@123'}
+        response = self.client.post(self.url, data)
+        self.user.refresh_from_db()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['message'], 'Password changed successfully')
+        self.assertTrue(self.user.check_password(data['new_password']))
+
+    @patch('users.views.get_object_or_404')
+    def test_invalid_token_user(self, mock_not_found):
+        data = {'new_password': 'asdF@123', 'confirm_new_password': 'asdF@123'}
+        mock_not_found.side_effect = Http404
+        response = self.client.post(self.url, data)
+        self.user.refresh_from_db()
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data['error'], 'Activation link is invalid')
+        self.assertFalse(self.user.check_password(data['new_password']))
+
+
+class TestResetPasswordAPI(APITestCase):
+    def setUp(self):
+        self.user = baker.make(User, is_active=True, email='email@gmail.com')
+        self.url = reverse('users:reset_password')
+
+    @patch('utils.JWT_token.generate_token')
+    @patch('utils.send_email.send_link')
+    def test_successful_reset(self, mock_send_email, mock_generate_token):
+        data = {'email': 'email@gmail.com'}
+        response = self.client.post(self.url, data=data)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['message'], 'sent you a change password link!')
+        mock_send_email.assert_called_once()
+        mock_generate_token.assert_called_once()
+
+    @patch('utils.JWT_token.generate_token')
+    @patch('utils.send_email.send_link')
+    @patch('users.views.get_object_or_404')
+    def test_invalid_email(self, mock_get_object, mock_send_email, mock_generate_token):
+        mock_get_object.side_effect = Http404
+        data = {'email': 'email@gmail.com'}
+        response = self.client.post(self.url, data=data)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data['error'], 'user with this Email not found!')
+        mock_send_email.assert_not_called()
+        mock_generate_token.assert_not_called()
+
+
+class TestBlockTokenAPI(APITestCase):
+    def setUp(self):
+        self.user = baker.make(User, is_active=True)
+        self.token = JWT_token.generate_token(self.user)['refresh']
+        self.invalid_token = 'invalid.token.alksdjfadffeygfhasjf'
+        self.url = reverse('users:token_block')
+
+    @patch('rest_framework_simplejwt.tokens.BlacklistMixin.blacklist')
+    def test_successful_block_token(self, mock_black_list):
+        data = {'refresh': self.token}
+        response = self.client.post(self.url, data)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['message'], 'Token blocked successfully!')
+        mock_black_list.assert_called_once()
+
+    def test_block_invalid_token(self):
+        data = {'refresh': self.invalid_token}
+        response = self.client.post(self.url, data)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data['error'], 'token is invalid!')
+
+
+class TestUserProfileAPI(APITestCase):
+    def setUp(self):
+        self.user = baker.make(User, is_active=True)
+        self.token = JWT_token.generate_token(self.user)['token']
+
+    def test_retrieve_user_profile_GET(self):
+        url = reverse('users:user_profile', args=[self.user.id])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['username'], self.user.username)
+
+    def test_retrieve_user_profile_not_found(self):
+        url = reverse('users:user_profile', args=[23])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.data['detail'], 'No User matches the given query.')
+
+    def test_partial_update_user_profile(self):
+        data = {'username': 'new_username'}
+        url = reverse('users:user_profile', args=[1])
+        response = self.client.patch(url, data, HTTP_AUTHORIZATION='Bearer ' + self.token)
+        self.assertEqual(response.status_code, 200)
