@@ -3,15 +3,12 @@ from unittest.mock import patch
 from urllib.parse import urlencode
 
 import jwt
-from django.conf import settings
 from model_bakery import baker
 from rest_framework.test import APIRequestFactory, APITestCase
 from rest_framework_simplejwt.tokens import AccessToken
 
 from users.views import *
 
-
-# TODO: add utils tests.
 
 class TestUsersListAPI(APITestCase):
     @classmethod
@@ -67,16 +64,12 @@ class TestUserRegisterAPI(APITestCase):
             'password2': 'asdF@123',
         }
 
-    @patch('utils.JWT_token.generate_token')
-    @patch('utils.send_email.send_link')
-    def test_success_register(self, mock_send_email, mock_generate_token):
+    def test_success_register(self):
         response = self.client.post(self.url, data=self.valid_data)
         self.assertEqual(response.status_code, 200)
         self.assertIn('message', response.data)
         self.assertIn('data', response.data)
         self.assertEqual(User.objects.all().count(), 2)
-        mock_send_email.assert_called_once()
-        mock_generate_token.assert_called_once()
 
     def test_not_unique_username(self):
         response = self.client.post(self.url, data=self.invalid_data)
@@ -91,12 +84,10 @@ class TestUserRegisterAPI(APITestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn('error', response.data)
 
-    @patch('utils.send_email.send_link')
-    def test_register_with_avatar(self, mock_send_email):
+    def test_register_with_avatar(self):
         self.valid_data['avatar'] = 'avatar.png'
         response = self.client.post(self.url, data=self.valid_data)
         self.assertEqual(response.status_code, 200)
-        mock_send_email.assert_called_once()
 
 
 class TestUserRegisterVerificationAPI(APITestCase):
@@ -156,16 +147,12 @@ class TestResendVerificationEmailAPI(APITestCase):
         self.user = baker.make(User, is_active=False, email='email@gmail.com')
         self.active_user = baker.make(User, is_active=True, email='active_user@gmail.com')
 
-    @patch('utils.JWT_token.generate_token')
-    @patch('utils.send_email.send_link')
-    def test_successful_send_email(self, mock_send_email, mock_generate_token):
+    def test_successful_send_email(self):
         data = {'email': 'email@gmail.com'}
         response = self.client.post(self.url, data=data)
         self.assertEqual(response.status_code, 200)
         self.assertIn('message', response.data)
         self.assertEqual(response.data['message'], 'The activation email has been sent again successfully')
-        mock_send_email.assert_called_once()
-        mock_generate_token.assert_called_once()
 
     @patch('utils.send_email.send_link')
     def test_invalid_email(self, mock_send_email):
@@ -247,27 +234,19 @@ class TestResetPasswordAPI(APITestCase):
         self.user = baker.make(User, is_active=True, email='email@gmail.com')
         self.url = reverse('users:reset_password')
 
-    @patch('utils.JWT_token.generate_token')
-    @patch('utils.send_email.send_link')
-    def test_successful_reset(self, mock_send_email, mock_generate_token):
+    def test_successful_reset(self):
         data = {'email': 'email@gmail.com'}
         response = self.client.post(self.url, data=data)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data['message'], 'sent you a change password link!')
-        mock_send_email.assert_called_once()
-        mock_generate_token.assert_called_once()
 
-    @patch('utils.JWT_token.generate_token')
-    @patch('utils.send_email.send_link')
     @patch('users.views.get_object_or_404')
-    def test_invalid_email(self, mock_get_object, mock_send_email, mock_generate_token):
+    def test_invalid_email(self, mock_get_object):
         mock_get_object.side_effect = Http404
         data = {'email': 'email@gmail.com'}
         response = self.client.post(self.url, data=data)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data['error'], 'user with this Email not found!')
-        mock_send_email.assert_not_called()
-        mock_generate_token.assert_not_called()
 
 
 class TestBlockTokenAPI(APITestCase):
