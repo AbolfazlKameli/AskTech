@@ -218,7 +218,9 @@ class UserProfileAPI(RetrieveUpdateDestroyAPIView):
         user = self.get_object()
         serializer = self.get_serializer(instance=user, data=request.data, partial=True)
         if serializer.is_valid():
-            if 'email' in serializer.validated_data:
+            email_changed = 'email' in serializer.validated_data
+
+            if email_changed:
                 token = JWT_token.generate_token(user, timedelta(minutes=1))
                 user.is_active = False
                 user.save()
@@ -226,11 +228,10 @@ class UserProfileAPI(RetrieveUpdateDestroyAPIView):
                     reverse('users:user_register_verify', kwargs={'token': token['refresh']})
                 )
                 send_email.send_link(serializer.validated_data['email'], url)
-                serializer.save()
-                return Response(
-                    data={'message': 'send a verification url on your new email address and other changes saved.'},
-                    status=status.HTTP_200_OK
-                )
+
             serializer.save()
-            return Response(data={'message': 'updated profile successfully'}, status=status.HTTP_200_OK)
-        return Response(data={'test': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+            message = 'Updated profile successfully.'
+            if email_changed:
+                message += ' A verification URL has been sent to your new email address.'
+            return Response(data={'message': message}, status=status.HTTP_200_OK)
+        return Response(data={'errors': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
