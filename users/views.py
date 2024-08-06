@@ -1,8 +1,5 @@
-from datetime import timedelta
-
 from django.http import Http404
 from django.shortcuts import get_object_or_404
-from django.urls import reverse
 from rest_framework import status
 from rest_framework.generics import ListAPIView, CreateAPIView, RetrieveUpdateDestroyAPIView
 from rest_framework.permissions import IsAdminUser, IsAuthenticated, AllowAny
@@ -11,12 +8,11 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 
 from permissions import permissions
-from utils import JWT_token, send_email, paginators
+from utils import paginators
 from . import serializers
-from .models import User
+from .tasks import *
 
 
-# TODO: make some operations async with celery.
 class UsersListAPI(ListAPIView):
     """
     Returns list of users.\n
@@ -42,11 +38,8 @@ class UserRegisterAPI(CreateAPIView):
         if srz_data.is_valid():
             srz_data.validated_data.pop('password2')
             user = User.objects.create_user(**srz_data.validated_data, avatar=request.FILES.get('avatar'))
-            token = JWT_token.generate_token(user, timedelta(minutes=1))
-            url = self.request.build_absolute_uri(
-                reverse('users:user_register_verify', kwargs={'token': token['refresh']})
-            )
-            send_email.send_link(srz_data.validated_data['email'], url)
+            vd = srz_data.validated_data
+            send_verification_email.delay(vd['email'], user.id)
             return Response(
                 data={'message': 'we sent you an activation url', 'data': srz_data.data},
                 status=status.HTTP_200_OK,
@@ -98,11 +91,7 @@ class ResendVerificationEmailAPI(APIView):
         srz_data = self.serializer_class(data=request.POST)
         if srz_data.is_valid():
             user = srz_data.validated_data['user']
-            token = JWT_token.generate_token(user, timedelta(minutes=1))
-            url = self.request.build_absolute_uri(
-                reverse('users:user_register_verify', kwargs={'token': token['refresh']})
-            )
-            send_email.send_link(user.email, url)
+            send_verification_email.delay(user.email, user.id)
             return Response(
                 data={"message": "The activation email has been sent again successfully"},
                 status=status.HTTP_200_OK,
@@ -172,11 +161,7 @@ class ResetPasswordAPI(APIView):
                 user = get_object_or_404(User, email=srz_data.validated_data['email'])
             except Http404:
                 return Response(data={'error': 'user with this Email not found!'}, status=status.HTTP_400_BAD_REQUEST)
-            token = JWT_token.generate_token(user, timedelta(minutes=1))
-            url = self.request.build_absolute_uri(
-                reverse('users:set_password', kwargs={'token': token['refresh']})
-            )
-            send_email.send_link(user.email, url)
+            send_verification_email.delay(user.email, user.id)
             return Response(data={'message': 'sent you a change password link!'}, status=status.HTTP_200_OK)
         return Response(data={'error': srz_data.errors}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -218,19 +203,16 @@ class UserProfileAPI(RetrieveUpdateDestroyAPIView):
         user = self.get_object()
         serializer = self.get_serializer(instance=user, data=request.data, partial=True)
         if serializer.is_valid():
-            if 'email' in serializer.validated_data:
-                token = JWT_token.generate_token(user, timedelta(minutes=1))
+            email_changed = 'email' in serializer.validated_data
+
+            if email_changed:
                 user.is_active = False
                 user.save()
-                url = self.request.build_absolute_uri(
-                    reverse('users:user_register_verify', kwargs={'token': token['refresh']})
-                )
-                send_email.send_link(serializer.validated_data['email'], url)
-                serializer.save()
-                return Response(
-                    data={'message': 'send a verification url on your new email address and other changes saved.'},
-                    status=status.HTTP_200_OK
-                )
+                send_verification_email.delay(serializer.validated_data['email'], user.id)
+
             serializer.save()
-            return Response(data={'message': 'updated profile successfully'}, status=status.HTTP_200_OK)
-        return Response(data={'test': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+            message = 'Updated profile successfully.'
+            if email_changed:
+                message += ' A verification URL has been sent to your new email address.'
+            return Response(data={'message': message}, status=status.HTTP_200_OK)
+        return Response(data={'errors': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
