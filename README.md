@@ -43,7 +43,7 @@ python3 -m venv .venv
 activate virtual environment
 
 ```shell
-source source .venv/bin/activate 
+source .venv/bin/activate 
 ```
 
 install requirements
