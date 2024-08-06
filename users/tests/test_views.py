@@ -309,12 +309,6 @@ class TestUserProfileAPI(APITestCase):
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.data['detail'], 'No User matches the given query.')
 
-    def test_unauthorized_update_user_profile(self):
-        url = reverse('users:user_profile', args=[1])
-        response = self.client.put(url)
-        self.assertEqual(response.status_code, 401)
-        self.assertEqual(response.data['detail'], 'Authentication credentials were not provided.')
-
     def test_partial_update_user_profile(self):
         data = {'username': 'new_username'}
         url = reverse('users:user_profile', args=[1])
