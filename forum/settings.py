@@ -129,6 +129,7 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = '/static/'
+DOMAIN = '127.0.0.1:8000'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
@@ -136,7 +137,6 @@ STATIC_URL = '/static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Media Files
-MEDIA_ROOT = 'media/'
 MEDIA_URL = '/media/'
 
 AUTH_USER_MODEL = 'users.User'
@@ -203,7 +203,7 @@ CELERY_BROKER_URL = "amqp://"
 CELERY_RESULT_BACKEND = 'rpc://'
 CELERY_WORKER_PREFETCH_MULTIPLIER = 3
 CELERY_TIMEZONE = 'Asia/Tehran'
-CELERY_TASK_SERIALIZER = 'json'
+CELERY_TASK_SERIALIZER = 'pickle'
 CELERY_RESULT_SERIALIZER = 'pickle'
 CELERY_ACCEPT_CONTENT = ['json', 'pickle']
 CELERY_RESULT_EXPIRE = timedelta(minutes=1)
