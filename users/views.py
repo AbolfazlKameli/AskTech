@@ -39,7 +39,7 @@ class UserRegisterAPI(CreateAPIView):
             srz_data.validated_data.pop('password2')
             user = User.objects.create_user(**srz_data.validated_data, avatar=request.FILES.get('avatar'))
             vd = srz_data.validated_data
-            send_verification_email.delay(vd['email'], user.id)
+            send_verification_email.delay_on_commit(vd['email'], user.id)
             return Response(
                 data={'message': 'we sent you an activation url', 'data': srz_data.data},
                 status=status.HTTP_200_OK,
@@ -91,7 +91,7 @@ class ResendVerificationEmailAPI(APIView):
         srz_data = self.serializer_class(data=request.POST)
         if srz_data.is_valid():
             user = srz_data.validated_data['user']
-            send_verification_email.delay(user.email, user.id)
+            send_verification_email.delay_on_commit(user.email, user.id)
             return Response(
                 data={"message": "The activation email has been sent again successfully"},
                 status=status.HTTP_200_OK,
@@ -161,7 +161,7 @@ class ResetPasswordAPI(APIView):
                 user = get_object_or_404(User, email=srz_data.validated_data['email'])
             except Http404:
                 return Response(data={'error': 'user with this Email not found!'}, status=status.HTTP_400_BAD_REQUEST)
-            send_verification_email.delay(user.email, user.id)
+            send_verification_email.delay_on_commit(user.email, user.id)
             return Response(data={'message': 'sent you a change password link!'}, status=status.HTTP_200_OK)
         return Response(data={'error': srz_data.errors}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -208,7 +208,7 @@ class UserProfileAPI(RetrieveUpdateDestroyAPIView):
             if email_changed:
                 user.is_active = False
                 user.save()
-                send_verification_email.delay(serializer.validated_data['email'], user.id)
+                send_verification_email.delay_on_commit(serializer.validated_data['email'], user.id)
 
             serializer.save()
             message = 'Updated profile successfully.'
