@@ -10,7 +10,7 @@ documents = [
 
 urlpatterns = [
     path('KhatMan/', admin.site.urls),
-    path('', include('home.urls', namespace='home')),
-    path('users/', include('users.urls', namespace='users')),
+    path('', include('apps.home.urls', namespace='home')),
+    path('users/', include('apps.users.urls', namespace='users')),
     path('schema/', include(documents))
 ]

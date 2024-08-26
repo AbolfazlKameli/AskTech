@@ -2,7 +2,7 @@ from django.test import TestCase
 from django.urls import reverse, resolve
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
-from users import views
+from apps.users import views
 
 
 class TestUrls(TestCase):
