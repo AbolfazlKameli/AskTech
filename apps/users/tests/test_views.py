@@ -34,14 +34,14 @@ class TestUsersListAPI(APITestCase):
         request = self.factory.get(reverse('users:users_list'), HTTP_AUTHORIZATION='Bearer ' + self.admin_token)
         response = UsersListAPI.as_view()(request)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.data['results']), 20)
+        self.assertEqual(len(response.data['data']), 10)
 
     def test_list_paginated_GET(self):
         request = self.factory.get(f"{reverse('users:users_list')}?{urlencode({'page': 2})}",
                                    HTTP_AUTHORIZATION='Bearer ' + self.admin_token)
         response = UsersListAPI.as_view()(request)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.data['results']), 17)
+        self.assertEqual(len(response.data['data']), 10)
 
 
 class TestUserRegisterAPI(APITestCase):
