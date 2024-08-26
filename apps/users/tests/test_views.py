@@ -7,7 +7,7 @@ from model_bakery import baker
 from rest_framework.test import APIRequestFactory, APITestCase
 from rest_framework_simplejwt.tokens import AccessToken
 
-from users.views import *
+from apps.users.views import *
 
 
 class TestUsersListAPI(APITestCase):
@@ -119,7 +119,7 @@ class TestUserRegisterVerificationAPI(APITestCase):
         self.assertIn('message', response.data)
         self.assertEqual(response.data['message'], 'this account already is active')
 
-    @patch('users.views.get_object_or_404')
+    @patch('apps.users.views.get_object_or_404')
     def test_activation_url_invalid(self, mock_jwt_decode_token):
         mock_jwt_decode_token.side_effect = Http404
         response = self.client.get(self.url.replace('invalid_token', self.token['token']))
@@ -218,7 +218,7 @@ class TestSetPasswordAPI(APITestCase):
         self.assertEqual(response.data['message'], 'Password changed successfully')
         self.assertTrue(self.user.check_password(data['new_password']))
 
-    @patch('users.views.get_object_or_404')
+    @patch('apps.users.views.get_object_or_404')
     def test_invalid_token_user(self, mock_not_found):
         data = {'new_password': 'asdF@123', 'confirm_new_password': 'asdF@123'}
         mock_not_found.side_effect = Http404
@@ -240,7 +240,7 @@ class TestResetPasswordAPI(APITestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data['message'], 'sent you a change password link!')
 
-    @patch('users.views.get_object_or_404')
+    @patch('apps.users.views.get_object_or_404')
     def test_invalid_email(self, mock_get_object):
         mock_get_object.side_effect = Http404
         data = {'email': 'email@gmail.com'}

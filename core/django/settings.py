@@ -16,7 +16,7 @@ from pathlib import Path
 from decouple import config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
@@ -31,8 +31,8 @@ ALLOWED_HOSTS = []
 
 # Application definition
 LOCAL_APPS = [
-    'home.apps.HomeConfig',
-    'users.apps.UsersConfig',
+    'apps.home.apps.HomeConfig',
+    'apps.users.apps.UsersConfig',
 ]
 
 THIRD_PARTY_APPS = [
@@ -64,7 +64,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'forum.urls'
+ROOT_URLCONF = 'core.urls'
 
 TEMPLATES = [
     {
@@ -82,7 +82,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'forum.wsgi.application'
+WSGI_APPLICATION = 'core.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
@@ -152,60 +152,11 @@ REST_FRAMEWORK = {
         'rest_framework.renderers.JSONRenderer',
     ],
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    'DEFAULT_PAGINATION_CLASS': 'utils.paginators.NeatPagination',
 }
 
-# Simple_JWT
-SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(days=2),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=15),
-}
-
-# Spectacular
-SPECTACULAR_SETTINGS = {
-    'TITLE': 'AskTech',
-    'DESCRIPTION': 'a forum about Technology issues',
-    'VERSION': '1.0.0',
-    'is_superuser': True,
-    'is_authenticated': True
-}
-
-# SMTP
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = config('EMAIL_HOST')
-EMAIL_PORT = config('EMAIL_PORT')
-EMAIL_HOST_USER = config('EMAIL_HOST_USER')
-EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
-EMAIL_USE_TLS = config('EMAIL_USE_TLS')
-DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL')
-
-# ArvanCloud Storage Settings
-STORAGES = {
-    "default": {
-        "BACKEND": "storages.backends.s3.S3Storage",
-        "OPTIONS": {
-        },
-    },
-    "staticfiles": {
-        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
-        "OPTIONS": {
-        },
-    },
-}
-
-AWS_S3_ACCESS_KEY_ID = config('AWS_S3_ACCESS_KEY_ID')
-AWS_SECRET_ACCESS_KEY = config('AWS_SECRET_ACCESS_KEY')
-AWS_S3_ENDPOINT_URL = config('AWS_S3_ENDPOINT_URL')
-AWS_STORAGE_BUCKET_NAME = config('AWS_STORAGE_BUCKET_NAME')
-AWS_SERVICE_NAME = config('AWS_SERVICE_NAME')
-AW_S3_FILE_OVERWRITE = config('AW_S3_FILE_OVERWRITE')
-
-# CELERY configs
-CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
-CELERY_BROKER_URL = "amqp://"
-CELERY_RESULT_BACKEND = 'rpc://'
-CELERY_WORKER_PREFETCH_MULTIPLIER = 3
-CELERY_TIMEZONE = config('TIME_ZONE')
-CELERY_TASK_SERIALIZER = 'json'
-CELERY_RESULT_SERIALIZER = 'pickle'
-CELERY_ACCEPT_CONTENT = ['json', 'pickle']
-CELERY_RESULT_EXPIRE = timedelta(minutes=1)
+from core.settings.jwt import *  # Simple_JWT
+from core.settings.drf_spectacular import *  # Spectacular
+from core.settings.SMTP_configs import *  # SMTP
+from core.settings.storages import *  # ArvanCloud Storage Settings
+from core.settings.celery_configs import *  # CELERY configs

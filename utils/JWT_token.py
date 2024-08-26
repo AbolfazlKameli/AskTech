@@ -1,7 +1,7 @@
 import jwt
 from django.conf import settings
 
-from users.serializers import MyTokenObtainPairSerializer
+from apps.users.serializers import MyTokenObtainPairSerializer
 
 
 def generate_token(user, lifetime=None):

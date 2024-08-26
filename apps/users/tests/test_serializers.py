@@ -1,8 +1,8 @@
 from model_bakery import baker
 from rest_framework.test import APITestCase
 
-from users.models import User
-from users.serializers import (
+from apps.users.models import User
+from apps.users.serializers import (
     UserSerializer,
     UserRegisterSerializer,
     ResendVerificationEmailSerializer,

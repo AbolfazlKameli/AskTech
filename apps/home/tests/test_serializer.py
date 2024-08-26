@@ -1,7 +1,7 @@
 from model_bakery import baker
 from rest_framework.test import APITestCase
 
-from home.models import (
+from apps.home.models import (
     Tag,
     Question,
     AnswerComment,
@@ -9,13 +9,13 @@ from home.models import (
     Vote,
     CommentReply
 )
-from home.serializers import (
+from apps.home.serializers import (
     QuestionSerializer,
     AnswerSerializer,
     AnswerCommentSerializer,
     ReplyCommentSerializer
 )
-from users.models import User
+from apps.users.models import User
 
 
 class TestQuestionSerializer(APITestCase):

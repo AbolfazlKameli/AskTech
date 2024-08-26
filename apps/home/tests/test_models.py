@@ -1,8 +1,8 @@
 from django.test import TestCase
 from model_bakery import baker
 
-from home import models
-from users.models import User
+from apps.home import models
+from apps.users.models import User
 
 
 class TestQuestion(TestCase):

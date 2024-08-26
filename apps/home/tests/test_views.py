@@ -7,9 +7,9 @@ from rest_framework.test import APIRequestFactory
 from rest_framework.test import APITestCase
 from rest_framework_simplejwt.tokens import AccessToken
 
-from home import models
-from home.views import *
-from users.models import User
+from apps.home import models
+from apps.home.views import *
+from apps.users.models import User
 
 
 class TestHomeAPI(APITestCase):

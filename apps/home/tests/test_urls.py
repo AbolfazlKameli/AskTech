@@ -1,7 +1,7 @@
 from django.urls import reverse, resolve
 from rest_framework.test import APISimpleTestCase
 
-from home import views
+from apps.home import views
 
 
 class TestUrls(APISimpleTestCase):
