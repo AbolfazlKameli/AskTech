@@ -8,7 +8,6 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 
 from permissions import permissions
-from utils import paginators
 from . import serializers
 from .tasks import *
 
@@ -21,7 +20,6 @@ class UsersListAPI(ListAPIView):
     permission_classes = [IsAdminUser, ]
     queryset = User.objects.all()
     serializer_class = serializers.UserSerializer
-    pagination_class = paginators.StandardPageNumberPagination
 
 
 class UserRegisterAPI(CreateAPIView):

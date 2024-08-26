@@ -1,45 +1,45 @@
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from rest_framework import status
-from rest_framework.generics import GenericAPIView
+from rest_framework.generics import ListAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 
 from permissions import permissions
-from utils import paginators
 from . import serializers
-from .models import Question, Answer, AnswerComment, CommentReply, Tag, Vote
+from .models import Question, Answer, AnswerComment, CommentReply, Vote
 
 
-class HomeAPI(GenericAPIView):
+class HomeAPI(ListAPIView):
     """Home page."""
     permission_classes = [AllowAny]
-    pagination_class = paginators.StandardPageNumberPagination
+    serializer_class = serializers.QuestionSerializer
+    queryset = Question.objects.all()
 
     @extend_schema(parameters=[
         OpenApiParameter(name='tag', type=str, location=OpenApiParameter.QUERY, description='tag'),
         OpenApiParameter(name='search', type=str, location=OpenApiParameter.QUERY, description='search'),
     ])
-    def get(self, request, *args, **kwargs):
-        questions = Question.objects.all()
-        if self.request.query_params.get('tag'):
-            tag = get_object_or_404(Tag, slug=self.request.query_params['tag'])
-            questions = tag.questions.all()
-        if self.request.query_params.get('search'):
-            questions = Question.objects.filter(body__icontains=self.request.query_params['search'])
-            if not questions.exists():
-                return Response(data={'error': 'question not found.'}, status=status.HTTP_404_NOT_FOUND)
-        srz_data = serializers.QuestionSerializer(questions, many=True)
-        return Response(data={'data': srz_data.data}, status=status.HTTP_200_OK)
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+        # questions = Question.objects.all()
+        # if self.request.query_params.get('tag'):
+        #     tag = get_object_or_404(Tag, slug=self.request.query_params['tag'])
+        #     questions = tag.questions.all()
+        # if self.request.query_params.get('search'):
+        #     questions = Question.objects.filter(body__icontains=self.request.query_params['search'])
+        #     if not questions.exists():
+        #         return Response(data={'error': 'question not found.'}, status=status.HTTP_404_NOT_FOUND)
+        # srz_data = self.get_serializer(questions, many=True)
+        # return Response(data={'data': srz_data.data}, status=status.HTTP_200_OK)
 
 
 class QuestionViewSet(ModelViewSet):
     """question CRUD operations ModelViewSet"""
     serializer_class = serializers.QuestionSerializer
     queryset = Question.objects.all()
-    pagination_class = paginators.StandardPageNumberPagination
 
     def get_permissions(self):
         if self.action == 'list' or self.action == 'retrieve':
