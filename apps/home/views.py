@@ -18,10 +18,6 @@ class HomeAPI(ListAPIView):
     serializer_class = serializers.QuestionSerializer
     queryset = Question.objects.all()
 
-    @extend_schema(parameters=[
-        OpenApiParameter(name='tag', type=str, location=OpenApiParameter.QUERY, description='tag'),
-        OpenApiParameter(name='search', type=str, location=OpenApiParameter.QUERY, description='search'),
-    ])
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
         # questions = Question.objects.all()
