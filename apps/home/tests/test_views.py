@@ -263,7 +263,7 @@ class TestReplyViewSet(APITestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data['body'], 'update test')
 
-    def test_comment_full_update(self):
+    def test_reply_full_update(self):
         data = {
             'body': 'update testing body'
         }
@@ -273,7 +273,7 @@ class TestReplyViewSet(APITestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data['body'], 'update testing body')
 
-    def test_comment_delete(self):
+    def test_reply_delete(self):
         request = self.factory.delete(reverse('home:reply-detail', args=[1]),
                                       HTTP_AUTHORIZATION='Bearer ' + self.token)
         response = ReplyViewSet.as_view({'delete': 'destroy'})(request, pk=1)

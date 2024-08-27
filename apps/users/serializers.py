@@ -18,7 +18,16 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         exclude = ('password',)
-        read_only_fields = ('id', 'last_login', 'is_superuser', 'is_admin', 'groups', 'user_permissions')
+        read_only_fields = (
+            'id',
+            'last_login',
+            'is_superuser',
+            'is_admin',
+            'groups',
+            'user_permissions',
+            'score',
+            'is_active'
+        )
 
     def validate(self, attrs):
         if not attrs:

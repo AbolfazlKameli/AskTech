@@ -9,6 +9,7 @@ from rest_framework.viewsets import ModelViewSet
 
 from permissions import permissions
 from . import serializers
+from .docs.doc_serializers import DocQuestionSerializer
 from .models import Question, Answer, AnswerComment, CommentReply, Vote
 
 
@@ -18,10 +19,6 @@ class HomeAPI(ListAPIView):
     serializer_class = serializers.QuestionSerializer
     queryset = Question.objects.all()
 
-    @extend_schema(parameters=[
-        OpenApiParameter(name='tag', type=str, location=OpenApiParameter.QUERY, description='tag'),
-        OpenApiParameter(name='search', type=str, location=OpenApiParameter.QUERY, description='search'),
-    ])
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
         # questions = Question.objects.all()
@@ -56,6 +53,7 @@ class QuestionViewSet(ModelViewSet):
             return Response({'message': 'question created successfully!'})
         return Response({'error': serializer.errors})
 
+    @extend_schema(responses={200: DocQuestionSerializer})
     def retrieve(self, request, *args, **kwargs):
         """shows detail of one question object."""
         question = self.get_object()
@@ -64,9 +62,15 @@ class QuestionViewSet(ModelViewSet):
         srz_answers = serializers.AnswerSerializer(answers, many=True)
         return Response(data={'question': srz_question.data, 'answers': srz_answers.data}, status=status.HTTP_200_OK)
 
+    @extend_schema(responses={200: DocQuestionSerializer})
     def update(self, request, *args, **kwargs):
         """updates one question object."""
         return super().update(request, *args, **kwargs)
+
+    @extend_schema(responses={200: DocQuestionSerializer})
+    def partial_update(self, request, *args, **kwargs):
+        """updates a question object partially"""
+        return super().partial_update(request, *args, **kwargs)
 
     def destroy(self, request, *args, **kwargs):
         """deletes an answer object."""
@@ -166,6 +170,7 @@ class ReplyViewSet(ModelViewSet):
 class LikeAPI(APIView):
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(responses={200: DocQuestionSerializer})
     def post(self, request, answer_id):
         """add a like for each answer"""
         answer = get_object_or_404(Answer, id=answer_id)
@@ -183,6 +188,7 @@ class LikeAPI(APIView):
 class DisLikeAPI(APIView):
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(responses={200: DocQuestionSerializer})
     def post(self, request, answer_id):
         """add a dislike for each answer"""
         answer = get_object_or_404(Answer, id=answer_id)
@@ -200,6 +206,7 @@ class DisLikeAPI(APIView):
 class AcceptAnswerAPI(APIView):
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(responses={200: DocQuestionSerializer})
     def post(self, request, answer_id):
         """accept an answer object"""
         answer = get_object_or_404(Answer, id=answer_id)
@@ -209,7 +216,7 @@ class AcceptAnswerAPI(APIView):
                 answer.owner.score += 1
                 answer.owner.save()
                 answer.save()
-                return Response(data={'message': 'accepted'}, status=status.HTTP_200_OK)
+                return Response(data={'message': 'answer accepted.'}, status=status.HTTP_200_OK)
             return Response(data={'message': 'you can not accept an answer twice or accept two answers'},
                             status=status.HTTP_400_BAD_REQUEST
                             )
