@@ -10,6 +10,7 @@ from rest_framework.viewsets import ModelViewSet
 from docs.serializers.doc_serializers import MessageSerializer
 from permissions import permissions
 from . import serializers
+from .docs.doc_serializers import DocQuestionSerializer
 from .models import Question, Answer, AnswerComment, CommentReply, Vote
 
 
@@ -53,7 +54,7 @@ class QuestionViewSet(ModelViewSet):
             return Response({'message': 'question created successfully!'})
         return Response({'error': serializer.errors})
 
-    @extend_schema(responses={200: MessageSerializer})
+    @extend_schema(responses={200: DocQuestionSerializer})
     def retrieve(self, request, *args, **kwargs):
         """shows detail of one question object."""
         question = self.get_object()
@@ -62,9 +63,15 @@ class QuestionViewSet(ModelViewSet):
         srz_answers = serializers.AnswerSerializer(answers, many=True)
         return Response(data={'question': srz_question.data, 'answers': srz_answers.data}, status=status.HTTP_200_OK)
 
+    @extend_schema(responses={200: DocQuestionSerializer})
     def update(self, request, *args, **kwargs):
         """updates one question object."""
         return super().update(request, *args, **kwargs)
+
+    @extend_schema(responses={200: DocQuestionSerializer})
+    def partial_update(self, request, *args, **kwargs):
+        """updates a question object partially"""
+        return super().partial_update(request, *args, **kwargs)
 
     def destroy(self, request, *args, **kwargs):
         """deletes an answer object."""
