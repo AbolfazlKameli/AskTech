@@ -7,7 +7,6 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 
-from docs.serializers.doc_serializers import MessageSerializer
 from permissions import permissions
 from . import serializers
 from .docs.doc_serializers import DocQuestionSerializer
@@ -170,8 +169,8 @@ class ReplyViewSet(ModelViewSet):
 
 class LikeAPI(APIView):
     permission_classes = [IsAuthenticated]
-    serializer_class = MessageSerializer
 
+    @extend_schema(responses={200: DocQuestionSerializer})
     def post(self, request, answer_id):
         """add a like for each answer"""
         answer = get_object_or_404(Answer, id=answer_id)
@@ -188,8 +187,8 @@ class LikeAPI(APIView):
 
 class DisLikeAPI(APIView):
     permission_classes = [IsAuthenticated]
-    serializer_class = MessageSerializer
 
+    @extend_schema(responses={200: DocQuestionSerializer})
     def post(self, request, answer_id):
         """add a dislike for each answer"""
         answer = get_object_or_404(Answer, id=answer_id)
@@ -206,8 +205,8 @@ class DisLikeAPI(APIView):
 
 class AcceptAnswerAPI(APIView):
     permission_classes = [IsAuthenticated]
-    serializer_class = MessageSerializer
 
+    @extend_schema(responses={200: DocQuestionSerializer})
     def post(self, request, answer_id):
         """accept an answer object"""
         answer = get_object_or_404(Answer, id=answer_id)

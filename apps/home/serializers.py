@@ -53,7 +53,7 @@ class AnswerSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Answer
-        fields = '__all__'
+        exclude = ('accepted',)
 
     @extend_schema_field(serializers.ListSerializer(child=AnswerCommentSerializer(many=True)))
     def get_comments(self, obj):
