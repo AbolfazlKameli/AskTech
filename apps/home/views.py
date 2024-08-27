@@ -7,9 +7,9 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 
+from docs.serializers.doc_serializers import MessageSerializer
 from permissions import permissions
 from . import serializers
-from .docs import doc_serializers
 from .models import Question, Answer, AnswerComment, CommentReply, Vote
 
 
@@ -53,7 +53,7 @@ class QuestionViewSet(ModelViewSet):
             return Response({'message': 'question created successfully!'})
         return Response({'error': serializer.errors})
 
-    @extend_schema(responses=doc_serializers.DocQuestionSerializer(many=True))
+    @extend_schema(responses={200: MessageSerializer})
     def retrieve(self, request, *args, **kwargs):
         """shows detail of one question object."""
         question = self.get_object()
@@ -163,7 +163,7 @@ class ReplyViewSet(ModelViewSet):
 
 class LikeAPI(APIView):
     permission_classes = [IsAuthenticated]
-    serializer_class = doc_serializers.DocDislikeSerializer
+    serializer_class = MessageSerializer
 
     def post(self, request, answer_id):
         """add a like for each answer"""
@@ -181,7 +181,7 @@ class LikeAPI(APIView):
 
 class DisLikeAPI(APIView):
     permission_classes = [IsAuthenticated]
-    serializer_class = doc_serializers.DocDislikeSerializer
+    serializer_class = MessageSerializer
 
     def post(self, request, answer_id):
         """add a dislike for each answer"""
@@ -199,7 +199,7 @@ class DisLikeAPI(APIView):
 
 class AcceptAnswerAPI(APIView):
     permission_classes = [IsAuthenticated]
-    serializer_class = doc_serializers.DocAnswerAcceptSerializer
+    serializer_class = MessageSerializer
 
     def post(self, request, answer_id):
         """accept an answer object"""

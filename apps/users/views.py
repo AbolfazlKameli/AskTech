@@ -8,6 +8,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 
+from docs.serializers.doc_serializers import MessageSerializer
 from permissions import permissions
 from . import serializers
 from .docs import doc_serializers
@@ -91,7 +92,7 @@ class ResendVerificationEmailAPI(APIView):
     permission_classes = [permissions.NotAuthenticated, ]
     serializer_class = serializers.ResendVerificationEmailSerializer
 
-    @extend_schema(responses={200: doc_serializers.MessageSerializer})
+    @extend_schema(responses={200: MessageSerializer})
     def post(self, request):
         srz_data = self.serializer_class(data=request.POST)
         if srz_data.is_valid():
@@ -113,7 +114,7 @@ class ChangePasswordAPI(APIView):
     serializer_class = serializers.ChangePasswordSerializer
 
     @extend_schema(responses={
-        200: doc_serializers.MessageSerializer
+        200: MessageSerializer
     })
     def put(self, request):
         srz_data = self.serializer_class(data=request.data)
@@ -138,7 +139,7 @@ class SetPasswordAPI(APIView):
     serializer_class = serializers.SetPasswordSerializer
 
     @extend_schema(responses={
-        200: doc_serializers.MessageSerializer
+        200: MessageSerializer
     })
     def post(self, request, token):
         srz_data = self.serializer_class(data=request.POST)
@@ -166,7 +167,7 @@ class ResetPasswordAPI(APIView):
     serializer_class = serializers.ResetPasswordSerializer
 
     @extend_schema(responses={
-        200: doc_serializers.MessageSerializer
+        200: MessageSerializer
     })
     def post(self, request):
         srz_data = self.serializer_class(data=request.POST)
@@ -188,7 +189,7 @@ class BlockTokenAPI(APIView):
     serializer_class = serializers.TokenSerializer
     permission_classes = [AllowAny, ]
 
-    @extend_schema(responses={200: doc_serializers.MessageSerializer})
+    @extend_schema(responses={200: MessageSerializer})
     def post(self, request):
         srz_data = self.serializer_class(data=request.POST)
         if srz_data.is_valid():
@@ -203,10 +204,10 @@ class BlockTokenAPI(APIView):
 
 @extend_schema_view(
     patch=extend_schema(
-        responses=doc_serializers.MessageSerializer
+        responses=MessageSerializer
     ),
     delete=extend_schema(
-        responses={200: doc_serializers.MessageSerializer}
+        responses={200: MessageSerializer}
     )
 )
 class UserProfileAPI(RetrieveUpdateDestroyAPIView):

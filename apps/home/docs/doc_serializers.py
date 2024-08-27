@@ -5,14 +5,6 @@ from apps.home.models import Question, Tag
 from apps.home.serializers import AnswerSerializer
 
 
-class DocAnswerAcceptSerializer(serializers.Serializer):
-    message = serializers.CharField()
-
-
-class DocDislikeSerializer(serializers.Serializer):
-    message = serializers.CharField()
-
-
 class DocQuestionSerializer(serializers.ModelSerializer):
     owner = serializers.StringRelatedField(read_only=True)
     tag = serializers.SlugRelatedField(many=True, slug_field='name', queryset=Tag.objects.all(), required=False)

@@ -7,10 +7,6 @@ class DocRegisterVerifySerializer(serializers.Serializer):
     refresh = serializers.CharField()
 
 
-class MessageSerializer(serializers.Serializer):
-    message = serializers.CharField()
-
-
 class DocRegisterSerializer(serializers.Serializer):
     username = serializers.CharField()
     email = serializers.CharField()
