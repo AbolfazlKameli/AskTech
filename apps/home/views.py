@@ -53,6 +53,7 @@ class QuestionViewSet(ModelViewSet):
             return Response({'message': 'question created successfully!'})
         return Response({'error': serializer.errors})
 
+    @extend_schema(responses=doc_serializers.DocQuestionSerializer(many=True))
     def retrieve(self, request, *args, **kwargs):
         """shows detail of one question object."""
         question = self.get_object()
