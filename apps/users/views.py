@@ -1,5 +1,6 @@
 from django.http import Http404
 from django.shortcuts import get_object_or_404
+from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import status
 from rest_framework.generics import ListAPIView, CreateAPIView, RetrieveUpdateDestroyAPIView
 from rest_framework.permissions import IsAdminUser, IsAuthenticated, AllowAny
@@ -32,15 +33,18 @@ class UserRegisterAPI(CreateAPIView):
     serializer_class = serializers.UserRegisterSerializer
     permission_classes = [permissions.NotAuthenticated, ]
 
-    def create(self, request, *args, **kwargs):
+    @extend_schema(responses={201: doc_serializers.DocRegisterSerializer})
+    def post(self, request, *args, **kwargs):
         srz_data = self.serializer_class(data=request.POST)
         if srz_data.is_valid():
             srz_data.validated_data.pop('password2')
             user = User.objects.create_user(**srz_data.validated_data, avatar=request.FILES.get('avatar'))
             vd = srz_data.validated_data
             send_verification_email.delay_on_commit(vd['email'], user.id)
+            response = srz_data.data
+            response['message'] = 'we sent you an activation url.'
             return Response(
-                data={'message': 'we sent you an activation url', 'data': srz_data.data},
+                data={'data': response},
                 status=status.HTTP_200_OK,
             )
         return Response(
@@ -87,6 +91,7 @@ class ResendVerificationEmailAPI(APIView):
     permission_classes = [permissions.NotAuthenticated, ]
     serializer_class = serializers.ResendVerificationEmailSerializer
 
+    @extend_schema(responses={200: doc_serializers.MessageSerializer})
     def post(self, request):
         srz_data = self.serializer_class(data=request.POST)
         if srz_data.is_valid():
@@ -107,6 +112,9 @@ class ChangePasswordAPI(APIView):
     permission_classes = [IsAuthenticated, ]
     serializer_class = serializers.ChangePasswordSerializer
 
+    @extend_schema(responses={
+        200: doc_serializers.MessageSerializer
+    })
     def put(self, request):
         srz_data = self.serializer_class(data=request.data)
         if srz_data.is_valid():
@@ -129,6 +137,9 @@ class SetPasswordAPI(APIView):
     permission_classes = [AllowAny, ]
     serializer_class = serializers.SetPasswordSerializer
 
+    @extend_schema(responses={
+        200: doc_serializers.MessageSerializer
+    })
     def post(self, request, token):
         srz_data = self.serializer_class(data=request.POST)
         decrypted_token = JWT_token.decode_token(token)
@@ -154,6 +165,9 @@ class ResetPasswordAPI(APIView):
     permission_classes = [AllowAny, ]
     serializer_class = serializers.ResetPasswordSerializer
 
+    @extend_schema(responses={
+        200: doc_serializers.MessageSerializer
+    })
     def post(self, request):
         srz_data = self.serializer_class(data=request.POST)
         if srz_data.is_valid():
@@ -174,6 +188,7 @@ class BlockTokenAPI(APIView):
     serializer_class = serializers.TokenSerializer
     permission_classes = [AllowAny, ]
 
+    @extend_schema(responses={200: doc_serializers.MessageSerializer})
     def post(self, request):
         srz_data = self.serializer_class(data=request.POST)
         if srz_data.is_valid():
@@ -186,6 +201,14 @@ class BlockTokenAPI(APIView):
         return Response(data={'error': srz_data.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
+@extend_schema_view(
+    patch=extend_schema(
+        responses=doc_serializers.MessageSerializer
+    ),
+    delete=extend_schema(
+        responses={200: doc_serializers.MessageSerializer}
+    )
+)
 class UserProfileAPI(RetrieveUpdateDestroyAPIView):
     """
     Retrieve or update user profile.\n
@@ -199,7 +222,7 @@ class UserProfileAPI(RetrieveUpdateDestroyAPIView):
     queryset = User.objects.filter(is_active=True)
     http_method_names = ['get', 'patch', 'delete']
 
-    def partial_update(self, request, *args, **kwargs):
+    def patch(self, request, *args, **kwargs):
         user = self.get_object()
         serializer = self.get_serializer(instance=user, data=request.data, partial=True)
         if serializer.is_valid():
