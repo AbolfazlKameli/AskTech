@@ -10,9 +10,11 @@ from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 
 from docs.serializers.doc_serializers import MessageSerializer
 from permissions import permissions
+from utils import JWT_token
 from . import serializers
 from .docs import doc_serializers
-from .tasks import *
+from .models import User
+from .tasks import send_verification_email
 
 
 class UsersListAPI(ListAPIView):
