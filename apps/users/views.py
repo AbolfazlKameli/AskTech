@@ -39,12 +39,11 @@ class UserRegisterAPI(CreateAPIView):
         srz_data = self.serializer_class(data=request.POST)
         if srz_data.is_valid():
             srz_data.validated_data.pop('password2')
-            user = User.objects.create_user(**srz_data.validated_data, avatar=request.FILES.get('avatar'))
+            user = User.objects.create_user(**srz_data.validated_data)
             vd = srz_data.validated_data
             send_verification_email.delay_on_commit(vd['email'], user.id)
             response = srz_data.data
             response['message'] = 'we sent you an activation url.'
-            response.pop('avatar')
             return Response(
                 data={'data': response},
                 status=status.HTTP_200_OK,

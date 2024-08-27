@@ -25,7 +25,6 @@ class UserSerializer(serializers.ModelSerializer):
             'is_admin',
             'groups',
             'user_permissions',
-            'score',
             'is_active'
         )
 
@@ -52,10 +51,9 @@ class UserRegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('username', 'email', 'password', 'password2', 'avatar')
+        fields = ('username', 'email', 'password', 'password2')
         extra_kwargs = {
             'password': {'write_only': True, 'min_length': 8},
-            'avatar': {'required': False}
         }
 
     def validate(self, data):

@@ -14,7 +14,7 @@ class UserAdmin(BaseUserAdmin):
     readonly_fields = ('last_login',)
 
     fieldsets = (
-        ('Main', {'fields': ('avatar', 'username', 'email', 'bio', 'password', 'last_login', 'score')}),
+        ('Main', {'fields': ('username', 'email', 'password', 'last_login')}),
         ('Permissions', {'fields': ('is_active', 'is_admin', 'is_superuser', 'groups', 'user_permissions')}),
     )
     add_fieldsets = (
