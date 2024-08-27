@@ -44,6 +44,7 @@ class UserRegisterAPI(CreateAPIView):
             send_verification_email.delay_on_commit(vd['email'], user.id)
             response = srz_data.data
             response['message'] = 'we sent you an activation url.'
+            response.pop('avatar')
             return Response(
                 data={'data': response},
                 status=status.HTTP_200_OK,

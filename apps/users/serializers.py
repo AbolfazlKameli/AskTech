@@ -52,9 +52,10 @@ class UserRegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('username', 'email', 'password', 'password2')
+        fields = ('username', 'email', 'password', 'password2', 'avatar')
         extra_kwargs = {
-            'password': {'write_only': True, 'min_length': 8}
+            'password': {'write_only': True, 'min_length': 8},
+            'avatar': {'required': False}
         }
 
     def validate(self, data):
