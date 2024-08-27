@@ -9,6 +9,7 @@ from rest_framework.viewsets import ModelViewSet
 
 from permissions import permissions
 from . import serializers
+from .docs import doc_serializers
 from .models import Question, Answer, AnswerComment, CommentReply, Vote
 
 
@@ -161,6 +162,7 @@ class ReplyViewSet(ModelViewSet):
 
 class LikeAPI(APIView):
     permission_classes = [IsAuthenticated]
+    serializer_class = doc_serializers.DocDislikeSerializer
 
     def post(self, request, answer_id):
         """add a like for each answer"""
@@ -178,6 +180,7 @@ class LikeAPI(APIView):
 
 class DisLikeAPI(APIView):
     permission_classes = [IsAuthenticated]
+    serializer_class = doc_serializers.DocDislikeSerializer
 
     def post(self, request, answer_id):
         """add a dislike for each answer"""
@@ -195,6 +198,7 @@ class DisLikeAPI(APIView):
 
 class AcceptAnswerAPI(APIView):
     permission_classes = [IsAuthenticated]
+    serializer_class = doc_serializers.DocAnswerAcceptSerializer
 
     def post(self, request, answer_id):
         """accept an answer object"""
@@ -205,7 +209,7 @@ class AcceptAnswerAPI(APIView):
                 answer.owner.score += 1
                 answer.owner.save()
                 answer.save()
-                return Response(data={'message': 'accepted'}, status=status.HTTP_200_OK)
+                return Response(data={'message': 'answer accepted.'}, status=status.HTTP_200_OK)
             return Response(data={'message': 'you can not accept an answer twice or accept two answers'},
                             status=status.HTTP_400_BAD_REQUEST
                             )

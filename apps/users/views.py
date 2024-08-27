@@ -9,6 +9,7 @@ from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 
 from permissions import permissions
 from . import serializers
+from .docs import doc_serializers
 from .tasks import *
 
 
@@ -55,6 +56,7 @@ class UserRegisterVerifyAPI(APIView):
     """
     permission_classes = [permissions.NotAuthenticated, ]
     http_method_names = ['get']
+    serializer_class = doc_serializers.DocRegisterVerifySerializer
 
     def get(self, request, token):
         decrypted_token = JWT_token.decode_token(token)
