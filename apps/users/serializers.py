@@ -2,7 +2,7 @@ from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
-from .models import User
+from .models import User, UserProfile
 
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -44,6 +44,17 @@ class UserSerializer(serializers.ModelSerializer):
         if users.exists():
             raise serializers.ValidationError('user with this Email already exists.')
         return email
+
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    owner = serializers.StringRelatedField(read_only=True)
+
+    class Meta:
+        model = UserProfile
+        fields = '__all__'
+        extra_kwargs = {
+            'score': {'read_only': True}
+        }
 
 
 class UserRegisterSerializer(serializers.ModelSerializer):
