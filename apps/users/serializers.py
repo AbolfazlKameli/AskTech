@@ -9,6 +9,8 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
     def get_token(cls, user, lifetime=None):
         token = super().get_token(user)
+        token['email'] = user.email
+        token['username'] = user.username
         if lifetime:
             token.set_exp(claim='exp', lifetime=lifetime)
         return token
