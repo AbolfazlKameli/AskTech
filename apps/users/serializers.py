@@ -2,7 +2,7 @@ from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
-from .models import User, UserProfile
+from .models import User
 
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -15,6 +15,10 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
+    bio = serializers.CharField(source='profile.bio')
+    avatar = serializers.ImageField(source='profile.avatar')
+    score = serializers.IntegerField(source='profile.score')
+
     class Meta:
         model = User
         exclude = ('password',)
@@ -27,6 +31,22 @@ class UserSerializer(serializers.ModelSerializer):
             'user_permissions',
             'is_active'
         )
+
+    def update(self, instance, validated_data):
+        profile_data = validated_data.pop('profile', {})
+        user_data = validated_data
+
+        profile = instance.profile
+        profile.bio = profile_data.get('bio', profile.bio)
+        profile.avatar = profile_data.get('avatar', profile.avatar)
+        profile.score = profile_data.get('score', profile.score)
+        profile.save()
+
+        instance.username = user_data.get('username', instance.username)
+        instance.email = user_data.get('email', instance.email)
+        instance.save()
+
+        return instance
 
     def validate(self, attrs):
         if not attrs:
@@ -44,17 +64,6 @@ class UserSerializer(serializers.ModelSerializer):
         if users.exists():
             raise serializers.ValidationError('user with this Email already exists.')
         return email
-
-
-class UserProfileSerializer(serializers.ModelSerializer):
-    owner = serializers.StringRelatedField(read_only=True)
-
-    class Meta:
-        model = UserProfile
-        fields = '__all__'
-        extra_kwargs = {
-            'score': {'read_only': True}
-        }
 
 
 class UserRegisterSerializer(serializers.ModelSerializer):
