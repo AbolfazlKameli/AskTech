@@ -35,15 +35,18 @@ class UserSerializer(serializers.ModelSerializer):
         )
 
     def update(self, instance, validated_data):
+        # fetching objects data
         profile_data = validated_data.pop('profile', {})
         user_data = validated_data
 
+        # saving user profile info
         profile = instance.profile
         profile.bio = profile_data.get('bio', profile.bio)
         profile.avatar = profile_data.get('avatar', profile.avatar)
         profile.score = profile_data.get('score', profile.score)
         profile.save()
 
+        # saving user info
         instance.username = user_data.get('username', instance.username)
         instance.email = user_data.get('email', instance.email)
         instance.save()
