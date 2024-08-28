@@ -229,15 +229,14 @@ class UserProfileAPI(RetrieveUpdateDestroyAPIView):
         serializer = self.get_serializer(instance=user, data=request.data, partial=True)
         if serializer.is_valid():
             email_changed = 'email' in serializer.validated_data
-
+            message = 'Updated profile successfully.'
             if email_changed:
                 user.is_active = False
                 user.save()
                 send_verification_email.delay_on_commit(serializer.validated_data['email'], user.id)
+                message += ' A verification URL has been sent to your new email address.'
 
             serializer.save()
-            message = 'Updated profile successfully.'
-            if email_changed:
-                message += ' A verification URL has been sent to your new email address.'
+
             return Response(data={'message': message}, status=status.HTTP_200_OK)
         return Response(data={'errors': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
