@@ -17,25 +17,19 @@ class HomeAPI(ListAPIView):
     permission_classes = [AllowAny]
     serializer_class = serializers.QuestionSerializer
     queryset = Question.objects.all()
+    filterset_fields = ['tag', 'owner', 'created', 'owner']
+    search_fields = ['title', 'body']
 
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
-        # questions = Question.objects.all()
-        # if self.request.query_params.get('tag'):
-        #     tag = get_object_or_404(Tag, slug=self.request.query_params['tag'])
-        #     questions = tag.questions.all()
-        # if self.request.query_params.get('search'):
-        #     questions = Question.objects.filter(body__icontains=self.request.query_params['search'])
-        #     if not questions.exists():
-        #         return Response(data={'error': 'question not found.'}, status=status.HTTP_404_NOT_FOUND)
-        # srz_data = self.get_serializer(questions, many=True)
-        # return Response(data={'data': srz_data.data}, status=status.HTTP_200_OK)
 
 
 class QuestionViewSet(ModelViewSet):
     """question CRUD operations ModelViewSet"""
     serializer_class = serializers.QuestionSerializer
     queryset = Question.objects.all()
+    filterset_fields = ['tag', 'owner', 'created', 'owner']
+    search_fields = ['title', 'body']
 
     def get_permissions(self):
         if self.action == 'list' or self.action == 'retrieve':
