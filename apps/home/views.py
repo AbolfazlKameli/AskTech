@@ -206,8 +206,8 @@ class AcceptAnswerAPI(APIView):
         if request.user.id == answer.question.owner.id:
             if not answer.accepted and not answer.question.has_accepted_answer():
                 answer.accepted = True
-                answer.owner.score += 1
-                answer.owner.save()
+                answer.owner.profile.score += 1
+                answer.owner.profile.save()
                 answer.save()
                 return Response(data={'message': 'answer accepted.'}, status=status.HTTP_200_OK)
             return Response(data={'message': 'you can not accept an answer twice or accept two answers'},
