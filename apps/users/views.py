@@ -1,8 +1,7 @@
 from django.http import Http404
-from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import status
-from rest_framework.generics import ListAPIView, CreateAPIView, RetrieveUpdateDestroyAPIView
+from rest_framework.generics import ListAPIView, CreateAPIView, RetrieveUpdateDestroyAPIView, get_object_or_404
 from rest_framework.permissions import IsAdminUser, IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -10,9 +9,11 @@ from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 
 from docs.serializers.doc_serializers import MessageSerializer
 from permissions import permissions
+from utils import JWT_token
 from . import serializers
 from .docs import doc_serializers
-from .tasks import *
+from .models import User
+from .tasks import send_verification_email
 
 
 class UsersListAPI(ListAPIView):
@@ -23,6 +24,8 @@ class UsersListAPI(ListAPIView):
     permission_classes = [IsAdminUser, ]
     queryset = User.objects.all()
     serializer_class = serializers.UserSerializer
+    filterset_fields = ['last_login', 'is_active', 'is_admin', 'is_superuser']
+    search_fields = ['username', 'email']
 
 
 class UserRegisterAPI(CreateAPIView):
@@ -39,7 +42,7 @@ class UserRegisterAPI(CreateAPIView):
         srz_data = self.serializer_class(data=request.POST)
         if srz_data.is_valid():
             srz_data.validated_data.pop('password2')
-            user = User.objects.create_user(**srz_data.validated_data, avatar=request.FILES.get('avatar'))
+            user = User.objects.create_user(**srz_data.validated_data)
             vd = srz_data.validated_data
             send_verification_email.delay_on_commit(vd['email'], user.id)
             response = srz_data.data
@@ -228,15 +231,14 @@ class UserProfileAPI(RetrieveUpdateDestroyAPIView):
         serializer = self.get_serializer(instance=user, data=request.data, partial=True)
         if serializer.is_valid():
             email_changed = 'email' in serializer.validated_data
-
+            message = 'Updated profile successfully.'
             if email_changed:
                 user.is_active = False
                 user.save()
                 send_verification_email.delay_on_commit(serializer.validated_data['email'], user.id)
+                message += ' A verification URL has been sent to your new email address.'
 
             serializer.save()
-            message = 'Updated profile successfully.'
-            if email_changed:
-                message += ' A verification URL has been sent to your new email address.'
+
             return Response(data={'message': message}, status=status.HTTP_200_OK)
         return Response(data={'errors': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)

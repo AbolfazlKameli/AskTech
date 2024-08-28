@@ -1,7 +1,6 @@
-from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from rest_framework import status
-from rest_framework.generics import ListAPIView
+from rest_framework.generics import ListAPIView, get_object_or_404
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -18,25 +17,19 @@ class HomeAPI(ListAPIView):
     permission_classes = [AllowAny]
     serializer_class = serializers.QuestionSerializer
     queryset = Question.objects.all()
+    filterset_fields = ['tag', 'owner', 'created', 'owner']
+    search_fields = ['title', 'body']
 
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
-        # questions = Question.objects.all()
-        # if self.request.query_params.get('tag'):
-        #     tag = get_object_or_404(Tag, slug=self.request.query_params['tag'])
-        #     questions = tag.questions.all()
-        # if self.request.query_params.get('search'):
-        #     questions = Question.objects.filter(body__icontains=self.request.query_params['search'])
-        #     if not questions.exists():
-        #         return Response(data={'error': 'question not found.'}, status=status.HTTP_404_NOT_FOUND)
-        # srz_data = self.get_serializer(questions, many=True)
-        # return Response(data={'data': srz_data.data}, status=status.HTTP_200_OK)
 
 
 class QuestionViewSet(ModelViewSet):
     """question CRUD operations ModelViewSet"""
     serializer_class = serializers.QuestionSerializer
     queryset = Question.objects.all()
+    filterset_fields = ['tag', 'owner', 'created', 'owner']
+    search_fields = ['title', 'body']
 
     def get_permissions(self):
         if self.action == 'list' or self.action == 'retrieve':
@@ -213,8 +206,8 @@ class AcceptAnswerAPI(APIView):
         if request.user.id == answer.question.owner.id:
             if not answer.accepted and not answer.question.has_accepted_answer():
                 answer.accepted = True
-                answer.owner.score += 1
-                answer.owner.save()
+                answer.owner.profile.score += 1
+                answer.owner.profile.save()
                 answer.save()
                 return Response(data={'message': 'answer accepted.'}, status=status.HTTP_200_OK)
             return Response(data={'message': 'you can not accept an answer twice or accept two answers'},

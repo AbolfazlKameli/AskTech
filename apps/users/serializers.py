@@ -9,12 +9,18 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
     def get_token(cls, user, lifetime=None):
         token = super().get_token(user)
+        token['email'] = user.email
+        token['username'] = user.username
         if lifetime:
             token.set_exp(claim='exp', lifetime=lifetime)
         return token
 
 
 class UserSerializer(serializers.ModelSerializer):
+    bio = serializers.CharField(source='profile.bio')
+    avatar = serializers.ImageField(source='profile.avatar')
+    score = serializers.IntegerField(source='profile.score')
+
     class Meta:
         model = User
         exclude = ('password',)
@@ -25,9 +31,27 @@ class UserSerializer(serializers.ModelSerializer):
             'is_admin',
             'groups',
             'user_permissions',
-            'score',
             'is_active'
         )
+
+    def update(self, instance, validated_data):
+        # fetching objects data
+        profile_data = validated_data.pop('profile', {})
+        user_data = validated_data
+
+        # saving user profile info
+        profile = instance.profile
+        profile.bio = profile_data.get('bio', profile.bio)
+        profile.avatar = profile_data.get('avatar', profile.avatar)
+        profile.score = profile_data.get('score', profile.score)
+        profile.save()
+
+        # saving user info
+        instance.username = user_data.get('username', instance.username)
+        instance.email = user_data.get('email', instance.email)
+        instance.save()
+
+        return instance
 
     def validate(self, attrs):
         if not attrs:
@@ -54,7 +78,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         model = User
         fields = ('username', 'email', 'password', 'password2')
         extra_kwargs = {
-            'password': {'write_only': True, 'min_length': 8}
+            'password': {'write_only': True, 'min_length': 8},
         }
 
     def validate(self, data):

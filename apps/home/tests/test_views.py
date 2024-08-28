@@ -21,7 +21,6 @@ class TestHomeAPI(APITestCase):
         response = self.client.get(reverse('home:home'))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.data['data']), 1)
-        print(response.data)
         self.assertEqual(response.data['data'][0]['id'], 1)
         self.assertEqual(response.data['data'][0]['body'], 'test body')
 

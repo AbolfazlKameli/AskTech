@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
 from .forms import UserChangeForm, UserCreationForm
-from .models import User
+from .models import User, UserProfile
 
 
 class UserAdmin(BaseUserAdmin):
@@ -14,7 +14,7 @@ class UserAdmin(BaseUserAdmin):
     readonly_fields = ('last_login',)
 
     fieldsets = (
-        ('Main', {'fields': ('avatar', 'username', 'email', 'bio', 'password', 'last_login', 'score')}),
+        ('Main', {'fields': ('username', 'email', 'password', 'last_login')}),
         ('Permissions', {'fields': ('is_active', 'is_admin', 'is_superuser', 'groups', 'user_permissions')}),
     )
     add_fieldsets = (
@@ -34,3 +34,4 @@ class UserAdmin(BaseUserAdmin):
 
 
 admin.site.register(User, UserAdmin)
+admin.site.register(UserProfile)
