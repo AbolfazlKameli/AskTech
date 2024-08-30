@@ -1,10 +1,10 @@
-from django.test import TestCase
+from rest_framework.test import APITestCase
 from model_bakery import baker
 
 from apps.users.models import User
 
 
-class TestUser(TestCase):
+class TestUser(APITestCase):
     def setUp(self):
         self.user = baker.make(User, username='username', email='email@gmail.com', is_active=True)
         self.not_active_user = baker.make(User, username='not_active', email='not_active@gmail.com')

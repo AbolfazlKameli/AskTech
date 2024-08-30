@@ -1,11 +1,11 @@
-from django.test import TestCase
 from model_bakery import baker
+from rest_framework.test import APITestCase
 
 from apps.home import models
 from apps.users.models import User
 
 
-class TestQuestion(TestCase):
+class TestQuestion(APITestCase):
     def setUp(self):
         user = baker.make(User, username='username')
         self.question = baker.make(models.Question, owner=user, title='test title', body='test body')
@@ -28,7 +28,7 @@ class TestQuestion(TestCase):
         self.assertEqual(self.question.short_body, 'test body...')
 
 
-class TestAnswer(TestCase):
+class TestAnswer(APITestCase):
     def setUp(self):
         user = baker.make(User, username='username')
         question = baker.make(models.Question, title='test title')
@@ -41,7 +41,7 @@ class TestAnswer(TestCase):
         self.assertEqual(self.answer.short_body, 'test...')
 
 
-class AnswerCommentTest(TestCase):
+class AnswerCommentTest(APITestCase):
     def setUp(self):
         user = baker.make(User, username='username')
         answer = baker.make(models.Answer, body='test')
@@ -51,7 +51,7 @@ class AnswerCommentTest(TestCase):
         self.assertEqual(str(self.comment), 'username - test...')
 
 
-class CommentReplyTest(TestCase):
+class CommentReplyTest(APITestCase):
     def setUp(self):
         user = baker.make(User, username='username')
         self.reply = baker.make(models.CommentReply, owner=user, body='test')
@@ -60,7 +60,7 @@ class CommentReplyTest(TestCase):
         self.assertEqual(str(self.reply), 'username - test...')
 
 
-class TagTest(TestCase):
+class TagTest(APITestCase):
     def setUp(self):
         sub_tag = baker.make(models.Tag, is_sub=True)
         self.tag = baker.make(models.Tag, sub_tag=sub_tag, name='test name')
@@ -72,7 +72,7 @@ class TagTest(TestCase):
         self.assertEqual(self.tag.slug, 'test-name')
 
 
-class VoteTest(TestCase):
+class VoteTest(APITestCase):
     def setUp(self):
         user = baker.make(User, is_active=True)
         answer = baker.make(models.Answer)
