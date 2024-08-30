@@ -146,6 +146,7 @@ class SetPasswordAPI(APIView):
     })
     def post(self, request, token):
         srz_data = self.serializer_class(data=request.POST)
+        # TODO: add a token validation to remove duplicate code.
         decrypted_token = JWT_token.decode_token(token)
         try:
             user = get_object_or_404(User, id=decrypted_token)
@@ -207,7 +208,7 @@ class BlockTokenAPI(APIView):
 
 @extend_schema_view(
     patch=extend_schema(
-        responses=MessageSerializer
+        responses={200: MessageSerializer}
     ),
     delete=extend_schema(
         responses={200: MessageSerializer}
@@ -242,3 +243,10 @@ class UserProfileAPI(RetrieveUpdateDestroyAPIView):
 
             return Response(data={'message': message}, status=status.HTTP_200_OK)
         return Response(data={'errors': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+    def destroy(self, request, *args, **kwargs):
+        # TODO: implement full delete account.
+        response = super().destroy(request, *args, **kwargs)
+        if response.status_code != 204:
+            return response
+        return Response(data={'message': 'your account deleted successfully.'})
