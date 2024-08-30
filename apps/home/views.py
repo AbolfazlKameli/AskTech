@@ -1,4 +1,4 @@
-from drf_spectacular.utils import extend_schema, OpenApiParameter
+from drf_spectacular.utils import extend_schema, OpenApiParameter, extend_schema_view
 from rest_framework import status
 from rest_framework.generics import ListAPIView, get_object_or_404
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -6,6 +6,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 
+from docs.serializers.doc_serializers import MessageSerializer
 from permissions import permissions
 from . import serializers
 from .docs.doc_serializers import DocQuestionSerializer
@@ -24,6 +25,23 @@ class HomeAPI(ListAPIView):
         return super().list(request, *args, **kwargs)
 
 
+@extend_schema_view(
+    create=extend_schema(
+        responses={201: MessageSerializer}
+    ),
+    retrieve=extend_schema(
+        responses={200: DocQuestionSerializer}
+    ),
+    update=extend_schema(
+        responses={200: MessageSerializer}
+    ),
+    partial_update=extend_schema(
+        responses={200: MessageSerializer}
+    ),
+    destroy=extend_schema(
+        responses={204: MessageSerializer}
+    )
+)
 class QuestionViewSet(ModelViewSet):
     """question CRUD operations ModelViewSet"""
     serializer_class = serializers.QuestionSerializer
@@ -43,46 +61,72 @@ class QuestionViewSet(ModelViewSet):
         serializer = self.get_serializer(data=self.request.data)
         if serializer.is_valid():
             serializer.save(owner=self.request.user)
-            return Response({'message': 'question created successfully!'})
+            return Response(data={'message': 'question created successfully!'}, status=status.HTTP_201_CREATED)
         return Response({'error': serializer.errors})
 
-    @extend_schema(responses={200: DocQuestionSerializer})
     def retrieve(self, request, *args, **kwargs):
         """shows detail of one question object."""
+        response = super().retrieve(request, *args, **kwargs)
         question = self.get_object()
-        srz_question = self.get_serializer(question)
         answers = question.answers.all()
         srz_answers = serializers.AnswerSerializer(answers, many=True)
-        return Response(data={'question': srz_question.data, 'answers': srz_answers.data}, status=status.HTTP_200_OK)
+        response.data['answers'] = srz_answers.data
+        return response
 
-    @extend_schema(responses={200: DocQuestionSerializer})
     def update(self, request, *args, **kwargs):
         """updates one question object."""
-        return super().update(request, *args, **kwargs)
+        response = super().update(request, *args, **kwargs)
+        if response.status_code != 200:
+            return response
+        return Response(data={'message': 'question updated successfully.'}, status=status.HTTP_200_OK)
 
-    @extend_schema(responses={200: DocQuestionSerializer})
     def partial_update(self, request, *args, **kwargs):
         """updates a question object partially"""
-        return super().partial_update(request, *args, **kwargs)
+        response = super().partial_update(request, *args, **kwargs)
+        if response.status_code != 200:
+            return response
+        return Response(data={'message': 'question updated successfully.'}, status=status.HTTP_200_OK)
 
     def destroy(self, request, *args, **kwargs):
         """deletes an answer object."""
-        return super().destroy(request, *args, **kwargs)
+        response = super().destroy(request, *args, **kwargs)
+        if response.status_code != 204:
+            return response
+        return Response(data={'message': 'question deleted successfully.'}, status=status.HTTP_204_NO_CONTENT)
 
 
+@extend_schema_view(
+    create=extend_schema(
+        responses={
+            201: MessageSerializer
+        },
+        parameters=[
+            OpenApiParameter(
+                name='question_id',
+                type=int,
+                location=OpenApiParameter.QUERY,
+                description='question id',
+                required=True
+            )
+        ],
+    ),
+    update=extend_schema(responses={
+        200: MessageSerializer
+    }),
+    destroy=extend_schema(responses={
+        204: MessageSerializer
+    })
+)
 class AnswerViewSet(ModelViewSet):
     serializer_class = serializers.AnswerSerializer
     queryset = Answer.objects.all()
-    http_method_names = ['post', 'put', 'patch', 'delete']
+    http_method_names = ['post', 'put', 'delete']
 
     def get_permissions(self):
         if self.action == 'create':
             return [IsAuthenticated()]
         return [permissions.IsOwnerOrReadOnly()]
 
-    @extend_schema(parameters=[
-        OpenApiParameter(name='question_id', type=int, location=OpenApiParameter.QUERY, description='question id',
-                         required=True)])
     def create(self, request, *args, **kwargs):
         """creates an answer object."""
         srz_data = self.get_serializer(data=self.request.POST)
@@ -94,30 +138,45 @@ class AnswerViewSet(ModelViewSet):
 
     def update(self, request, *args, **kwargs):
         """updates an answer object."""
-        return super().update(request, *args, **kwargs)
-
-    def partial_update(self, request, *args, **kwargs):
-        """updates an answer object."""
-        return super().partial_update(request, *args, **kwargs)
+        response = super().update(request, *args, **kwargs)
+        if response.status_code != 200:
+            return response
+        return Response(data={'message': 'answer updated successfully.'}, status=status.HTTP_200_OK)
 
     def destroy(self, request, *args, **kwargs):
         """deletes an answer object."""
-        return super().destroy(request, *args, **kwargs)
+        response = super().update(request, *args, **kwargs)
+        if response.status_code != 204:
+            return response
+        return Response(data={'message': 'answer deleted successfully.'}, status=status.HTTP_204_NO_CONTENT)
 
 
+@extend_schema_view(
+    create=extend_schema(
+        responses={
+            201: MessageSerializer
+        },
+        parameters=[
+            OpenApiParameter(name='answer_id', type=str, location=OpenApiParameter.QUERY, description='answer id'),
+        ]
+    ),
+    update=extend_schema(
+        responses={200: MessageSerializer}
+    ),
+    destroy=extend_schema(
+        responses={204: MessageSerializer}
+    )
+)
 class AnswerCommentViewSet(ModelViewSet):
     serializer_class = serializers.AnswerCommentSerializer
     queryset = AnswerComment.objects.all()
-    http_method_names = ['post', 'put', 'patch', 'delete']
+    http_method_names = ['post', 'put', 'delete']
 
     def get_permissions(self):
         if self.action == 'create':
             return [IsAuthenticated()]
         return [permissions.IsOwnerOrReadOnly()]
 
-    @extend_schema(parameters=[
-        OpenApiParameter(name='answer_id', type=str, location=OpenApiParameter.QUERY, description='answer id'),
-    ])
     def create(self, request, *args, **kwargs):
         """creates a comment object."""
         srz_data = self.get_serializer(data=self.request.data)
@@ -125,27 +184,62 @@ class AnswerCommentViewSet(ModelViewSet):
             answer = get_object_or_404(Answer, id=self.request.query_params['answer_id'])
             srz_data.save(owner=self.request.user, answer=answer)
             return Response(
-                data={'message': 'created successfully'},
+                data={'message': 'comment created successfully'},
                 status=status.HTTP_201_CREATED
             )
         return Response(data={'error': srz_data.errors}, status=status.HTTP_400_BAD_REQUEST)
 
+    def update(self, request, *args, **kwargs):
+        """updates a comment object."""
+        response = super().update(request, *args, **kwargs)
+        if response.status_code != 200:
+            return response
+        return Response(data={'message': 'comment updated successfully.'}, status=status.HTTP_200_OK)
 
+    def destroy(self, request, *args, **kwargs):
+        """deletes a comment object."""
+        response = super().update(request, *args, **kwargs)
+        if response.status_code != 204:
+            return response
+        return Response(data={'message': 'comment deleted successfully.'}, status=status.HTTP_204_NO_CONTENT)
+
+
+@extend_schema_view(
+    create=extend_schema(
+        responses={201: MessageSerializer},
+        parameters=[
+            OpenApiParameter(
+                name='comment_id',
+                type=int,
+                location=OpenApiParameter.QUERY,
+                description='comment_id',
+                required=True
+            ),
+            OpenApiParameter(
+                name='reply_id',
+                type=int,
+                location=OpenApiParameter.QUERY,
+                description='reply_id'
+            )
+        ]
+    ),
+    update=extend_schema(
+        responses={200: MessageSerializer}
+    ),
+    destroy=extend_schema(
+        responses={204: MessageSerializer}
+    )
+)
 class ReplyViewSet(ModelViewSet):
     serializer_class = serializers.ReplyCommentSerializer
     queryset = CommentReply.objects.all()
-    http_method_names = ['post', 'put', 'patch', 'delete']
+    http_method_names = ['post', 'put', 'delete']
 
     def get_permissions(self):
         if self.action == 'create':
             return [IsAuthenticated()]
         return [permissions.IsOwnerOrReadOnly()]
 
-    @extend_schema(parameters=[
-        OpenApiParameter(name='comment_id', type=int, location=OpenApiParameter.QUERY, description='comment_id',
-                         required=True),
-        OpenApiParameter(name='reply_id', type=int, location=OpenApiParameter.QUERY, description='reply_id')
-    ])
     def create(self, request, *args, **kwargs):
         """created a reply object."""
         srz_data = self.get_serializer(data=self.request.data)
@@ -159,11 +253,25 @@ class ReplyViewSet(ModelViewSet):
             return Response(data={'message': 'created successfully!'}, status=status.HTTP_201_CREATED)
         return Response(data={'error': srz_data.errors}, status=status.HTTP_400_BAD_REQUEST)
 
+    def update(self, request, *args, **kwargs):
+        """updates a reply object."""
+        response = super().update(request, *args, **kwargs)
+        if response.status_code != 200:
+            return response
+        return Response(data={'message': 'reply updated successfully.'}, status=status.HTTP_200_OK)
+
+    def destroy(self, request, *args, **kwargs):
+        """destroys a reply object."""
+        response = super().destroy(request, *args, **kwargs)
+        if response.status_code != 200:
+            return response
+        return Response(data={'message': 'reply deleted successfully.'}, status=status.HTTP_204_NO_CONTENT)
+
 
 class LikeAPI(APIView):
     permission_classes = [IsAuthenticated]
 
-    @extend_schema(responses={200: DocQuestionSerializer})
+    @extend_schema(responses={200: MessageSerializer})
     def post(self, request, answer_id):
         """add a like for each answer"""
         answer = get_object_or_404(Answer, id=answer_id)
@@ -171,7 +279,7 @@ class LikeAPI(APIView):
         dislike = Vote.objects.filter(owner=self.request.user, answer=answer, is_dislike=True)
         if like.exists():
             like.delete()
-            return Response(data={'message': 'like removed'}, status=status.HTTP_200_OK)
+            return Response(data={'message': 'like removed'}, status=status.HTTP_204_NO_CONTENT)
         if dislike:
             dislike.delete()
         like.create(owner=self.request.user, answer=answer, is_like=True)
@@ -181,7 +289,7 @@ class LikeAPI(APIView):
 class DisLikeAPI(APIView):
     permission_classes = [IsAuthenticated]
 
-    @extend_schema(responses={200: DocQuestionSerializer})
+    @extend_schema(responses={200: MessageSerializer})
     def post(self, request, answer_id):
         """add a dislike for each answer"""
         answer = get_object_or_404(Answer, id=answer_id)
@@ -199,7 +307,7 @@ class DisLikeAPI(APIView):
 class AcceptAnswerAPI(APIView):
     permission_classes = [IsAuthenticated]
 
-    @extend_schema(responses={200: DocQuestionSerializer})
+    @extend_schema(responses={200: MessageSerializer})
     def post(self, request, answer_id):
         """accept an answer object"""
         answer = get_object_or_404(Answer, id=answer_id)
@@ -210,7 +318,7 @@ class AcceptAnswerAPI(APIView):
                 answer.owner.profile.save()
                 answer.save()
                 return Response(data={'message': 'answer accepted.'}, status=status.HTTP_200_OK)
-            return Response(data={'message': 'you can not accept an answer twice or accept two answers'},
+            return Response(data={'error': 'you can not accept an answer twice or accept two answers'},
                             status=status.HTTP_400_BAD_REQUEST
                             )
         return Response(data={'error': 'only question owner can perform this action'}, status=status.HTTP_403_FORBIDDEN)

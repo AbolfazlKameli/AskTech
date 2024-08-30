@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
+from datetime import timedelta
 from pathlib import Path
 
 from decouple import config
@@ -39,8 +40,7 @@ THIRD_PARTY_APPS = [
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
     'drf_spectacular',
-    'storages',
-    'django_filters'
+    'storages'
 ]
 
 INSTALLED_APPS = [
@@ -153,9 +153,10 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     'DEFAULT_PAGINATION_CLASS': 'utils.paginators.NeatPagination',
-    'DEFAULT_FILTER_BACKENDS': [
-        'django_filters.rest_framework.DjangoFilterBackend',
-        'rest_framework.filters.SearchFilter'
-    ]
 }
 
+from core.settings.jwt import *  # Simple_JWT
+from core.settings.drf_spectacular import *  # Spectacular
+from core.settings.SMTP_configs import *  # SMTP
+from core.settings.storages import *  # ArvanCloud Storage Settings
+from core.settings.celery_configs import *  # CELERY configs
