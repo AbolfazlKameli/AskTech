@@ -17,12 +17,9 @@ class HomeAPI(ListAPIView):
     """Home page."""
     permission_classes = [AllowAny]
     serializer_class = serializers.QuestionSerializer
-    queryset = Question.objects.all()
-    filterset_fields = ['tag', 'owner', 'created', 'owner']
+    queryset = Question.objects.select_related('owner').all()
+    filterset_fields = ['tag', 'owner', 'created']
     search_fields = ['title', 'body']
-
-    def list(self, request, *args, **kwargs):
-        return super().list(request, *args, **kwargs)
 
 
 @extend_schema_view(
@@ -45,7 +42,7 @@ class HomeAPI(ListAPIView):
 class QuestionViewSet(ModelViewSet):
     """question CRUD operations ModelViewSet"""
     serializer_class = serializers.QuestionSerializer
-    queryset = Question.objects.all()
+    queryset = Question.objects.select_related('owner').all()
     filterset_fields = ['tag', 'owner', 'created', 'owner']
     search_fields = ['title', 'body']
 
@@ -67,8 +64,7 @@ class QuestionViewSet(ModelViewSet):
     def retrieve(self, request, *args, **kwargs):
         """shows detail of one question object."""
         response = super().retrieve(request, *args, **kwargs)
-        question = self.get_object()
-        answers = question.answers.all()
+        answers = self.get_object().answers.all()
         srz_answers = serializers.AnswerSerializer(answers, many=True)
         response.data['answers'] = srz_answers.data
         return response
@@ -119,7 +115,7 @@ class QuestionViewSet(ModelViewSet):
 )
 class AnswerViewSet(ModelViewSet):
     serializer_class = serializers.AnswerSerializer
-    queryset = Answer.objects.all()
+    queryset = Answer.objects.select_related('owner', 'question').all()
     http_method_names = ['post', 'put', 'delete']
 
     def get_permissions(self):
@@ -169,7 +165,7 @@ class AnswerViewSet(ModelViewSet):
 )
 class AnswerCommentViewSet(ModelViewSet):
     serializer_class = serializers.AnswerCommentSerializer
-    queryset = AnswerComment.objects.all()
+    queryset = AnswerComment.objects.select_related('owner', 'answer').all()
     http_method_names = ['post', 'put', 'delete']
 
     def get_permissions(self):
@@ -232,7 +228,7 @@ class AnswerCommentViewSet(ModelViewSet):
 )
 class ReplyViewSet(ModelViewSet):
     serializer_class = serializers.ReplyCommentSerializer
-    queryset = CommentReply.objects.all()
+    queryset = CommentReply.objects.select_related('owner', 'comment', 'reply').all()
     http_method_names = ['post', 'put', 'delete']
 
     def get_permissions(self):
