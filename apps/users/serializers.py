@@ -17,8 +17,8 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
-    bio = serializers.CharField(source='profile.bio')
-    avatar = serializers.ImageField(source='profile.avatar')
+    bio = serializers.CharField(source='profile.bio', required=False)
+    avatar = serializers.ImageField(source='profile.avatar', required=False)
     score = serializers.IntegerField(source='profile.score', read_only=True)
 
     class Meta:

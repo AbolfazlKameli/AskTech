@@ -141,7 +141,7 @@ class AnswerViewSet(ModelViewSet):
 
     def destroy(self, request, *args, **kwargs):
         """deletes an answer object."""
-        response = super().update(request, *args, **kwargs)
+        response = super().destroy(request, *args, **kwargs)
         if response.status_code != 204:
             return response
         return Response(data={'message': 'answer deleted successfully.'}, status=status.HTTP_204_NO_CONTENT)
@@ -194,7 +194,7 @@ class AnswerCommentViewSet(ModelViewSet):
 
     def destroy(self, request, *args, **kwargs):
         """deletes a comment object."""
-        response = super().update(request, *args, **kwargs)
+        response = super().destroy(request, *args, **kwargs)
         if response.status_code != 204:
             return response
         return Response(data={'message': 'comment deleted successfully.'}, status=status.HTTP_204_NO_CONTENT)
