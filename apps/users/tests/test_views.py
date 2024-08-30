@@ -1,13 +1,19 @@
-from datetime import datetime
+from datetime import timedelta, datetime
 from unittest.mock import patch
 from urllib.parse import urlencode
 
 import jwt
+from django.conf import settings
+from django.shortcuts import Http404
+from django.urls import reverse
 from model_bakery import baker
+from rest_framework import status
 from rest_framework.test import APIRequestFactory, APITestCase
 from rest_framework_simplejwt.tokens import AccessToken
 
-from apps.users.views import *
+from apps.users.models import User
+from apps.users.views import UsersListAPI
+from utils import JWT_token
 
 
 class TestUsersListAPI(APITestCase):
@@ -67,7 +73,7 @@ class TestUserRegisterAPI(APITestCase):
     def test_success_register(self):
         response = self.client.post(self.url, data=self.valid_data)
         self.assertEqual(response.status_code, 200)
-        self.assertIn('message', response.data)
+        self.assertIn('message', response.data['data'])
         self.assertIn('data', response.data)
         self.assertEqual(User.objects.all().count(), 2)
 
@@ -115,7 +121,7 @@ class TestUserRegisterVerificationAPI(APITestCase):
         self.user.is_active = True
         self.user.save()
         response = self.client.get(self.url.replace('invalid_token', self.token['token']))
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('message', response.data)
         self.assertEqual(response.data['message'], 'this account already is active')
 
@@ -136,6 +142,7 @@ class TestUserRegisterVerificationAPI(APITestCase):
     def test_expired_token(self):
         expired_token = self.create_expired_token()
         response = self.client.get(self.url.replace('invalid_token', expired_token))
+        print(response.data, response.status_code)
         self.assertEqual(response.status_code, 400)
         self.assertIn('error', response.data)
         self.assertEqual(response.data['error'], 'Activation link has expired!')

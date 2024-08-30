@@ -1,7 +1,8 @@
 from django.http import Http404
+from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import status
-from rest_framework.generics import ListAPIView, CreateAPIView, RetrieveUpdateDestroyAPIView, get_object_or_404
+from rest_framework.generics import ListAPIView, CreateAPIView, RetrieveUpdateDestroyAPIView
 from rest_framework.permissions import IsAdminUser, IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -75,7 +76,7 @@ class UserRegisterVerifyAPI(APIView):
         except TypeError:
             return Response(data=decrypted_token, status=status.HTTP_400_BAD_REQUEST)
         if user.is_active:
-            return Response(data={'message': 'this account already is active'}, status=status.HTTP_200_OK)
+            return Response(data={'message': 'this account already is active'}, status=status.HTTP_400_BAD_REQUEST)
         user.is_active = True
         user.save()
         token = JWT_token.generate_token(user)
