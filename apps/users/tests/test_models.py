@@ -1,7 +1,7 @@
 from rest_framework.test import APITestCase
 from model_bakery import baker
 
-from apps.users.models import User
+from apps.users.models import User, UserProfile
 
 
 class TestUser(APITestCase):
@@ -31,3 +31,12 @@ class TestUser(APITestCase):
     def test_user_is_not_admin(self):
         self.assertFalse(self.user.is_admin)
         self.assertFalse(self.user.is_staff)
+
+
+class TestUserProfile(APITestCase):
+    def setUp(self):
+        baker.make(User, is_active=True, username='test', email='username@email.com')
+        self.profile = UserProfile.objects.last()
+
+    def test_str(self):
+        self.assertEqual(str(self.profile), 'test - username@email.com')
