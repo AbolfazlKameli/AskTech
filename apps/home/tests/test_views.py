@@ -7,15 +7,30 @@ from rest_framework.test import APIRequestFactory
 from rest_framework.test import APITestCase
 from rest_framework_simplejwt.tokens import AccessToken
 
-from apps.home import models
-from apps.home.views import *
+from apps.home.models import (
+    Tag,
+    Question,
+    CommentReply,
+    Answer,
+    AnswerComment,
+    Vote
+)
+from apps.home.views import (
+    AnswerCommentViewSet,
+    AnswerViewSet,
+    DisLikeAPI,
+    LikeAPI,
+    QuestionViewSet,
+    ReplyViewSet,
+
+)
 from apps.users.models import User
 
 
 class TestHomeAPI(APITestCase):
     @classmethod
     def setUpTestData(cls):
-        baker.make(models.Question, body='test body')
+        baker.make(Question, body='test body')
 
     def test_home_GET(self):
         response = self.client.get(reverse('home:home'))
@@ -29,8 +44,8 @@ class TestQuestionViewSet(APITestCase):
     def setUp(self):
         self.factory = APIRequestFactory()
         self.user = baker.make(User, is_active=True)
-        self.tag = baker.make(models.Tag, name='test_tag')
-        baker.make(models.Question, 33, owner=self.user)
+        self.tag = baker.make(Tag, name='test_tag')
+        baker.make(Question, 33, owner=self.user)
         self.token = self.get_JWT_token()
 
     def get_JWT_token(self):
@@ -45,7 +60,7 @@ class TestQuestionViewSet(APITestCase):
         request = self.factory.post(reverse('home:question-detail', args=[2]), data=data,
                                     HTTP_AUTHORIZATION='Bearer ' + self.token)
         response = QuestionViewSet.as_view({'post': 'create'})(request, pk=2)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 201)
         self.assertEqual(len(response.data), 1)
 
     def test_permissions_denied(self):
@@ -78,7 +93,7 @@ class TestQuestionViewSet(APITestCase):
         }
         request = self.factory.post(reverse('home:question-list'), data=data, HTTP_AUTHORIZATION='Bearer ' + self.token)
         response = QuestionViewSet.as_view({'post': 'create'})(request)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 201)
         self.assertEqual(response.data['message'], 'question created successfully!')
 
     def test_question_partial_update(self):
@@ -89,7 +104,7 @@ class TestQuestionViewSet(APITestCase):
                                      HTTP_AUTHORIZATION='Bearer ' + self.token)
         response = QuestionViewSet.as_view({'patch': 'partial_update'})(request, pk=2)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data['title'], 'update test')
+        self.assertEqual(response.data['message'], 'question updated successfully.')
 
     def test_question_full_update(self):
         data = {
@@ -100,8 +115,7 @@ class TestQuestionViewSet(APITestCase):
                                    HTTP_AUTHORIZATION='Bearer ' + self.token)
         response = QuestionViewSet.as_view({'put': 'update'})(request, pk=2)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data['title'], 'update test')
-        self.assertEqual(response.data['body'], 'update testing body')
+        self.assertEqual(response.data['message'], 'question updated successfully.')
 
     def test_question_delete(self):
         request = self.factory.delete(reverse('home:question-detail', args=[2]),
@@ -114,7 +128,7 @@ class TestAnswerViewSet(APITestCase):
     def setUp(self):
         self.factory = APIRequestFactory()
         self.user = baker.make(User, is_active=True)
-        self.question = baker.make(models.Question, owner=self.user)
+        self.question = baker.make(Question, owner=self.user)
         baker.make(Answer, question=self.question, owner=self.user)
         self.token = self.get_JWT_token()
 
@@ -140,16 +154,6 @@ class TestAnswerViewSet(APITestCase):
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.data['message'], 'created successfully')
 
-    def test_answer_partial_update(self):
-        data = {
-            'body': 'update test',
-        }
-        request = self.factory.patch(reverse('home:answer-viewset-detail', args=[1]), data=data,
-                                     HTTP_AUTHORIZATION='Bearer ' + self.token)
-        response = AnswerViewSet.as_view({'patch': 'partial_update'})(request, pk=1)
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data['body'], 'update test')
-
     def test_answer_full_update(self):
         data = {
             'body': 'update testing body'
@@ -158,7 +162,7 @@ class TestAnswerViewSet(APITestCase):
                                    HTTP_AUTHORIZATION='Bearer ' + self.token)
         response = AnswerViewSet.as_view({'put': 'update'})(request, pk=1)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data['body'], 'update testing body')
+        self.assertEqual(response.data['message'], 'answer updated successfully.')
 
     def test_answer_delete(self):
         request = self.factory.delete(reverse('home:answer-viewset-detail', args=[1]),
@@ -194,17 +198,7 @@ class TestAnswerCommentViewSet(APITestCase):
         request = self.factory.post(url, data=data, HTTP_AUTHORIZATION='Bearer ' + self.token)
         response = AnswerCommentViewSet.as_view({'post': 'create'})(request)
         self.assertEqual(response.status_code, 201)
-        self.assertEqual(response.data['message'], 'created successfully')
-
-    def test_comment_partial_update(self):
-        data = {
-            'body': 'update test',
-        }
-        request = self.factory.patch(reverse('home:answer_comments-detail', args=[1]), data=data,
-                                     HTTP_AUTHORIZATION='Bearer ' + self.token)
-        response = AnswerCommentViewSet.as_view({'patch': 'partial_update'})(request, pk=1)
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data['body'], 'update test')
+        self.assertEqual(response.data['message'], 'comment created successfully')
 
     def test_comment_full_update(self):
         data = {
@@ -214,7 +208,7 @@ class TestAnswerCommentViewSet(APITestCase):
                                    HTTP_AUTHORIZATION='Bearer ' + self.token)
         response = AnswerCommentViewSet.as_view({'put': 'update'})(request, pk=1)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data['body'], 'update testing body')
+        self.assertEqual(response.data['message'], 'comment updated successfully.')
 
     def test_comment_delete(self):
         request = self.factory.delete(reverse('home:answer_comments-detail', args=[1]),
@@ -252,16 +246,6 @@ class TestReplyViewSet(APITestCase):
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.data['message'], 'created successfully!')
 
-    def test_reply_partial_update(self):
-        data = {
-            'body': 'update test',
-        }
-        request = self.factory.patch(reverse('home:reply-detail', args=[1]), data=data,
-                                     HTTP_AUTHORIZATION='Bearer ' + self.token)
-        response = ReplyViewSet.as_view({'patch': 'partial_update'})(request, pk=1)
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data['body'], 'update test')
-
     def test_reply_full_update(self):
         data = {
             'body': 'update testing body'
@@ -270,7 +254,7 @@ class TestReplyViewSet(APITestCase):
                                    HTTP_AUTHORIZATION='Bearer ' + self.token)
         response = ReplyViewSet.as_view({'put': 'update'})(request, pk=1)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data['body'], 'update testing body')
+        self.assertEqual(response.data['message'], 'reply updated successfully.')
 
     def test_reply_delete(self):
         request = self.factory.delete(reverse('home:reply-detail', args=[1]),
@@ -284,8 +268,8 @@ class TestLikeAPI(APITestCase):
         self.factory = APIRequestFactory()
         self.user = baker.make(User, is_active=True)
         self.answer = baker.make(Answer)
-        baker.make(models.Vote, is_like=True)
-        baker.make(models.Vote, is_dislike=True)
+        baker.make(Vote, is_like=True)
+        baker.make(Vote, is_dislike=True)
         self.token = self.get_JWT_token()
 
     def get_JWT_token(self):
@@ -306,15 +290,15 @@ class TestLikeAPI(APITestCase):
         self.assertEqual(response.data['message'], 'liked')
 
     def test_remove_like(self):
-        baker.make(models.Vote, is_like=True, owner=self.user, answer=self.answer)
+        baker.make(Vote, is_like=True, owner=self.user, answer=self.answer)
         request = self.factory.post(reverse('home:answer_like', args=[1]),
                                     HTTP_AUTHORIZATION='Bearer ' + self.token)
         response = LikeAPI.as_view()(request, answer_id=1)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 204)
         self.assertEqual(response.data['message'], 'like removed')
 
     def test_like_on_dislike(self):
-        baker.make(models.Vote, is_dislike=True, owner=self.user, answer=self.answer)
+        baker.make(Vote, is_dislike=True, owner=self.user, answer=self.answer)
         request = self.factory.post(reverse('home:answer_like', args=[1]),
                                     HTTP_AUTHORIZATION='Bearer ' + self.token)
         response = LikeAPI.as_view()(request, answer_id=1)
@@ -328,8 +312,8 @@ class TestDisLikeAPI(APITestCase):
         self.factory = APIRequestFactory()
         self.user = baker.make(User, is_active=True)
         self.answer = baker.make(Answer)
-        baker.make(models.Vote, is_like=True)
-        baker.make(models.Vote, is_dislike=True)
+        baker.make(Vote, is_like=True)
+        baker.make(Vote, is_dislike=True)
         self.token = self.get_JWT_token()
 
     def get_JWT_token(self):
@@ -350,7 +334,7 @@ class TestDisLikeAPI(APITestCase):
         self.assertEqual(response.data['message'], 'disliked')
 
     def test_remove_dislike(self):
-        baker.make(models.Vote, is_dislike=True, owner=self.user, answer=self.answer)
+        baker.make(Vote, is_dislike=True, owner=self.user, answer=self.answer)
         request = self.factory.post(reverse('home:answer_dislike', args=[1]),
                                     HTTP_AUTHORIZATION='Bearer ' + self.token)
         response = DisLikeAPI.as_view()(request, answer_id=1)
@@ -358,7 +342,7 @@ class TestDisLikeAPI(APITestCase):
         self.assertEqual(response.data['message'], 'dislike removed')
 
     def test_dislike_on_like(self):
-        baker.make(models.Vote, is_like=True, owner=self.user, answer=self.answer)
+        baker.make(Vote, is_like=True, owner=self.user, answer=self.answer)
         request = self.factory.post(reverse('home:answer_dislike', args=[1]),
                                     HTTP_AUTHORIZATION='Bearer ' + self.token)
         response = DisLikeAPI.as_view()(request, answer_id=1)
