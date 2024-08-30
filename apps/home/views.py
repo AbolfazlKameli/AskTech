@@ -66,11 +66,12 @@ class QuestionViewSet(ModelViewSet):
 
     def retrieve(self, request, *args, **kwargs):
         """shows detail of one question object."""
+        response = super().retrieve(request, *args, **kwargs)
         question = self.get_object()
-        srz_question = self.get_serializer(question)
         answers = question.answers.all()
         srz_answers = serializers.AnswerSerializer(answers, many=True)
-        return Response(data={'question': srz_question.data, 'answers': srz_answers.data}, status=status.HTTP_200_OK)
+        response.data['answers'] = srz_answers.data
+        return response
 
     def update(self, request, *args, **kwargs):
         """updates one question object."""
@@ -278,7 +279,7 @@ class LikeAPI(APIView):
         dislike = Vote.objects.filter(owner=self.request.user, answer=answer, is_dislike=True)
         if like.exists():
             like.delete()
-            return Response(data={'message': 'like removed'}, status=status.HTTP_204_OK)
+            return Response(data={'message': 'like removed'}, status=status.HTTP_204_NO_CONTENT)
         if dislike:
             dislike.delete()
         like.create(owner=self.request.user, answer=answer, is_like=True)
