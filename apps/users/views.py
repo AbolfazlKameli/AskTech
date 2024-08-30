@@ -68,18 +68,14 @@ class UserRegisterVerifyAPI(APIView):
     serializer_class = doc_serializers.DocRegisterVerifySerializer
 
     def get(self, request, token):
-        decrypted_token = JWT_token.decode_token(token)
-        try:
-            user = get_object_or_404(User, id=decrypted_token)
-        except Http404:
-            return Response(data={'error': 'Activation URL is invalid'}, status=status.HTTP_404_NOT_FOUND)
-        except TypeError:
-            return Response(data=decrypted_token, status=status.HTTP_400_BAD_REQUEST)
-        if user.is_active:
+        token_result = JWT_token.get_user(token)
+        if not isinstance(token_result, User):
+            return token_result
+        if token_result.is_active:
             return Response(data={'message': 'this account already is active'}, status=status.HTTP_400_BAD_REQUEST)
-        user.is_active = True
-        user.save()
-        token = JWT_token.generate_token(user)
+        token_result.is_active = True
+        token_result.save()
+        token = JWT_token.generate_token(token_result)
         return Response(data={
             'message': 'Account activated successfully',
             'token': token['token'],
@@ -147,18 +143,13 @@ class SetPasswordAPI(APIView):
     })
     def post(self, request, token):
         srz_data = self.serializer_class(data=request.POST)
-        # TODO: add a token validation to remove duplicate code.
-        decrypted_token = JWT_token.decode_token(token)
-        try:
-            user = get_object_or_404(User, id=decrypted_token)
-        except Http404:
-            return Response(data={'error': 'Activation link is invalid'}, status=status.HTTP_400_BAD_REQUEST)
-        except TypeError:
-            return Response(decrypted_token, status=status.HTTP_400_BAD_REQUEST)
+        token_result = JWT_token.get_user(token)
+        if not isinstance(token_result, User):
+            return token_result
         if srz_data.is_valid():
             new_password = srz_data.validated_data['new_password']
-            user.set_password(new_password)
-            user.save()
+            token_result.set_password(new_password)
+            token_result.save()
             return Response(data={'message': 'Password changed successfully'}, status=status.HTTP_200_OK)
         return Response(data={'error': srz_data.errors}, status=status.HTTP_400_BAD_REQUEST)
 

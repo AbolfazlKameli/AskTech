@@ -127,7 +127,7 @@ class TestUserRegisterVerificationAPI(APITestCase):
         self.assertIn('message', response.data)
         self.assertEqual(response.data['message'], 'this account already is active')
 
-    @patch('apps.users.views.get_object_or_404')
+    @patch('apps.users.views.JWT_token.get_object_or_404')
     def test_activation_url_invalid(self, mock_jwt_decode_token):
         mock_jwt_decode_token.side_effect = Http404
         response = self.client.get(self.url.replace('invalid_token', self.token['token']))
@@ -226,14 +226,14 @@ class TestSetPasswordAPI(APITestCase):
         self.assertEqual(response.data['message'], 'Password changed successfully')
         self.assertTrue(self.user.check_password(data['new_password']))
 
-    @patch('apps.users.views.get_object_or_404')
+    @patch('apps.users.views.JWT_token.get_object_or_404')
     def test_invalid_token_user(self, mock_not_found):
         data = {'new_password': 'asdF@123', 'confirm_new_password': 'asdF@123'}
         mock_not_found.side_effect = Http404
         response = self.client.post(self.url, data)
         self.user.refresh_from_db()
-        self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.data['error'], 'Activation link is invalid')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.data['error'], 'Activation URL is invalid')
         self.assertFalse(self.user.check_password(data['new_password']))
 
 
