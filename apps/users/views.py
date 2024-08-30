@@ -237,7 +237,6 @@ class UserProfileAPI(RetrieveUpdateDestroyAPIView):
         return Response(data={'errors': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
     def destroy(self, request, *args, **kwargs):
-        # TODO: implement full delete account.
         response = super().destroy(request, *args, **kwargs)
         if response.status_code != 204:
             return response
