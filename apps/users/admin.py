@@ -5,6 +5,11 @@ from .forms import UserChangeForm, UserCreationForm
 from .models import User, UserProfile
 
 
+class UserProfileInline(admin.StackedInline):
+    model = UserProfile
+    readonly_fields = ('score',)
+
+
 class UserAdmin(BaseUserAdmin):
     form = UserChangeForm
     add_form = UserCreationForm
@@ -25,6 +30,8 @@ class UserAdmin(BaseUserAdmin):
     ordering = ('username',)
     filter_horizontal = ('groups', 'user_permissions')
 
+    inlines = [UserProfileInline]
+
     def get_form(self, request, obj=None, **kwargs):
         form = super().get_form(request, obj, **kwargs)
         is_superuser = request.user.is_superuser
@@ -34,4 +41,3 @@ class UserAdmin(BaseUserAdmin):
 
 
 admin.site.register(User, UserAdmin)
-admin.site.register(UserProfile)
