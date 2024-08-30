@@ -1,9 +1,11 @@
+import os
 from datetime import timedelta, datetime
 from unittest.mock import patch
 from urllib.parse import urlencode
 
 import jwt
 from django.conf import settings
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.shortcuts import Http404
 from django.urls import reverse
 from model_bakery import baker
@@ -142,7 +144,6 @@ class TestUserRegisterVerificationAPI(APITestCase):
     def test_expired_token(self):
         expired_token = self.create_expired_token()
         response = self.client.get(self.url.replace('invalid_token', expired_token))
-        print(response.data, response.status_code)
         self.assertEqual(response.status_code, 400)
         self.assertIn('error', response.data)
         self.assertEqual(response.data['error'], 'Activation link has expired!')
@@ -288,6 +289,7 @@ class TestUserProfileAPI(APITestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data['username'], self.user.username)
+        self.assertEqual(response.data['score'], 0)
 
     def test_retrieve_user_profile_not_found(self):
         url = reverse('users:user_profile', args=[23])
@@ -295,8 +297,33 @@ class TestUserProfileAPI(APITestCase):
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.data['detail'], 'No User matches the given query.')
 
-    def test_partial_update_user_profile(self):
-        data = {'username': 'new_username'}
+    @patch('storages.backends.s3boto3.S3Boto3Storage.save', return_value='test/avatar.png')
+    def test_partial_update_user_profile(self, mock_save):
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        image_path = os.path.join(base_dir, 'test_data/images/test.png')
+
+        with open(image_path, 'rb') as image:
+            avatar = SimpleUploadedFile(
+                'avatar.png',
+                image.read(),
+                content_type='image/png'
+            )
+        data = {'username': 'new_username', 'avatar': avatar}
         url = reverse('users:user_profile', args=[1])
         response = self.client.patch(url, data, HTTP_AUTHORIZATION='Bearer ' + self.token)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['message'], 'Updated profile successfully.')
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.username, 'new_username')
+        self.assertTrue(self.user.profile.avatar.name.endswith('avatar.png'))
+
+    @patch('apps.users.views.send_verification_email.delay_on_commit')
+    def test_update_email(self, mock_send_email_task):
+        data = {'email': 'email@email.com'}
+        url = reverse('users:user_profile', args=[1])
+        response = self.client.patch(url, data, HTTP_AUTHORIZATION='Bearer ' + self.token)
+        mock_send_email_task.assert_called_once()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.user.refresh_from_db()
+        self.assertFalse(self.user.is_active)
+        self.assertEqual(self.user.email, 'email@email.com')

@@ -1,11 +1,11 @@
-from django.test import TestCase
 from django.urls import reverse, resolve
+from rest_framework.test import APISimpleTestCase
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from apps.users import views
 
 
-class TestUrls(TestCase):
+class TestUrls(APISimpleTestCase):
     # Tokens
     def test_token_obtain_pair_url(self):
         token_obtain_pair_url = reverse('users:token_obtain_pair')

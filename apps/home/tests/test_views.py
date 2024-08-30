@@ -3,8 +3,7 @@ from urllib.parse import urlencode
 from django.contrib.auth.models import AnonymousUser
 from django.urls import reverse
 from model_bakery import baker
-from rest_framework.test import APIRequestFactory
-from rest_framework.test import APITestCase
+from rest_framework.test import APITestCase, APIRequestFactory
 from rest_framework_simplejwt.tokens import AccessToken
 
 from apps.home.models import (

@@ -1,10 +1,10 @@
-from django.test import TestCase
+from rest_framework.test import APITestCase
 from model_bakery import baker
 
-from apps.users.models import User
+from apps.users.models import User, UserProfile
 
 
-class TestUser(TestCase):
+class TestUser(APITestCase):
     def setUp(self):
         self.user = baker.make(User, username='username', email='email@gmail.com', is_active=True)
         self.not_active_user = baker.make(User, username='not_active', email='not_active@gmail.com')
@@ -31,3 +31,12 @@ class TestUser(TestCase):
     def test_user_is_not_admin(self):
         self.assertFalse(self.user.is_admin)
         self.assertFalse(self.user.is_staff)
+
+
+class TestUserProfile(APITestCase):
+    def setUp(self):
+        baker.make(User, is_active=True, username='test', email='username@email.com')
+        self.profile = UserProfile.objects.last()
+
+    def test_str(self):
+        self.assertEqual(str(self.profile), 'test - username@email.com')
