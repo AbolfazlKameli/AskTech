@@ -25,7 +25,7 @@ class ReplyCommentSerializer(serializers.ModelSerializer):
 
     @extend_schema_field(serializers.ListSerializer(child=serializers.DictField()))
     def get_replies(self, obj):
-        replies = obj.i_replies.all()
+        replies = obj.i_replies.select_related('owner', 'comment', 'reply').all()
         return ReplyCommentSerializer(instance=replies, many=True).data
 
 
@@ -40,7 +40,7 @@ class AnswerCommentSerializer(serializers.ModelSerializer):
 
     @extend_schema_field(serializers.ListSerializer(child=ReplyCommentSerializer(many=True)))
     def get_replies(self, obj):
-        replies = obj.replies.filter(reply=None)
+        replies = obj.replies.select_related('owner', 'comment', 'reply').filter(reply=None)
         return ReplyCommentSerializer(instance=replies, many=True).data
 
 
@@ -62,10 +62,10 @@ class AnswerSerializer(serializers.ModelSerializer):
 
     @extend_schema_field(serializers.IntegerField())
     def get_likes(self, obj):
-        likes = obj.votes.filter(is_like=True)
+        likes = obj.votes.select_related('owner', 'answer').filter(is_like=True)
         return likes.count()
 
     @extend_schema_field(serializers.IntegerField())
     def get_dislikes(self, obj):
-        dislikes = obj.votes.filter(is_dislike=True)
+        dislikes = obj.votes.select_related('owner', 'answer').filter(is_dislike=True)
         return dislikes.count()
