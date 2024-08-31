@@ -10,7 +10,7 @@ from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 
 from docs.serializers.doc_serializers import MessageSerializer
 from permissions import permissions
-from utils import JWT_token
+from utils import JWT_token, bucket
 from . import serializers
 from .docs import doc_serializers
 from .models import User
@@ -237,6 +237,7 @@ class UserProfileAPI(RetrieveUpdateDestroyAPIView):
         return Response(data={'errors': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
     def destroy(self, request, *args, **kwargs):
+        bucket.bucket.delete_object(self.get_object().profile.avatar.name)
         response = super().destroy(request, *args, **kwargs)
         if response.status_code != 204:
             return response
