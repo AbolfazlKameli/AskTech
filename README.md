@@ -55,7 +55,7 @@ pip install -r requirements.txt
 start celery project
 
 ```shell
-celery -A forum worker -l INFO  
+celery -A core worker -l INFO  
 ```
 
 start the django server
