@@ -327,3 +327,10 @@ class TestUserProfileAPI(APITestCase):
         self.user.refresh_from_db()
         self.assertFalse(self.user.is_active)
         self.assertEqual(self.user.email, 'email@email.com')
+
+    @patch('apps.users.views.bucket.bucket.delete_object')
+    def test_delete_account(self, mock_delete_avatar):
+        url = reverse('users:user_profile', args=[1])
+        response = self.client.delete(url, HTTP_AUTHORIZATION='Bearer ' + self.token)
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn(self.user, User.objects.all())
