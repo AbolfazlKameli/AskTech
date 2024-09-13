@@ -25,13 +25,13 @@ sudo systemctl start rabbitmq-server
 Clone the project
 
 ```shell
-git clone https://github.com/AbolfazlKameli/Q-A-Forum.git
+git clone https://github.com/AbolfazlKameli/AskTech.git
 ```
 
 Go to the project directory
 
 ```shell
-cd Q-A-Forum/
+cd AskTech/
 ```
 
 make a virtual environment
