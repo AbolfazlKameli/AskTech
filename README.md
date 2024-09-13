@@ -1,8 +1,7 @@
 # AskTech
 
-AskTech is a free and open source website whose main focus is on digital currency. Django REST API technology is used in
-the back-end of this site. This project is still under development. After
-completion, additional information about this project will be announced.
+AskTech is a free and open source website. Django REST API technology is used in
+the back-end of this site.
 
 ## Authors
 
