@@ -40,7 +40,7 @@ class UserRegisterAPI(CreateAPIView):
 
     @extend_schema(responses={201: doc_serializers.DocRegisterSerializer})
     def post(self, request, *args, **kwargs):
-        srz_data = self.serializer_class(data=request.POST)
+        srz_data = self.serializer_class(data=request.data)
         if srz_data.is_valid():
             srz_data.validated_data.pop('password2')
             user = User.objects.create_user(**srz_data.validated_data)
@@ -94,7 +94,7 @@ class ResendVerificationEmailAPI(APIView):
 
     @extend_schema(responses={200: MessageSerializer})
     def post(self, request):
-        srz_data = self.serializer_class(data=request.POST)
+        srz_data = self.serializer_class(data=request.data)
         if srz_data.is_valid():
             user = srz_data.validated_data['user']
             send_verification_email.delay_on_commit(user.email, user.id)
@@ -142,7 +142,7 @@ class SetPasswordAPI(APIView):
         200: MessageSerializer
     })
     def post(self, request, token):
-        srz_data = self.serializer_class(data=request.POST)
+        srz_data = self.serializer_class(data=request.data)
         token_result = JWT_token.get_user(token)
         if not isinstance(token_result, User):
             return token_result
@@ -166,7 +166,7 @@ class ResetPasswordAPI(APIView):
         200: MessageSerializer
     })
     def post(self, request):
-        srz_data = self.serializer_class(data=request.POST)
+        srz_data = self.serializer_class(data=request.data)
         if srz_data.is_valid():
             try:
                 user = get_object_or_404(User, email=srz_data.validated_data['email'])
@@ -187,10 +187,10 @@ class BlockTokenAPI(APIView):
 
     @extend_schema(responses={200: MessageSerializer})
     def post(self, request):
-        srz_data = self.serializer_class(data=request.POST)
+        srz_data = self.serializer_class(data=request.data)
         if srz_data.is_valid():
             try:
-                token = RefreshToken(request.POST['refresh'])
+                token = RefreshToken(request.data['refresh'])
             except TokenError:
                 return Response(data={'error': 'token is invalid!'}, status=status.HTTP_400_BAD_REQUEST)
             token.blacklist()
