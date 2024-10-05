@@ -42,18 +42,18 @@ class UserRegisterAPI(CreateAPIView):
     def post(self, request, *args, **kwargs):
         srz_data = self.serializer_class(data=request.data)
         if srz_data.is_valid():
-            srz_data.validated_data.pop('password2')
-            user = User.objects.create_user(**srz_data.validated_data)
             vd = srz_data.validated_data
+            vd.pop('password2')
+            user = User.objects.create_user(**srz_data.validated_data)
             send_verification_email.delay_on_commit(vd['email'], user.id)
             response = srz_data.data
             response['message'] = 'We`ve sent you an activation link via email.'
             return Response(
                 data={'data': response},
-                status=status.HTTP_200_OK,
+                status=status.HTTP_201_CREATED,
             )
         return Response(
-            data={'error': srz_data.errors},
+            data={'errors': srz_data.errors},
             status=status.HTTP_400_BAD_REQUEST
         )
 
@@ -72,22 +72,22 @@ class UserRegisterVerifyAPI(APIView):
         if not isinstance(token_result, User):
             return token_result
         if token_result.is_active:
-            return Response(data={'message': 'this account already is active.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(data={'message': 'this account already is active.'}, status=status.HTTP_409_CONFLICT)
         token_result.is_active = True
         token_result.save()
-        token = JWT_token.generate_token(token_result)
+        new_token = JWT_token.generate_token(token_result)
         return Response(data={
             'message': 'Account activated successfully.',
-            'token': token['token'],
-            'refresh': token['refresh']},
+            'token': new_token['token'],
+            'refresh': new_token['refresh']},
             status=status.HTTP_200_OK
         )
 
 
 class ResendVerificationEmailAPI(APIView):
     """
-    makes a new token and sends it with email.\n
-    allowed methods: POST.
+    Generates a new token and sends it via email.
+    Allowed methods: POST.
     """
     permission_classes = [permissions.NotAuthenticated, ]
     serializer_class = serializers.ResendVerificationEmailSerializer
@@ -100,7 +100,7 @@ class ResendVerificationEmailAPI(APIView):
             send_verification_email.delay_on_commit(user.email, user.id)
             return Response(
                 data={"message": "We`ve resent the activation link to your email."},
-                status=status.HTTP_200_OK,
+                status=status.HTTP_202_ACCEPTED,
             )
         return Response(data={'errors': srz_data.errors}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -126,8 +126,10 @@ class ChangePasswordAPI(APIView):
                 user.set_password(new_password)
                 user.save()
                 return Response(data={'message': 'Your password changed successfully.'}, status=status.HTTP_200_OK)
-            return Response(data={'error': 'Your old password is not correct.'}, status=status.HTTP_400_BAD_REQUEST)
-        return Response(data={'error': srz_data.errors}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                data={'errors': {'old_password': 'Your old password is not correct.'}},
+                status=status.HTTP_400_BAD_REQUEST)
+        return Response(data={'errors': srz_data.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class SetPasswordAPI(APIView):
@@ -151,7 +153,7 @@ class SetPasswordAPI(APIView):
             token_result.set_password(new_password)
             token_result.save()
             return Response(data={'message': 'Password changed successfully.'}, status=status.HTTP_200_OK)
-        return Response(data={'error': srz_data.errors}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(data={'errors': srz_data.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class ResetPasswordAPI(APIView):
@@ -169,18 +171,21 @@ class ResetPasswordAPI(APIView):
         srz_data = self.serializer_class(data=request.data)
         if srz_data.is_valid():
             try:
-                user = get_object_or_404(User, email=srz_data.validated_data['email'])
-            except Http404:
-                return Response(data={'error': 'user with this Email not found.'}, status=status.HTTP_404_NOT_FOUND)
+                user = User.objects.get(User, email=srz_data.validated_data['email'])
+            except User.DoesNotExist:
+                return Response(data={'errors': 'user with this Email not found.'}, status=status.HTTP_404_NOT_FOUND)
             send_verification_email.delay_on_commit(user.email, user.id)
-            return Response(data={'message': 'sent you a change password link via email.'}, status=status.HTTP_200_OK)
-        return Response(data={'error': srz_data.errors}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                data={'message': 'A password reset link has been sent to your email.'},
+                status=status.HTTP_202_ACCEPTED
+            )
+        return Response(data={'errors': srz_data.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class BlockTokenAPI(APIView):
     """
-    blocks a deleted token\n
-    allowed methods: POST.
+    Blocks a specified refresh token.
+    Allowed methods: POST.
     """
     serializer_class = serializers.TokenSerializer
     permission_classes = [AllowAny, ]
@@ -192,10 +197,13 @@ class BlockTokenAPI(APIView):
             try:
                 token = RefreshToken(request.data['refresh'])
             except TokenError:
-                return Response(data={'error': 'token is invalid!'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    data={'errors': {'refresh': 'The provided token is invalid or has expired.'}},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
             token.blacklist()
-            return Response(data={'message': 'Token blocked successfully!'}, status=status.HTTP_200_OK)
-        return Response(data={'error': srz_data.errors}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(data={'message': 'Token blocked successfully!'}, status=status.HTTP_204_NO_CONTENT)
+        return Response(data={'errors': srz_data.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
 @extend_schema_view(
@@ -208,9 +216,11 @@ class BlockTokenAPI(APIView):
 )
 class UserProfileAPI(RetrieveUpdateDestroyAPIView):
     """
-    Retrieve or update user profile.\n
-    allowed methods: GET, PATCH, DELETE.\n
-    GET: Retrieve, PATCH:partial update, DELETE: delete account.
+    Retrieve, update, or delete user profile.
+    Allowed methods: GET, PATCH, DELETE.
+    GET: Retrieve the profile.
+    PATCH: Partially update the profile.
+    DELETE: Delete the account.
     """
     permission_classes = [permissions.IsOwnerOrReadOnly]
     serializer_class = serializers.UserSerializer
@@ -237,8 +247,10 @@ class UserProfileAPI(RetrieveUpdateDestroyAPIView):
         return Response(data={'errors': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
     def destroy(self, request, *args, **kwargs):
-        bucket.bucket.delete_object(self.get_object().profile.avatar.name)
+        user = self.get_object()
+        if user.profile.avatar:
+            bucket.bucket.delete_object(self.get_object().profile.avatar.name)
         response = super().destroy(request, *args, **kwargs)
         if response.status_code != 204:
             return response
-        return Response(data={'message': 'your account deleted successfully.'})
+        return Response(data={'message': 'your account has been deleted successfully.'})
