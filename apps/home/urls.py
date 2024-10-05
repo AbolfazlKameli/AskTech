@@ -11,11 +11,13 @@ urlpatterns = [
     path('accept/<int:answer_id>/', views.AcceptAnswerAPI.as_view(), name='answer_accept'),
     path('answer/<int:question_id>/', views.CreateAnswerAPI.as_view(), name='answer_create'),
     path('answer_comment/<int:answer_id>/', views.CreateCommentAPI.as_view(), name='comment_create'),
+    path('reply/<int:comment_id>/', views.CreateReplyAPI.as_view(), name='reply_create'),
+    path('reply/<int:comment_id>/<int:reply_id>/', views.CreateReplyAPI.as_view(), name='reply_create'),
 ]
 
 router = routers.DefaultRouter()
 router.register('question', views.QuestionViewSet)
 router.register('answers', views.AnswerViewSet, basename='answer-viewset')
 router.register('answer_comments', views.AnswerCommentViewSet, basename='answer_comments')
-router.register('reply', views.ReplyViewSet, basename='reply')
+router.register('replies', views.ReplyViewSet, basename='reply')
 urlpatterns += router.urls

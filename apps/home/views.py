@@ -190,24 +190,6 @@ class CreateCommentAPI(CreateAPIView):
 
 
 @extend_schema_view(
-    create=extend_schema(
-        responses={201: MessageSerializer},
-        parameters=[
-            OpenApiParameter(
-                name='comment_id',
-                type=int,
-                location=OpenApiParameter.QUERY,
-                description='comment_id',
-                required=True
-            ),
-            OpenApiParameter(
-                name='reply_id',
-                type=int,
-                location=OpenApiParameter.QUERY,
-                description='reply_id'
-            )
-        ]
-    ),
     update=extend_schema(
         responses={200: MessageSerializer}
     ),
@@ -228,34 +210,35 @@ class ReplyViewSet(ModelViewSet):
             return response
         return Response(data={'message': 'reply updated successfully.'}, status=status.HTTP_200_OK)
 
-    def get_permissions(self):
-        if self.action == 'create':
-            return [IsAuthenticated()]
-        return [permissions.IsOwnerOrReadOnly()]
+    def destroy(self, request, *args, **kwargs):
+        """destroys a reply object."""
+        return super().destroy(request, *args, **kwargs)
+
+
+@extend_schema(
+    responses={
+        201: MessageSerializer
+    }
+)
+class CreateReplyAPI(CreateAPIView):
+    """creates a reply object."""
+    serializer_class = serializers.ReplyCommentSerializer
+    queryset = CommentReply.objects.select_related('owner', 'comment', 'reply').all()
+    permission_classes = [IsAuthenticated]
+    http_method_names = ['post']
 
     def create(self, request, *args, **kwargs):
-        """created a reply object."""
+        """creates a reply object."""
         srz_data = self.get_serializer(data=self.request.data)
         if srz_data.is_valid():
-            comment = get_object_or_404(AnswerComment, id=self.request.query_params.get('comment_id'))
+            comment = get_object_or_404(AnswerComment, id=kwargs.get('comment_id'))
             try:
-                reply = CommentReply.objects.get(id=self.request.query_params.get('reply_id'))
+                reply = CommentReply.objects.get(id=kwargs.get('reply_id'))
             except CommentReply.DoesNotExist:
                 reply = None
             srz_data.save(owner=self.request.user, comment=comment, reply=reply)
             return Response(data={'message': 'reply created successfully.'}, status=status.HTTP_201_CREATED)
         return Response(data={'error': srz_data.errors}, status=status.HTTP_400_BAD_REQUEST)
-
-    def update(self, request, *args, **kwargs):
-        """updates a reply object."""
-        response = super().update(request, *args, **kwargs)
-        if response.status_code != 200:
-            return response
-        return Response(data={'message': 'reply updated successfully.'}, status=status.HTTP_200_OK)
-
-    def destroy(self, request, *args, **kwargs):
-        """destroys a reply object."""
-        return super().destroy(request, *args, **kwargs)
 
 
 class LikeAPI(APIView):
