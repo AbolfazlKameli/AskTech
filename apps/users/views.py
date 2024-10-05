@@ -47,7 +47,7 @@ class UserRegisterAPI(CreateAPIView):
             vd = srz_data.validated_data
             send_verification_email.delay_on_commit(vd['email'], user.id)
             response = srz_data.data
-            response['message'] = 'we sent you an activation url.'
+            response['message'] = 'We`ve sent you an activation link via email.'
             return Response(
                 data={'data': response},
                 status=status.HTTP_200_OK,
@@ -72,12 +72,12 @@ class UserRegisterVerifyAPI(APIView):
         if not isinstance(token_result, User):
             return token_result
         if token_result.is_active:
-            return Response(data={'message': 'this account already is active'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(data={'message': 'this account already is active.'}, status=status.HTTP_400_BAD_REQUEST)
         token_result.is_active = True
         token_result.save()
         token = JWT_token.generate_token(token_result)
         return Response(data={
-            'message': 'Account activated successfully',
+            'message': 'Account activated successfully.',
             'token': token['token'],
             'refresh': token['refresh']},
             status=status.HTTP_200_OK
@@ -99,7 +99,7 @@ class ResendVerificationEmailAPI(APIView):
             user = srz_data.validated_data['user']
             send_verification_email.delay_on_commit(user.email, user.id)
             return Response(
-                data={"message": "The activation email has been sent again successfully"},
+                data={"message": "We`ve resent the activation link to your email."},
                 status=status.HTTP_200_OK,
             )
         return Response(data={'errors': srz_data.errors}, status=status.HTTP_400_BAD_REQUEST)
@@ -125,8 +125,8 @@ class ChangePasswordAPI(APIView):
             if user.check_password(old_password):
                 user.set_password(new_password)
                 user.save()
-                return Response(data={'message': 'Your password changed successfully!'}, status=status.HTTP_200_OK)
-            return Response(data={'error': 'Your old password is not correct'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(data={'message': 'Your password changed successfully.'}, status=status.HTTP_200_OK)
+            return Response(data={'error': 'Your old password is not correct.'}, status=status.HTTP_400_BAD_REQUEST)
         return Response(data={'error': srz_data.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -150,7 +150,7 @@ class SetPasswordAPI(APIView):
             new_password = srz_data.validated_data['new_password']
             token_result.set_password(new_password)
             token_result.save()
-            return Response(data={'message': 'Password changed successfully'}, status=status.HTTP_200_OK)
+            return Response(data={'message': 'Password changed successfully.'}, status=status.HTTP_200_OK)
         return Response(data={'error': srz_data.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -171,9 +171,9 @@ class ResetPasswordAPI(APIView):
             try:
                 user = get_object_or_404(User, email=srz_data.validated_data['email'])
             except Http404:
-                return Response(data={'error': 'user with this Email not found!'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(data={'error': 'user with this Email not found.'}, status=status.HTTP_404_NOT_FOUND)
             send_verification_email.delay_on_commit(user.email, user.id)
-            return Response(data={'message': 'sent you a change password link!'}, status=status.HTTP_200_OK)
+            return Response(data={'message': 'sent you a change password link via email.'}, status=status.HTTP_200_OK)
         return Response(data={'error': srz_data.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -229,7 +229,7 @@ class UserProfileAPI(RetrieveUpdateDestroyAPIView):
                 user.is_active = False
                 user.save()
                 send_verification_email.delay_on_commit(serializer.validated_data['email'], user.id)
-                message += ' A verification URL has been sent to your new email address.'
+                message += ' A verification link has been sent to your new email address.'
 
             serializer.save()
 

@@ -58,7 +58,7 @@ class QuestionViewSet(ModelViewSet):
         serializer = self.get_serializer(data=self.request.data)
         if serializer.is_valid():
             serializer.save(owner=self.request.user)
-            return Response(data={'message': 'question created successfully!'}, status=status.HTTP_201_CREATED)
+            return Response(data={'message': 'question created successfully.'}, status=status.HTTP_201_CREATED)
         return Response({'error': serializer.errors})
 
     def retrieve(self, request, *args, **kwargs):
@@ -129,7 +129,7 @@ class AnswerViewSet(ModelViewSet):
         if srz_data.is_valid():
             question = get_object_or_404(Question, id=request.query_params.get('question_id'))
             srz_data.save(question=question, owner=self.request.user)
-            return Response(data={'message': 'created successfully'}, status=status.HTTP_201_CREATED)
+            return Response(data={'message': 'answer created successfully.'}, status=status.HTTP_201_CREATED)
         return Response(data={'error': srz_data.errors}, status=status.HTTP_400_BAD_REQUEST)
 
     def update(self, request, *args, **kwargs):
@@ -180,7 +180,7 @@ class AnswerCommentViewSet(ModelViewSet):
             answer = get_object_or_404(Answer, id=self.request.query_params['answer_id'])
             srz_data.save(owner=self.request.user, answer=answer)
             return Response(
-                data={'message': 'comment created successfully'},
+                data={'message': 'comment created successfully.'},
                 status=status.HTTP_201_CREATED
             )
         return Response(data={'error': srz_data.errors}, status=status.HTTP_400_BAD_REQUEST)
@@ -246,7 +246,7 @@ class ReplyViewSet(ModelViewSet):
             except CommentReply.DoesNotExist:
                 reply = None
             srz_data.save(owner=self.request.user, comment=comment, reply=reply)
-            return Response(data={'message': 'created successfully!'}, status=status.HTTP_201_CREATED)
+            return Response(data={'message': 'reply created successfully.'}, status=status.HTTP_201_CREATED)
         return Response(data={'error': srz_data.errors}, status=status.HTTP_400_BAD_REQUEST)
 
     def update(self, request, *args, **kwargs):
@@ -275,11 +275,11 @@ class LikeAPI(APIView):
         dislike = Vote.objects.filter(owner=self.request.user, answer=answer, is_dislike=True)
         if like.exists():
             like.delete()
-            return Response(data={'message': 'like removed'}, status=status.HTTP_204_NO_CONTENT)
+            return Response(data={'message': 'like removed.'}, status=status.HTTP_204_NO_CONTENT)
         if dislike:
             dislike.delete()
         like.create(owner=self.request.user, answer=answer, is_like=True)
-        return Response(data={'message': 'liked'}, status=status.HTTP_200_OK)
+        return Response(data={'message': 'answer liked.'}, status=status.HTTP_200_OK)
 
 
 class DisLikeAPI(APIView):
@@ -293,11 +293,11 @@ class DisLikeAPI(APIView):
         like = Vote.objects.filter(owner=self.request.user, answer=answer, is_like=True)
         if dislike.exists():
             dislike.delete()
-            return Response(data={'message': 'dislike removed'}, status=status.HTTP_200_OK)
+            return Response(data={'message': 'dislike removed.'}, status=status.HTTP_200_OK)
         if like.exists():
             like.delete()
         dislike.create(owner=self.request.user, answer=answer, is_dislike=True)
-        return Response(data={'message': 'disliked'}, status=status.HTTP_200_OK)
+        return Response(data={'message': 'answer disliked.'}, status=status.HTTP_200_OK)
 
 
 class AcceptAnswerAPI(APIView):
@@ -314,7 +314,9 @@ class AcceptAnswerAPI(APIView):
                 answer.owner.profile.save()
                 answer.save()
                 return Response(data={'message': 'answer accepted.'}, status=status.HTTP_200_OK)
-            return Response(data={'error': 'you can not accept an answer twice or accept two answers'},
-                            status=status.HTTP_400_BAD_REQUEST
-                            )
-        return Response(data={'error': 'only question owner can perform this action'}, status=status.HTTP_403_FORBIDDEN)
+            return Response(
+                data={'error': 'you can not accept an answer twice or accept two answers at the same time.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        return Response(data={'error': 'only question owner can perform this action.'},
+                        status=status.HTTP_403_FORBIDDEN)
