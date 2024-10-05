@@ -62,10 +62,16 @@ class AnswerSerializer(serializers.ModelSerializer):
 
     @extend_schema_field(serializers.IntegerField())
     def get_likes(self, obj):
-        likes = obj.votes.select_related('owner', 'answer').filter(is_like=True)
-        return likes.count()
+        return self.get_votes_count(obj, is_like=True)
 
     @extend_schema_field(serializers.IntegerField())
     def get_dislikes(self, obj):
-        dislikes = obj.votes.select_related('owner', 'answer').filter(is_dislike=True)
-        return dislikes.count()
+        return self.get_votes_count(obj, is_dislike=True)
+
+    def get_votes_count(self, obj, is_like=None, is_dislike=None):
+        votes = obj.votes.select_related('owner', 'answer')
+        if is_like is not None:
+            votes = votes.filter(is_like=is_like)
+        if is_dislike is not None:
+            votes = votes.filter(is_dislike=is_dislike)
+        return votes.count()
