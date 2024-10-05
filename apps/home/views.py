@@ -125,7 +125,7 @@ class AnswerViewSet(ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         """creates an answer object."""
-        srz_data = self.get_serializer(data=self.request.POST)
+        srz_data = self.get_serializer(data=self.request.data)
         if srz_data.is_valid():
             question = get_object_or_404(Question, id=request.query_params.get('question_id'))
             srz_data.save(question=question, owner=self.request.user)
