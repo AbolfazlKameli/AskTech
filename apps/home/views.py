@@ -193,10 +193,10 @@ class ReplyViewSet(ModelViewSet):
 
     def update(self, request, *args, **kwargs):
         """updates a reply object."""
-        response = super().update(request, *args, **kwargs)
-        if response.status_code != 200:
-            return response
-        return Response(data={'message': 'reply updated successfully.'}, status=status.HTTP_200_OK)
+        return update_response(
+            super().update(request, *args, **kwargs),
+            'reply updated successfully.'
+        )
 
     def destroy(self, request, *args, **kwargs):
         """destroys a reply object."""
