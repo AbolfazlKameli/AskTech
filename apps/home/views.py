@@ -8,6 +8,7 @@ from rest_framework.viewsets import ModelViewSet
 
 from docs.serializers.doc_serializers import MessageSerializer
 from permissions import permissions
+from utils.update_response import update_response
 from . import serializers
 from .docs.doc_serializers import DocQuestionSerializer
 from .models import Question, Answer, AnswerComment, CommentReply, Vote
@@ -40,29 +41,28 @@ class HomeAPI(ListAPIView):
     )
 )
 class QuestionViewSet(ModelViewSet):
-    """question CRUD operations ModelViewSet"""
+    """Question CRUD operations ModelViewSet."""
     serializer_class = serializers.QuestionSerializer
     queryset = Question.objects.select_related('owner').all()
-    filterset_fields = ['tag', 'owner', 'created', 'owner']
+    filterset_fields = ['tag', 'owner', 'created']
     search_fields = ['title', 'body']
 
     def get_permissions(self):
-        if self.action == 'list' or self.action == 'retrieve':
+        if self.action in ['list', 'retrieve']:
             return [AllowAny()]
         elif self.action == 'create':
             return [IsAuthenticated()]
         return [permissions.IsOwnerOrReadOnly()]
 
     def create(self, request, *args, **kwargs):
-        """creates a question object."""
-        serializer = self.get_serializer(data=self.request.data)
-        if serializer.is_valid():
-            serializer.save(owner=self.request.user)
-            return Response(data={'message': 'question created successfully.'}, status=status.HTTP_201_CREATED)
-        return Response({'error': serializer.errors})
+        """Creates a question object."""
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)  # Automatically raise an exception if invalid
+        serializer.save(owner=request.user)
+        return Response(data={'message': 'Question created successfully.'}, status=status.HTTP_201_CREATED)
 
     def retrieve(self, request, *args, **kwargs):
-        """shows detail of one question object."""
+        """Shows detail of one question object."""
         response = super().retrieve(request, *args, **kwargs)
         answers = self.get_object().answers.all()
         srz_answers = serializers.AnswerSerializer(answers, many=True)
@@ -70,25 +70,25 @@ class QuestionViewSet(ModelViewSet):
         return response
 
     def update(self, request, *args, **kwargs):
-        """updates one question object."""
-        response = super().update(request, *args, **kwargs)
-        if response.status_code != 200:
-            return response
-        return Response(data={'message': 'question updated successfully.'}, status=status.HTTP_200_OK)
+        """Updates one question object."""
+        return update_response(
+            super().update(request, *args, **kwargs),
+            message='Question updated successfully.'
+        )
 
     def partial_update(self, request, *args, **kwargs):
-        """updates a question object partially"""
-        response = super().partial_update(request, *args, **kwargs)
-        if response.status_code != 200:
-            return response
-        return Response(data={'message': 'question updated successfully.'}, status=status.HTTP_200_OK)
+        """Updates a question object partially."""
+        return update_response(
+            super().partial_update(request, *args, **kwargs),
+            message='Question updated successfully.'
+        )
 
     def destroy(self, request, *args, **kwargs):
-        """deletes an answer object."""
+        """Deletes a question object."""
         response = super().destroy(request, *args, **kwargs)
-        if response.status_code != 204:
-            return response
-        return Response(data={'message': 'question deleted successfully.'}, status=status.HTTP_204_NO_CONTENT)
+        if response.status_code == 204:
+            return Response(data={'message': 'Question deleted successfully.'}, status=status.HTTP_204_NO_CONTENT)
+        return response
 
 
 @extend_schema_view(
