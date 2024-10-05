@@ -85,10 +85,7 @@ class QuestionViewSet(ModelViewSet):
 
     def destroy(self, request, *args, **kwargs):
         """Deletes a question object."""
-        response = super().destroy(request, *args, **kwargs)
-        if response.status_code == 204:
-            return Response(data={'message': 'Question deleted successfully.'}, status=status.HTTP_204_NO_CONTENT)
-        return response
+        return super().destroy(request, *args, **kwargs)
 
 
 @extend_schema_view(
@@ -118,10 +115,7 @@ class AnswerViewSet(ModelViewSet):
 
     def destroy(self, request, *args, **kwargs):
         """deletes an answer object."""
-        response = super().destroy(request, *args, **kwargs)
-        if response.status_code != 204:
-            return response
-        return Response(data={'message': 'answer deleted successfully.'}, status=status.HTTP_204_NO_CONTENT)
+        return super().destroy(request, *args, **kwargs)
 
 
 @extend_schema(
@@ -175,10 +169,7 @@ class AnswerCommentViewSet(ModelViewSet):
 
     def destroy(self, request, *args, **kwargs):
         """deletes a comment object."""
-        response = super().destroy(request, *args, **kwargs)
-        if response.status_code != status.HTTP_204_NO_CONTENT:
-            return response
-        return Response(data={'message': 'comment deleted successfully.'}, status=status.HTTP_204_NO_CONTENT)
+        return super().destroy(request, *args, **kwargs)
 
 
 @extend_schema(
@@ -264,10 +255,7 @@ class ReplyViewSet(ModelViewSet):
 
     def destroy(self, request, *args, **kwargs):
         """destroys a reply object."""
-        response = super().destroy(request, *args, **kwargs)
-        if response.status_code != 200:
-            return response
-        return Response(data={'message': 'reply deleted successfully.'}, status=status.HTTP_204_NO_CONTENT)
+        return super().destroy(request, *args, **kwargs)
 
 
 class LikeAPI(APIView):
