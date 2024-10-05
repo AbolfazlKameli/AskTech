@@ -1,4 +1,4 @@
-from drf_spectacular.utils import extend_schema, OpenApiParameter, extend_schema_view
+from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import status
 from rest_framework.generics import ListAPIView, get_object_or_404, CreateAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -100,11 +100,7 @@ class AnswerViewSet(ModelViewSet):
     serializer_class = serializers.AnswerSerializer
     queryset = Answer.objects.select_related('owner', 'question').all()
     http_method_names = ['put', 'delete']
-
-    def get_permissions(self):
-        if self.action == 'create':
-            return [IsAuthenticated()]
-        return [permissions.IsOwnerOrReadOnly()]
+    permission_classes = [permissions.IsOwnerOrReadOnly]
 
     def update(self, request, *args, **kwargs):
         """updates an answer object."""
@@ -154,11 +150,7 @@ class AnswerCommentViewSet(ModelViewSet):
     serializer_class = serializers.AnswerCommentSerializer
     queryset = AnswerComment.objects.select_related('owner', 'answer').all()
     http_method_names = ['put', 'delete']
-
-    def get_permissions(self):
-        if self.action == 'create':
-            return [IsAuthenticated()]
-        return [permissions.IsOwnerOrReadOnly()]
+    permission_classes = [permissions.IsOwnerOrReadOnly]
 
     def update(self, request, *args, **kwargs):
         """updates a comment object."""
@@ -226,7 +218,15 @@ class CreateCommentAPI(CreateAPIView):
 class ReplyViewSet(ModelViewSet):
     serializer_class = serializers.ReplyCommentSerializer
     queryset = CommentReply.objects.select_related('owner', 'comment', 'reply').all()
-    http_method_names = ['post', 'put', 'delete']
+    http_method_names = ['put', 'delete']
+    permission_classes = [permissions.IsOwnerOrReadOnly]
+
+    def update(self, request, *args, **kwargs):
+        """updates a reply object."""
+        response = super().update(request, *args, **kwargs)
+        if response.status_code != 200:
+            return response
+        return Response(data={'message': 'reply updated successfully.'}, status=status.HTTP_200_OK)
 
     def get_permissions(self):
         if self.action == 'create':
