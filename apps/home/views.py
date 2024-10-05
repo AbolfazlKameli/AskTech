@@ -36,9 +36,6 @@ class HomeAPI(ListAPIView):
     partial_update=extend_schema(
         responses={200: MessageSerializer}
     ),
-    destroy=extend_schema(
-        responses={204: MessageSerializer}
-    )
 )
 class QuestionViewSet(ModelViewSet):
     """Question CRUD operations ModelViewSet."""
@@ -92,9 +89,6 @@ class QuestionViewSet(ModelViewSet):
     update=extend_schema(responses={
         200: MessageSerializer
     }),
-    destroy=extend_schema(responses={
-        204: MessageSerializer
-    })
 )
 class AnswerViewSet(ModelViewSet):
     serializer_class = serializers.AnswerSerializer
@@ -142,9 +136,6 @@ class CreateAnswerAPI(CreateAPIView):
     update=extend_schema(
         responses={200: MessageSerializer}
     ),
-    destroy=extend_schema(
-        responses={204: MessageSerializer}
-    )
 )
 class AnswerCommentViewSet(ModelViewSet):
     serializer_class = serializers.AnswerCommentSerializer
@@ -193,9 +184,6 @@ class CreateCommentAPI(CreateAPIView):
     update=extend_schema(
         responses={200: MessageSerializer}
     ),
-    destroy=extend_schema(
-        responses={204: MessageSerializer}
-    )
 )
 class ReplyViewSet(ModelViewSet):
     serializer_class = serializers.ReplyCommentSerializer
