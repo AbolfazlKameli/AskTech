@@ -9,9 +9,12 @@ urlpatterns = [
     path('like/<int:answer_id>/', views.LikeAPI.as_view(), name='answer_like'),
     path('dislike/<int:answer_id>/', views.DisLikeAPI.as_view(), name='answer_dislike'),
     path('accept/<int:answer_id>/', views.AcceptAnswerAPI.as_view(), name='answer_accept'),
+
+    # Answer creation
+    path('answer/<int:question_id>/', views.AnswerViewSet.as_view({'post': 'create'}), name='answer_create')
 ]
 
-router = routers.SimpleRouter()
+router = routers.DefaultRouter()
 router.register('question', views.QuestionViewSet)
 router.register('answer', views.AnswerViewSet, basename='answer-viewset')
 router.register('answer_comments', views.AnswerCommentViewSet, basename='answer_comments')

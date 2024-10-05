@@ -96,15 +96,6 @@ class QuestionViewSet(ModelViewSet):
         responses={
             201: MessageSerializer
         },
-        parameters=[
-            OpenApiParameter(
-                name='question_id',
-                type=int,
-                location=OpenApiParameter.QUERY,
-                description='question id',
-                required=True
-            )
-        ],
     ),
     update=extend_schema(responses={
         200: MessageSerializer
@@ -127,7 +118,7 @@ class AnswerViewSet(ModelViewSet):
         """creates an answer object."""
         srz_data = self.get_serializer(data=self.request.data)
         if srz_data.is_valid():
-            question = get_object_or_404(Question, id=request.query_params.get('question_id'))
+            question = get_object_or_404(Question, id=kwargs.get('question_id'))
             srz_data.save(question=question, owner=self.request.user)
             return Response(data={'message': 'answer created successfully.'}, status=status.HTTP_201_CREATED)
         return Response(data={'error': srz_data.errors}, status=status.HTTP_400_BAD_REQUEST)
