@@ -10,6 +10,7 @@ urlpatterns = [
     path('dislike/<int:answer_id>/', views.DisLikeAPI.as_view(), name='answer_dislike'),
     path('accept/<int:answer_id>/', views.AcceptAnswerAPI.as_view(), name='answer_accept'),
     path('answer/<int:question_id>/', views.CreateAnswerAPI.as_view(), name='answer_create'),
+    path('answer_comment/<int:answer_id>/', views.CreateCommentAPI.as_view(), name='comment_create'),
 ]
 
 router = routers.DefaultRouter()

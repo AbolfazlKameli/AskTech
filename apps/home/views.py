@@ -149,14 +149,6 @@ class CreateAnswerAPI(CreateAPIView):
 
 
 @extend_schema_view(
-    create=extend_schema(
-        responses={
-            201: MessageSerializer
-        },
-        parameters=[
-            OpenApiParameter(name='answer_id', type=str, location=OpenApiParameter.QUERY, description='answer id'),
-        ]
-    ),
     update=extend_schema(
         responses={200: MessageSerializer}
     ),
@@ -167,38 +159,51 @@ class CreateAnswerAPI(CreateAPIView):
 class AnswerCommentViewSet(ModelViewSet):
     serializer_class = serializers.AnswerCommentSerializer
     queryset = AnswerComment.objects.select_related('owner', 'answer').all()
-    http_method_names = ['post', 'put', 'delete']
+    http_method_names = ['put', 'delete']
 
     def get_permissions(self):
         if self.action == 'create':
             return [IsAuthenticated()]
         return [permissions.IsOwnerOrReadOnly()]
 
+    def update(self, request, *args, **kwargs):
+        """updates a comment object."""
+        return update_response(
+            super().update(request, *args, **kwargs),
+            'comment updated successfully.'
+        )
+
+    def destroy(self, request, *args, **kwargs):
+        """deletes a comment object."""
+        response = super().destroy(request, *args, **kwargs)
+        if response.status_code != status.HTTP_204_NO_CONTENT:
+            return response
+        return Response(data={'message': 'comment deleted successfully.'}, status=status.HTTP_204_NO_CONTENT)
+
+
+@extend_schema(
+    responses={
+        201: MessageSerializer
+    }
+)
+class CreateCommentAPI(CreateAPIView):
+    """creates a comment object."""
+    serializer_class = serializers.AnswerCommentSerializer
+    queryset = AnswerComment.objects.select_related('owner', 'answer').all()
+    permission_classes = [IsAuthenticated]
+    http_method_names = ['post']
+
     def create(self, request, *args, **kwargs):
         """creates a comment object."""
         srz_data = self.get_serializer(data=self.request.data)
         if srz_data.is_valid():
-            answer = get_object_or_404(Answer, id=self.request.query_params['answer_id'])
+            answer = get_object_or_404(Answer, id=kwargs.get('answer_id'))
             srz_data.save(owner=self.request.user, answer=answer)
             return Response(
                 data={'message': 'comment created successfully.'},
                 status=status.HTTP_201_CREATED
             )
         return Response(data={'error': srz_data.errors}, status=status.HTTP_400_BAD_REQUEST)
-
-    def update(self, request, *args, **kwargs):
-        """updates a comment object."""
-        response = super().update(request, *args, **kwargs)
-        if response.status_code != 200:
-            return response
-        return Response(data={'message': 'comment updated successfully.'}, status=status.HTTP_200_OK)
-
-    def destroy(self, request, *args, **kwargs):
-        """deletes a comment object."""
-        response = super().destroy(request, *args, **kwargs)
-        if response.status_code != 204:
-            return response
-        return Response(data={'message': 'comment deleted successfully.'}, status=status.HTTP_204_NO_CONTENT)
 
 
 @extend_schema_view(
