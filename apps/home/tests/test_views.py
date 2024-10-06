@@ -11,11 +11,11 @@ from apps.home.models import (
     Question,
     CommentReply,
     Answer,
-    AnswerComment,
+    Comment,
     Vote
 )
 from apps.home.views import (
-    AnswerCommentViewSet,
+    CommentViewSet,
     AnswerViewSet,
     DisLikeAPI,
     LikeAPI,
@@ -175,7 +175,7 @@ class TestAnswerCommentViewSet(APITestCase):
         self.factory = APIRequestFactory()
         self.user = baker.make(User, is_active=True)
         self.answer = baker.make(Answer)
-        baker.make(AnswerComment, answer=self.answer, owner=self.user)
+        baker.make(Comment, answer=self.answer, owner=self.user)
         self.token = self.get_JWT_token()
 
     def get_JWT_token(self):
@@ -185,7 +185,7 @@ class TestAnswerCommentViewSet(APITestCase):
     def test_permissions_denied(self):
         request = self.factory.put(reverse('home:answer_comments-detail', args=[1]))
         request.user = AnonymousUser()
-        response = AnswerCommentViewSet.as_view({'put': 'update'})(request, pk=1)
+        response = CommentViewSet.as_view({'put': 'update'})(request, pk=1)
         self.assertEqual(response.status_code, 401)
 
     def test_comment_create(self):
@@ -195,7 +195,7 @@ class TestAnswerCommentViewSet(APITestCase):
         }
         url = f"{reverse('home:answer_comments-list')}?{urlencode({'answer_id': 1})}"
         request = self.factory.post(url, data=data, HTTP_AUTHORIZATION='Bearer ' + self.token)
-        response = AnswerCommentViewSet.as_view({'post': 'create'})(request)
+        response = CommentViewSet.as_view({'post': 'create'})(request)
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.data['message'], 'comment created successfully')
 
@@ -205,14 +205,14 @@ class TestAnswerCommentViewSet(APITestCase):
         }
         request = self.factory.put(reverse('home:answer_comments-detail', args=[1]), data=data,
                                    HTTP_AUTHORIZATION='Bearer ' + self.token)
-        response = AnswerCommentViewSet.as_view({'put': 'update'})(request, pk=1)
+        response = CommentViewSet.as_view({'put': 'update'})(request, pk=1)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data['message'], 'comment updated successfully.')
 
     def test_comment_delete(self):
         request = self.factory.delete(reverse('home:answer_comments-detail', args=[1]),
                                       HTTP_AUTHORIZATION='Bearer ' + self.token)
-        response = AnswerCommentViewSet.as_view({'delete': 'destroy'})(request, pk=1)
+        response = CommentViewSet.as_view({'delete': 'destroy'})(request, pk=1)
         self.assertEqual(response.status_code, 204)
 
 
@@ -220,7 +220,7 @@ class TestReplyViewSet(APITestCase):
     def setUp(self):
         self.factory = APIRequestFactory()
         self.user = baker.make(User, is_active=True)
-        self.comment = baker.make(AnswerComment)
+        self.comment = baker.make(Comment)
         baker.make(CommentReply, comment=self.comment, owner=self.user, reply=None)
         self.token = self.get_JWT_token()
 

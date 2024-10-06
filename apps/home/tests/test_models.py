@@ -45,7 +45,7 @@ class AnswerCommentTest(APITestCase):
     def setUp(self):
         user = baker.make(User, username='username')
         answer = baker.make(models.Answer, body='test')
-        self.comment = baker.make(models.AnswerComment, owner=user, answer=answer)
+        self.comment = baker.make(models.Comment, owner=user, answer=answer)
 
     def test_comment_str(self):
         self.assertEqual(str(self.comment), 'username - test...')

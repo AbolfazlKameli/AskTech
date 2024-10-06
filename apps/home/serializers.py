@@ -1,7 +1,7 @@
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
-from .models import Question, Answer, AnswerComment, CommentReply, Tag
+from .models import Question, Answer, Comment, CommentReply, Tag
 
 
 class QuestionSerializer(serializers.ModelSerializer):
@@ -29,13 +29,13 @@ class ReplyCommentSerializer(serializers.ModelSerializer):
         return ReplyCommentSerializer(instance=replies, many=True).data
 
 
-class AnswerCommentSerializer(serializers.ModelSerializer):
+class CommentSerializer(serializers.ModelSerializer):
     replies = serializers.SerializerMethodField(read_only=True)
     owner = serializers.StringRelatedField(read_only=True)
     answer = serializers.StringRelatedField(read_only=True)
 
     class Meta:
-        model = AnswerComment
+        model = Comment
         fields = '__all__'
 
     @extend_schema_field(serializers.ListSerializer(child=ReplyCommentSerializer(many=True)))
@@ -55,10 +55,10 @@ class AnswerSerializer(serializers.ModelSerializer):
         model = Answer
         exclude = ('accepted',)
 
-    @extend_schema_field(serializers.ListSerializer(child=AnswerCommentSerializer(many=True)))
+    @extend_schema_field(serializers.ListSerializer(child=CommentSerializer(many=True)))
     def get_comments(self, obj):
         comments = obj.comments.all()
-        return AnswerCommentSerializer(comments, many=True).data
+        return CommentSerializer(comments, many=True).data
 
     @extend_schema_field(serializers.IntegerField())
     def get_likes(self, obj):

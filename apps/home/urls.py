@@ -18,6 +18,6 @@ urlpatterns = [
 router = routers.DefaultRouter()
 router.register('question', views.QuestionViewSet)
 router.register('answers', views.AnswerViewSet, basename='answer-viewset')
-router.register('answer_comments', views.AnswerCommentViewSet, basename='answer_comments')
+router.register('comments', views.CommentViewSet, basename='comments')
 router.register('replies', views.ReplyViewSet, basename='reply')
 urlpatterns += router.urls

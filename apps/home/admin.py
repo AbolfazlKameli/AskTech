@@ -9,7 +9,7 @@ class AnswerInline(admin.StackedInline):
 
 
 class AnswerCommentsInline(admin.StackedInline):
-    model = models.AnswerComment
+    model = models.Comment
     raw_id_fields = ('owner', 'answer')
 
 
@@ -40,7 +40,7 @@ class AnswerAdmin(admin.ModelAdmin):
     inlines = (AnswerCommentsInline, VoteInline)
 
 
-@admin.register(models.AnswerComment)
+@admin.register(models.Comment)
 class AnswerCommentAdmin(admin.ModelAdmin):
     list_display = ('owner', 'answer', 'created', 'id')
     raw_id_fields = ('owner', 'answer')

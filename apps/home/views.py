@@ -11,7 +11,7 @@ from permissions import permissions
 from utils.update_response import update_response
 from . import serializers
 from .docs.doc_serializers import DocQuestionSerializer
-from .models import Question, Answer, AnswerComment, CommentReply, Vote
+from .models import Question, Answer, Comment, CommentReply, Vote
 
 
 class HomeAPI(ListAPIView):
@@ -137,9 +137,9 @@ class CreateAnswerAPI(CreateAPIView):
         responses={200: MessageSerializer}
     ),
 )
-class AnswerCommentViewSet(ModelViewSet):
-    serializer_class = serializers.AnswerCommentSerializer
-    queryset = AnswerComment.objects.select_related('owner', 'answer').all()
+class CommentViewSet(ModelViewSet):
+    serializer_class = serializers.CommentSerializer
+    queryset = Comment.objects.select_related('owner', 'answer').all()
     http_method_names = ['put', 'delete']
     permission_classes = [permissions.IsOwnerOrReadOnly]
 
@@ -162,8 +162,8 @@ class AnswerCommentViewSet(ModelViewSet):
 )
 class CreateCommentAPI(CreateAPIView):
     """creates a comment object."""
-    serializer_class = serializers.AnswerCommentSerializer
-    queryset = AnswerComment.objects.select_related('owner', 'answer').all()
+    serializer_class = serializers.CommentSerializer
+    queryset = Comment.objects.select_related('owner', 'answer').all()
     permission_classes = [IsAuthenticated]
     http_method_names = ['post']
 
@@ -219,7 +219,7 @@ class CreateReplyAPI(CreateAPIView):
         """creates a reply object."""
         srz_data = self.get_serializer(data=self.request.data)
         if srz_data.is_valid():
-            comment = get_object_or_404(AnswerComment, id=kwargs.get('comment_id'))
+            comment = get_object_or_404(Comment, id=kwargs.get('comment_id'))
             try:
                 reply = CommentReply.objects.get(id=kwargs.get('reply_id'))
             except CommentReply.DoesNotExist:
