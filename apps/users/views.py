@@ -111,18 +111,13 @@ class ChangePasswordAPI(APIView):
         200: MessageSerializer
     })
     def put(self, request):
-        srz_data = self.serializer_class(data=request.data)
+        srz_data = self.serializer_class(data=request.data, context={'request': request})
         if srz_data.is_valid():
             user = request.user
-            old_password = srz_data.validated_data['old_password']
             new_password = srz_data.validated_data['new_password']
-            if user.check_password(old_password):
-                user.set_password(new_password)
-                user.save()
-                return Response(data={'message': 'Your password changed successfully.'}, status=status.HTTP_200_OK)
-            return Response(
-                data={'errors': {'old_password': 'Your old password is not correct.'}},
-                status=status.HTTP_400_BAD_REQUEST)
+            user.set_password(new_password)
+            user.save()
+            return Response(data={'message': 'Your password changed successfully.'}, status=status.HTTP_200_OK)
         return Response(data={'errors': srz_data.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
