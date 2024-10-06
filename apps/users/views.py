@@ -161,7 +161,7 @@ class ResetPasswordAPI(APIView):
         srz_data = self.serializer_class(data=request.data)
         if srz_data.is_valid():
             try:
-                user: User = User.objects.get(User, email=srz_data.validated_data['email'])
+                user: User = User.objects.get(email=srz_data.validated_data['email'])
             except User.DoesNotExist:
                 return Response(data={'errors': 'user with this Email not found.'}, status=status.HTTP_404_NOT_FOUND)
             send_verification_email.delay_on_commit(user.email, user.id)
