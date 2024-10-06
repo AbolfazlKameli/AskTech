@@ -1,3 +1,5 @@
+from typing import Dict, Any
+
 from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
@@ -14,6 +16,20 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
         if lifetime:
             token.set_exp(claim='exp', lifetime=lifetime)
         return token
+
+    def validate(self, attrs):
+        data = super().validate(attrs)
+        refresh = self.get_token(self.user)
+        data.update({
+            'refresh': str(refresh),
+            'access': str(refresh.access_token),
+            'user': {
+                'id': self.user.id,
+                'username': self.user.username,
+                'email': self.user.email
+            }
+        })
+        return data
 
 
 class UserSerializer(serializers.ModelSerializer):
