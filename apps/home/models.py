@@ -57,7 +57,7 @@ class Answer(models.Model):
         return f'{self.body[:30]}...'
 
 
-class AnswerComment(models.Model):
+class Comment(models.Model):
     owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='answer_comments')
     answer = models.ForeignKey(Answer, on_delete=models.CASCADE, related_name='comments')
     body = models.TextField()
@@ -73,7 +73,7 @@ class AnswerComment(models.Model):
 
 class CommentReply(models.Model):
     owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='replies')
-    comment = models.ForeignKey(AnswerComment, on_delete=models.CASCADE, related_name='replies')
+    comment = models.ForeignKey(Comment, on_delete=models.CASCADE, related_name='replies')
     reply = models.ForeignKey('self', on_delete=models.CASCADE, related_name='i_replies', blank=True, null=True)
     body = models.TextField()
     created = models.DateTimeField(auto_now_add=True)

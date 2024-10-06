@@ -1,7 +1,7 @@
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
-from .models import Question, Answer, AnswerComment, CommentReply, Tag
+from .models import Question, Answer, Comment, CommentReply, Tag
 
 
 class QuestionSerializer(serializers.ModelSerializer):
@@ -29,13 +29,13 @@ class ReplyCommentSerializer(serializers.ModelSerializer):
         return ReplyCommentSerializer(instance=replies, many=True).data
 
 
-class AnswerCommentSerializer(serializers.ModelSerializer):
+class CommentSerializer(serializers.ModelSerializer):
     replies = serializers.SerializerMethodField(read_only=True)
     owner = serializers.StringRelatedField(read_only=True)
     answer = serializers.StringRelatedField(read_only=True)
 
     class Meta:
-        model = AnswerComment
+        model = Comment
         fields = '__all__'
 
     @extend_schema_field(serializers.ListSerializer(child=ReplyCommentSerializer(many=True)))
@@ -55,17 +55,23 @@ class AnswerSerializer(serializers.ModelSerializer):
         model = Answer
         exclude = ('accepted',)
 
-    @extend_schema_field(serializers.ListSerializer(child=AnswerCommentSerializer(many=True)))
+    @extend_schema_field(serializers.ListSerializer(child=CommentSerializer(many=True)))
     def get_comments(self, obj):
         comments = obj.comments.all()
-        return AnswerCommentSerializer(comments, many=True).data
+        return CommentSerializer(comments, many=True).data
 
     @extend_schema_field(serializers.IntegerField())
     def get_likes(self, obj):
-        likes = obj.votes.select_related('owner', 'answer').filter(is_like=True)
-        return likes.count()
+        return self.get_votes_count(obj, is_like=True)
 
     @extend_schema_field(serializers.IntegerField())
     def get_dislikes(self, obj):
-        dislikes = obj.votes.select_related('owner', 'answer').filter(is_dislike=True)
-        return dislikes.count()
+        return self.get_votes_count(obj, is_dislike=True)
+
+    def get_votes_count(self, obj, is_like=None, is_dislike=None):
+        votes = obj.votes.select_related('owner', 'answer')
+        if is_like is not None:
+            votes = votes.filter(is_like=is_like)
+        if is_dislike is not None:
+            votes = votes.filter(is_dislike=is_dislike)
+        return votes.count()

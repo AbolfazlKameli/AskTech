@@ -4,7 +4,7 @@ from rest_framework.test import APITestCase
 from apps.home.models import (
     Tag,
     Question,
-    AnswerComment,
+    Comment,
     Answer,
     Vote,
     CommentReply
@@ -12,7 +12,7 @@ from apps.home.models import (
 from apps.home.serializers import (
     QuestionSerializer,
     AnswerSerializer,
-    AnswerCommentSerializer,
+    CommentSerializer,
     ReplyCommentSerializer
 )
 from apps.users.models import User
@@ -77,8 +77,8 @@ class TestAnswerSerializer(APITestCase):
 
     def test_get_comments(self):
         answer = baker.make(Answer)
-        baker.make(AnswerComment, body='first comment', answer=answer)
-        baker.make(AnswerComment, body='second comment', answer=answer)
+        baker.make(Comment, body='first comment', answer=answer)
+        baker.make(Comment, body='second comment', answer=answer)
         data = AnswerSerializer(instance=answer).data['comments']
         self.assertEqual(len(data), 2)
         self.assertEqual(data[0]['body'], 'second comment')
@@ -110,7 +110,7 @@ class TestAnswerComment(APITestCase):
 
     def test_valid_data(self):
         data = {'owner': self.user, 'answer': self.answer, 'body': 'test_body'}
-        serializer = AnswerCommentSerializer(data=data)
+        serializer = CommentSerializer(data=data)
         self.assertTrue(serializer.is_valid())
         self.assertEqual(serializer.validated_data['body'], 'test_body')
 
@@ -120,10 +120,10 @@ class TestAnswerComment(APITestCase):
         self.assertEqual(len(serializer.errors), 1)
 
     def test_get_replies(self):
-        comment = baker.make(AnswerComment)
+        comment = baker.make(Comment)
         baker.make(CommentReply, comment=comment, body='test_body')
         baker.make(CommentReply, comment=comment, body='test_body2')
-        data = AnswerCommentSerializer(instance=comment).data['replies']
+        data = CommentSerializer(instance=comment).data['replies']
         self.assertEqual(len(data), 2)
         self.assertEqual(data[0]['body'], 'test_body2')
         self.assertEqual(data[1]['body'], 'test_body')
@@ -132,7 +132,7 @@ class TestAnswerComment(APITestCase):
 class TestReplyCommentSerializer(APITestCase):
     def setUp(self):
         self.user = baker.make(User, username='username', email='email@gmail.com', is_active=True)
-        self.comment = baker.make(AnswerComment)
+        self.comment = baker.make(Comment)
 
     def test_valid_data(self):
         data = {'owner': self.user, 'comment': self.comment, 'body': 'test_body'}
