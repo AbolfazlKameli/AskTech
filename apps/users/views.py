@@ -41,7 +41,7 @@ class UserRegisterAPI(CreateAPIView):
         if srz_data.is_valid():
             vd = srz_data.validated_data
             vd.pop('password2')
-            user = User.objects.create_user(**srz_data.validated_data)
+            user: User = User.objects.create_user(**srz_data.validated_data)
             send_verification_email.delay_on_commit(vd['email'], user.id)
             response = srz_data.data
             response['message'] = 'We`ve sent you an activation link via email.'
@@ -90,7 +90,7 @@ class ResendVerificationEmailAPI(APIView):
     def post(self, request):
         srz_data = self.serializer_class(data=request.data)
         if srz_data.is_valid():
-            user = srz_data.validated_data['user']
+            user: User = srz_data.validated_data['user']
             send_verification_email.delay_on_commit(user.email, user.id)
             return Response(
                 data={"message": "We`ve resent the activation link to your email."},
@@ -113,7 +113,7 @@ class ChangePasswordAPI(APIView):
     def put(self, request):
         srz_data = self.serializer_class(data=request.data, context={'request': request})
         if srz_data.is_valid():
-            user = request.user
+            user: User = request.user
             new_password = srz_data.validated_data['new_password']
             user.set_password(new_password)
             user.save()
@@ -134,7 +134,7 @@ class SetPasswordAPI(APIView):
     })
     def post(self, request, token):
         srz_data = self.serializer_class(data=request.data)
-        token_result = JWT_token.get_user(token)
+        token_result: User = JWT_token.get_user(token)
         if not isinstance(token_result, User):
             return token_result
         if srz_data.is_valid():
@@ -154,13 +154,13 @@ class ResetPasswordAPI(APIView):
     serializer_class = serializers.ResetPasswordSerializer
 
     @extend_schema(responses={
-        200: MessageSerializer
+        202: MessageSerializer
     })
     def post(self, request):
         srz_data = self.serializer_class(data=request.data)
         if srz_data.is_valid():
             try:
-                user = User.objects.get(User, email=srz_data.validated_data['email'])
+                user: User = User.objects.get(User, email=srz_data.validated_data['email'])
             except User.DoesNotExist:
                 return Response(data={'errors': 'user with this Email not found.'}, status=status.HTTP_404_NOT_FOUND)
             send_verification_email.delay_on_commit(user.email, user.id)
@@ -199,9 +199,6 @@ class BlockTokenAPI(APIView):
     patch=extend_schema(
         responses={200: MessageSerializer}
     ),
-    delete=extend_schema(
-        responses={200: MessageSerializer}
-    )
 )
 class UserProfileAPI(RetrieveUpdateDestroyAPIView):
     """
@@ -219,7 +216,7 @@ class UserProfileAPI(RetrieveUpdateDestroyAPIView):
     http_method_names = ['get', 'patch', 'delete']
 
     def patch(self, request, *args, **kwargs):
-        user = self.get_object()
+        user: User = self.get_object()
         serializer = self.get_serializer(instance=user, data=request.data, partial=True)
         if serializer.is_valid():
             email_changed = 'email' in serializer.validated_data
@@ -236,10 +233,7 @@ class UserProfileAPI(RetrieveUpdateDestroyAPIView):
         return Response(data={'errors': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
     def destroy(self, request, *args, **kwargs):
-        user = self.get_object()
+        user: User = self.get_object()
         if user.profile.avatar:
             bucket.bucket.delete_object(self.get_object().profile.avatar.name)
-        response = super().destroy(request, *args, **kwargs)
-        if response.status_code != 204:
-            return response
-        return Response(data={'message': 'your account has been deleted successfully.'})
+        return super().destroy(request, *args, **kwargs)
