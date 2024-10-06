@@ -6,7 +6,7 @@ from . import views
 app_name = 'users'
 
 token = [
-    path('', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('login/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('block_token/', views.BlockTokenAPI.as_view(), name='token_block'),
 ]
