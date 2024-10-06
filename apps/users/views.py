@@ -8,7 +8,8 @@ from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 
 from docs.serializers.doc_serializers import MessageSerializer
 from permissions import permissions
-from utils import JWT_token, bucket
+from utils import JWT_token
+from utils.bucket import Bucket
 from . import serializers
 from .models import User
 from .tasks import send_verification_email
@@ -235,5 +236,5 @@ class UserProfileAPI(RetrieveUpdateDestroyAPIView):
     def destroy(self, request, *args, **kwargs):
         user: User = self.get_object()
         if user.profile.avatar:
-            bucket.bucket.delete_object(self.get_object().profile.avatar.name)
+            Bucket().delete_object(self.get_object().profile.avatar.name)
         return super().destroy(request, *args, **kwargs)
