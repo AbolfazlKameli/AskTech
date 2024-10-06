@@ -241,7 +241,7 @@ class LikeAPI(APIView):
         if like.exists():
             like.delete()
             return Response(data={'message': 'like removed.'}, status=status.HTTP_204_NO_CONTENT)
-        if dislike:
+        if dislike.exists():
             dislike.delete()
         like.create(owner=self.request.user, answer=answer, is_like=True)
         return Response(data={'message': 'answer liked.'}, status=status.HTTP_200_OK)
