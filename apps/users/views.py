@@ -10,7 +10,6 @@ from docs.serializers.doc_serializers import MessageSerializer
 from permissions import permissions
 from utils import JWT_token, bucket
 from . import serializers
-from .docs import doc_serializers
 from .models import User
 from .tasks import send_verification_email
 
@@ -36,7 +35,7 @@ class UserRegisterAPI(CreateAPIView):
     serializer_class = serializers.UserRegisterSerializer
     permission_classes = [permissions.NotAuthenticated, ]
 
-    @extend_schema(responses={201: doc_serializers.DocRegisterSerializer})
+    @extend_schema(responses={201: MessageSerializer})
     def post(self, request, *args, **kwargs):
         srz_data = self.serializer_class(data=request.data)
         if srz_data.is_valid():
@@ -47,7 +46,7 @@ class UserRegisterAPI(CreateAPIView):
             response = srz_data.data
             response['message'] = 'We`ve sent you an activation link via email.'
             return Response(
-                data={'data': response},
+                data={'message': 'We`ve sent you an activation link via email.'},
                 status=status.HTTP_201_CREATED,
             )
         return Response(
@@ -63,7 +62,7 @@ class UserRegisterVerifyAPI(APIView):
     """
     permission_classes = [permissions.NotAuthenticated, ]
     http_method_names = ['get']
-    serializer_class = doc_serializers.DocRegisterVerifySerializer
+    serializer_class = MessageSerializer
 
     def get(self, request, token):
         token_result = JWT_token.get_user(token)
@@ -73,11 +72,8 @@ class UserRegisterVerifyAPI(APIView):
             return Response(data={'message': 'this account already is active.'}, status=status.HTTP_409_CONFLICT)
         token_result.is_active = True
         token_result.save()
-        new_token = JWT_token.generate_token(token_result)
-        return Response(data={
-            'message': 'Account activated successfully.',
-            'token': new_token['token'],
-            'refresh': new_token['refresh']},
+        return Response(
+            data={'message': 'Account activated successfully.'},
             status=status.HTTP_200_OK
         )
 
@@ -90,7 +86,7 @@ class ResendVerificationEmailAPI(APIView):
     permission_classes = [permissions.NotAuthenticated, ]
     serializer_class = serializers.ResendVerificationEmailSerializer
 
-    @extend_schema(responses={200: MessageSerializer})
+    @extend_schema(responses={202: MessageSerializer})
     def post(self, request):
         srz_data = self.serializer_class(data=request.data)
         if srz_data.is_valid():
