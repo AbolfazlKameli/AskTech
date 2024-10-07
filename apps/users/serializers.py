@@ -37,11 +37,10 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        exclude = ('password',)
+        exclude = ('password', 'is_superuser')
         read_only_fields = (
             'id',
             'last_login',
-            'is_superuser',
             'is_admin',
             'groups',
             'user_permissions',
