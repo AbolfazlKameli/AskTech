@@ -7,7 +7,8 @@ from django.utils.html import strip_tags
 def send_link(email: str, link: str, message: str):
     context = {
         'receiver': email,
-        'Activation_link': link
+        'Activation_link': link,
+        'message': message
     }
     template_name = 'activation_link.html'
     convert_to_html_context = render_to_string(
