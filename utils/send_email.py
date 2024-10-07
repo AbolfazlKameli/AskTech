@@ -4,7 +4,7 @@ from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 
 
-def send_link(email, link):
+def send_link(email: str, link: str, message: str):
     context = {
         'receiver': email,
         'Activation_link': link
@@ -16,7 +16,7 @@ def send_link(email, link):
     )
     plain_message = strip_tags(convert_to_html_context)
     send_mail(
-        subject="Verification URL from AskTech",
+        subject=message,
         message=plain_message,
         from_email=settings.EMAIL_HOST_USER,
         recipient_list=[email],
