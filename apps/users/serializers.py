@@ -15,6 +15,20 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
             token.set_exp(claim='exp', lifetime=lifetime)
         return token
 
+    def validate(self, attrs):
+        data = super().validate(attrs)
+        refresh = self.get_token(self.user)
+        data.update({
+            'refresh': str(refresh),
+            'access': str(refresh.access_token),
+            'user': {
+                'id': self.user.id,
+                'username': self.user.username,
+                'email': self.user.email
+            }
+        })
+        return data
+
 
 class UserSerializer(serializers.ModelSerializer):
     bio = serializers.CharField(source='profile.bio', required=False)
@@ -23,11 +37,10 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        exclude = ('password',)
+        exclude = ('password', 'is_superuser')
         read_only_fields = (
             'id',
             'last_login',
-            'is_superuser',
             'is_admin',
             'groups',
             'user_permissions',

@@ -43,7 +43,8 @@ class UserRegisterAPI(CreateAPIView):
             vd = srz_data.validated_data
             vd.pop('password2')
             user: User = User.objects.create_user(**srz_data.validated_data)
-            send_verification_email.delay_on_commit(vd['email'], user.id)
+            send_verification_email.delay_on_commit(vd['email'], user.id, 'verification',
+                                                    'Verification URL from AskTech')
             response = srz_data.data
             response['message'] = 'We`ve sent you an activation link via email.'
             return Response(
@@ -92,7 +93,8 @@ class ResendVerificationEmailAPI(APIView):
         srz_data = self.serializer_class(data=request.data)
         if srz_data.is_valid():
             user: User = srz_data.validated_data['user']
-            send_verification_email.delay_on_commit(user.email, user.id)
+            send_verification_email.delay_on_commit(user.email, user.id, 'verification',
+                                                    'Verification URL from AskTech')
             return Response(
                 data={"message": "We`ve resent the activation link to your email."},
                 status=status.HTTP_202_ACCEPTED,
@@ -161,10 +163,10 @@ class ResetPasswordAPI(APIView):
         srz_data = self.serializer_class(data=request.data)
         if srz_data.is_valid():
             try:
-                user: User = User.objects.get(User, email=srz_data.validated_data['email'])
+                user: User = User.objects.get(email=srz_data.validated_data['email'])
             except User.DoesNotExist:
                 return Response(data={'errors': 'user with this Email not found.'}, status=status.HTTP_404_NOT_FOUND)
-            send_verification_email.delay_on_commit(user.email, user.id)
+            send_verification_email.delay_on_commit(user.email, user.id, 'reset_password', 'Reset Password Link:')
             return Response(
                 data={'message': 'A password reset link has been sent to your email.'},
                 status=status.HTTP_202_ACCEPTED
@@ -225,7 +227,8 @@ class UserProfileAPI(RetrieveUpdateDestroyAPIView):
             if email_changed:
                 user.is_active = False
                 user.save()
-                send_verification_email.delay_on_commit(serializer.validated_data['email'], user.id)
+                send_verification_email.delay_on_commit(serializer.validated_data['email'], user.id, 'verification',
+                                                        'Verification URL from AskTech.')
                 message += ' A verification link has been sent to your new email address.'
 
             serializer.save()
