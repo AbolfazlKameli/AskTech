@@ -233,7 +233,7 @@ class LikeAPI(APIView):
     permission_classes = [IsAuthenticated]
 
     @extend_schema(responses={200: MessageSerializer})
-    def post(self, request, answer_id):
+    def get(self, request, answer_id):
         """add a like for each answer"""
         answer = get_object_or_404(Answer, id=answer_id)
         like = Vote.objects.filter(owner=self.request.user, answer=answer, is_like=True)
@@ -251,7 +251,7 @@ class DisLikeAPI(APIView):
     permission_classes = [IsAuthenticated]
 
     @extend_schema(responses={200: MessageSerializer})
-    def post(self, request, answer_id):
+    def get(self, request, answer_id):
         """add a dislike for each answer"""
         answer = get_object_or_404(Answer, id=answer_id)
         dislike = Vote.objects.filter(owner=self.request.user, answer=answer, is_dislike=True)
@@ -269,7 +269,7 @@ class AcceptAnswerAPI(APIView):
     permission_classes = [IsAuthenticated]
 
     @extend_schema(responses={200: MessageSerializer})
-    def post(self, request, answer_id):
+    def get(self, request, answer_id):
         """accept an answer object"""
         answer = get_object_or_404(Answer, id=answer_id)
         if request.user.id == answer.question.owner.id:
