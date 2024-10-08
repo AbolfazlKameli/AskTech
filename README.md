@@ -57,6 +57,12 @@ start celery project
 celery -A core worker -l INFO  
 ```
 
+Create your own `.env` file
+
+```shell
+cp .env_example .env
+```
+
 start the django server
 
 ```shell
