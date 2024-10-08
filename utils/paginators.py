@@ -1,9 +1,10 @@
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
+from urllib.parse import urlencode
 
 
 class NeatPagination(PageNumberPagination):
-    page_size = 10
+    page_size = 1
     max_page_size = 20
     page_size_query_param = 'limit'
 
@@ -19,7 +20,9 @@ class NeatPagination(PageNumberPagination):
                 'previous_page': self.get_previous_link(),
                 'next_page': self.get_next_link(),
                 'has_previous': self.page.has_previous(),
-                'has_next': self.page.has_next()
+                'has_next': self.page.has_next(),
+                'first': self.get_first_link(),
+                'last': self.get_last_link()
             },
             'data': data
         })
@@ -67,3 +70,19 @@ class NeatPagination(PageNumberPagination):
                 'data': schema,
             },
         }
+
+    def get_first_link(self):
+        if self.page.number == 1:
+            return None
+        return self.build_page_link(1)
+
+    def get_last_link(self):
+        if self.page.number == self.page.paginator.num_pages:
+            return None
+        return self.build_page_link(self.page.paginator.num_pages)
+
+    def build_page_link(self, page_number):
+        url = self.request.build_absolute_uri(self.request.path)
+        query_params = self.request.GET.copy()
+        query_params['page'] = page_number
+        return f'{url}?{urlencode(query_params)}'

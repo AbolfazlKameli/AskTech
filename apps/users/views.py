@@ -67,7 +67,7 @@ class UserRegisterVerifyAPI(APIView):
     serializer_class = MessageSerializer
 
     def get(self, request, token):
-        token_result = JWT_token.get_user(token)
+        token_result: User = JWT_token.get_user(token)
         if not isinstance(token_result, User):
             return token_result
         if token_result.is_active:
