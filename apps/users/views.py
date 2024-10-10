@@ -114,7 +114,7 @@ class ChangePasswordAPI(APIView):
         200: MessageSerializer
     })
     def put(self, request):
-        srz_data = self.serializer_class(data=request.data, context={'request': request})
+        srz_data = self.serializer_class(data=request.data, context={'user': request.user})
         if srz_data.is_valid():
             user: User = request.user
             new_password = srz_data.validated_data['new_password']
