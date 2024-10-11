@@ -32,20 +32,21 @@ class TestUsersListAPI(APITestCase):
         self.admin = baker.make(User, username='admin', email='admin@gmail.com', password='admin', is_active=True,
                                 is_admin=True)
         self.admin_token = str(AccessToken.for_user(self.admin))
+        self.url = reverse('users:users-list')
 
     def test_permission_denied(self):
-        request = self.factory.get(reverse('users:users_list'), HTTP_AUTHORIZATION='Bearer ' + self.user_token)
+        request = self.factory.get(self.url, HTTP_AUTHORIZATION='Bearer ' + self.user_token)
         response = UsersListAPI.as_view()(request)
         self.assertEqual(response.status_code, 403)
 
     def test_list_GET(self):
-        request = self.factory.get(reverse('users:users_list'), HTTP_AUTHORIZATION='Bearer ' + self.admin_token)
+        request = self.factory.get(self.url, HTTP_AUTHORIZATION='Bearer ' + self.admin_token)
         response = UsersListAPI.as_view()(request)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.data['data']), 10)
 
     def test_list_paginated_GET(self):
-        request = self.factory.get(f"{reverse('users:users_list')}?{urlencode({'page': 2})}",
+        request = self.factory.get(f"{self.url}?{urlencode({'page': 2})}",
                                    HTTP_AUTHORIZATION='Bearer ' + self.admin_token)
         response = UsersListAPI.as_view()(request)
         self.assertEqual(response.status_code, 200)
