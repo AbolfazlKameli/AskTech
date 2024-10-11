@@ -1,23 +1,23 @@
 from django.urls import path
-from rest_framework import routers
+from .routers import NoListDefaultRouter
 
 from . import views
 
 app_name = 'home'
 urlpatterns = [
     path('', views.HomeAPI.as_view(), name='home'),
-    path('like/<int:answer_id>/', views.LikeAPI.as_view(), name='answer_like'),
-    path('dislike/<int:answer_id>/', views.DisLikeAPI.as_view(), name='answer_dislike'),
-    path('accept_answer/<int:answer_id>/', views.AcceptAnswerAPI.as_view(), name='answer_accept'),
-    path('create_answer/<int:question_id>/', views.CreateAnswerAPI.as_view(), name='answer_create'),
-    path('create_comment/<int:answer_id>/', views.CreateCommentAPI.as_view(), name='comment_create'),
-    path('create_reply/<int:comment_id>/', views.CreateReplyAPI.as_view(), name='reply_create'),
-    path('create_reply/<int:comment_id>/<int:reply_id>/', views.CreateReplyAPI.as_view(), name='reply_create'),
+    path('answer/like/<int:answer_id>/', views.LikeAPI.as_view(), name='answer-like'),
+    path('answer/dislike/<int:answer_id>/', views.DisLikeAPI.as_view(), name='answer-dislike'),
+    path('answer/accept/<int:answer_id>/', views.AcceptAnswerAPI.as_view(), name='answer-accept'),
+    path('answer/create/<int:question_id>/', views.CreateAnswerAPI.as_view(), name='answer-create'),
+    path('comment/create/<int:answer_id>/', views.CreateCommentAPI.as_view(), name='comment-create'),
+    path('reply/create/<int:comment_id>/', views.CreateReplyAPI.as_view(), name='reply-create'),
+    path('reply/create/<int:comment_id>/<int:reply_id>/', views.CreateReplyAPI.as_view(), name='reply-create'),
 ]
 
-router = routers.DefaultRouter()
-router.register('questions', views.QuestionViewSet)
-router.register('answers', views.AnswerViewSet, basename='answer-viewset')
-router.register('comments', views.CommentViewSet, basename='comments')
-router.register('replies', views.ReplyViewSet, basename='reply')
+router = NoListDefaultRouter()
+router.register('question', views.QuestionViewSet)
+router.register('answer', views.AnswerViewSet, basename='answer-viewset')
+router.register('comment', views.CommentViewSet, basename='comments')
+router.register('reply', views.ReplyViewSet, basename='reply')
 urlpatterns += router.urls

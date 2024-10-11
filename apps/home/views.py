@@ -233,9 +233,9 @@ class LikeAPI(APIView):
     permission_classes = [IsAuthenticated]
 
     @extend_schema(responses={200: MessageSerializer})
-    def get(self, request, answer_id):
+    def get(self, request, *args, **kwargs):
         """add a like for each answer"""
-        answer = get_object_or_404(Answer, id=answer_id)
+        answer = get_object_or_404(Answer, id=kwargs.get('answer_id'))
         like = Vote.objects.filter(owner=self.request.user, answer=answer, is_like=True)
         dislike = Vote.objects.filter(owner=self.request.user, answer=answer, is_dislike=True)
         if like.exists():
@@ -251,9 +251,9 @@ class DisLikeAPI(APIView):
     permission_classes = [IsAuthenticated]
 
     @extend_schema(responses={200: MessageSerializer})
-    def get(self, request, answer_id):
+    def get(self, request, *args, **kwargs):
         """add a dislike for each answer"""
-        answer = get_object_or_404(Answer, id=answer_id)
+        answer = get_object_or_404(Answer, id=kwargs.get('answer_id'))
         dislike = Vote.objects.filter(owner=self.request.user, answer=answer, is_dislike=True)
         like = Vote.objects.filter(owner=self.request.user, answer=answer, is_like=True)
         if dislike.exists():
@@ -269,9 +269,9 @@ class AcceptAnswerAPI(APIView):
     permission_classes = [IsAuthenticated]
 
     @extend_schema(responses={200: MessageSerializer})
-    def get(self, request, answer_id):
+    def get(self, request, *args, **kwargs):
         """accept an answer object"""
-        answer = get_object_or_404(Answer, id=answer_id)
+        answer = get_object_or_404(Answer, id=kwargs.get('answer_id'))
         if request.user.id == answer.question.owner.id:
             if not answer.accepted and not answer.question.has_accepted_answer():
                 answer.accepted = True
