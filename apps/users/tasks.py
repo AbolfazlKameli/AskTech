@@ -12,7 +12,7 @@ from utils import JWT_token, send_email
 def send_verification_email(email_address: str, user_id: int, action: str, message: str):
     user = User.objects.get(id=user_id)
     token = JWT_token.generate_activation_token(user, timedelta(minutes=1))
-    url = f"http://{settings.DOMAIN}{reverse('users:user_register_verify', args=[token])}"
+    url = f"http://{settings.DOMAIN}{reverse('users:user-register-verify', args=[token])}"
     if action == 'reset_password':
-        url = f"http://{settings.DOMAIN}{reverse('users:set_password', args=[token])}"
+        url = f"http://{settings.DOMAIN}{reverse('users:set-password', args=[token])}"
     send_email.send_link(email_address, url, message)
