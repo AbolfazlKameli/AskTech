@@ -101,9 +101,9 @@ class TestUserRegisterAPI(APITestCase):
 
 class TestUserRegisterVerificationAPI(APITestCase):
     def setUp(self):
-        self.url = reverse('users:user_register_verify', args=['invalid_token'])
+        self.url = reverse('users:user-register-verify', args=['invalid_token'])
         self.user = baker.make(User, is_active=False)
-        self.token = JWT_token.generate_activation_token(self.user)
+        self.token = JWT_token.generate_activation_token(self.user, timedelta(minutes=1))
 
     def create_expired_token(self):
         payload = {
@@ -113,25 +113,25 @@ class TestUserRegisterVerificationAPI(APITestCase):
         return jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
 
     def test_account_activation_success(self):
-        response = self.client.get(self.url.replace('invalid_token', self.token['token']))
+        response = self.client.get(self.url.replace('invalid_token', self.token))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn('message', response.data)
-        self.assertEqual(response.data['message'], 'Account activated successfully')
+        self.assertEqual(response.data['message'], 'Account activated successfully.')
         self.user.refresh_from_db()
         self.assertTrue(self.user.is_active)
 
     def test_account_already_active(self):
         self.user.is_active = True
         self.user.save()
-        response = self.client.get(self.url.replace('invalid_token', self.token['token']))
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        response = self.client.get(self.url.replace('invalid_token', self.token))
+        self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
         self.assertIn('message', response.data)
-        self.assertEqual(response.data['message'], 'this account already is active')
+        self.assertEqual(response.data['message'], 'this account already is active.')
 
     @patch('apps.users.views.JWT_token.get_object_or_404')
     def test_activation_url_invalid(self, mock_jwt_decode_token):
         mock_jwt_decode_token.side_effect = Http404
-        response = self.client.get(self.url.replace('invalid_token', self.token['token']))
+        response = self.client.get(self.url.replace('invalid_token', self.token))
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertIn('error', response.data)
         self.assertEqual(response.data['error'], 'Activation URL is invalid')
