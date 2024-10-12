@@ -14,7 +14,7 @@ from rest_framework.test import APIRequestFactory, APITestCase
 from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from apps.users.models import User
+from apps.users.models import User, UserProfile
 from apps.users.views import UsersListAPI
 from utils import JWT_token
 
@@ -282,17 +282,18 @@ class TestBlockTokenAPI(APITestCase):
 class TestUserProfileAPI(APITestCase):
     def setUp(self):
         self.user = baker.make(User, is_active=True)
-        self.token = JWT_token.generate_token(self.user)['token']
+        baker.make(UserProfile, owner=self.user)
+        self.token = str(RefreshToken.for_user(self.user).access_token)
 
     def test_retrieve_user_profile_GET(self):
-        url = reverse('users:user_profile', args=[self.user.id])
+        url = reverse('users:user-profile', args=[self.user.id])
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data['username'], self.user.username)
         self.assertEqual(response.data['score'], 0)
 
     def test_retrieve_user_profile_not_found(self):
-        url = reverse('users:user_profile', args=[23])
+        url = reverse('users:user-profile', args=[23])
         response = self.client.get(url)
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.data['detail'], 'No User matches the given query.')
@@ -309,7 +310,7 @@ class TestUserProfileAPI(APITestCase):
                 content_type='image/png'
             )
         data = {'username': 'new_username', 'avatar': avatar}
-        url = reverse('users:user_profile', args=[1])
+        url = reverse('users:user-profile', args=[1])
         response = self.client.patch(url, data, HTTP_AUTHORIZATION='Bearer ' + self.token)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['message'], 'Updated profile successfully.')
@@ -320,7 +321,7 @@ class TestUserProfileAPI(APITestCase):
     @patch('apps.users.views.send_verification_email.delay_on_commit')
     def test_update_email(self, mock_send_email_task):
         data = {'email': 'email@email.com'}
-        url = reverse('users:user_profile', args=[1])
+        url = reverse('users:user-profile', args=[1])
         response = self.client.patch(url, data, HTTP_AUTHORIZATION='Bearer ' + self.token)
         mock_send_email_task.assert_called_once()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -328,9 +329,9 @@ class TestUserProfileAPI(APITestCase):
         self.assertFalse(self.user.is_active)
         self.assertEqual(self.user.email, 'email@email.com')
 
-    @patch('apps.users.views.bucket.bucket.delete_object')
+    @patch('apps.users.views.Bucket.delete_object')
     def test_delete_account(self, mock_delete_avatar):
-        url = reverse('users:user_profile', args=[1])
+        url = reverse('users:user-profile', args=[1])
         response = self.client.delete(url, HTTP_AUTHORIZATION='Bearer ' + self.token)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 204)
         self.assertNotIn(self.user, User.objects.all())
