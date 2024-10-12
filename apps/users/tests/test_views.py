@@ -242,21 +242,19 @@ class TestSetPasswordAPI(APITestCase):
 class TestResetPasswordAPI(APITestCase):
     def setUp(self):
         self.user = baker.make(User, is_active=True, email='email@gmail.com')
-        self.url = reverse('users:reset_password')
+        self.url = reverse('users:reset-password')
 
     def test_successful_reset(self):
         data = {'email': 'email@gmail.com'}
         response = self.client.post(self.url, data=data)
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data['message'], 'sent you a change password link!')
+        self.assertEqual(response.status_code, 202)
+        self.assertEqual(response.data['message'], 'A password reset link has been sent to your email.')
 
-    @patch('apps.users.views.get_object_or_404')
-    def test_invalid_email(self, mock_get_object):
-        mock_get_object.side_effect = Http404
-        data = {'email': 'email@gmail.com'}
+    def test_invalid_email(self):
+        data = {'email': 'invalidemail@gmail.com'}
         response = self.client.post(self.url, data=data)
-        self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.data['error'], 'user with this Email not found!')
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.data['errors'], 'user with this Email not found.')
 
 
 class TestBlockTokenAPI(APITestCase):
