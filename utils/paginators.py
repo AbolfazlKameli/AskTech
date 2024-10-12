@@ -4,7 +4,7 @@ from urllib.parse import urlencode
 
 
 class NeatPagination(PageNumberPagination):
-    page_size = 1
+    page_size = 10
     max_page_size = 20
     page_size_query_param = 'limit'
 

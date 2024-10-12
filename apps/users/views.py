@@ -12,6 +12,7 @@ from utils import JWT_token
 from utils.bucket import Bucket
 from . import serializers
 from .models import User
+from .services import register
 from .tasks import send_verification_email
 
 
@@ -38,21 +39,18 @@ class UserRegisterAPI(CreateAPIView):
 
     @extend_schema(responses={201: MessageSerializer})
     def post(self, request, *args, **kwargs):
-        srz_data = self.serializer_class(data=request.data)
-        if srz_data.is_valid():
-            vd = srz_data.validated_data
-            vd.pop('password2')
-            user: User = User.objects.create_user(**srz_data.validated_data)
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid():
+            vd = serializer.validated_data
+            user = register(username=vd['username'], email=vd['email'], password=vd['password'])
             send_verification_email.delay_on_commit(vd['email'], user.id, 'verification',
                                                     'Verification URL from AskTech')
-            response = srz_data.data
-            response['message'] = 'We`ve sent you an activation link via email.'
             return Response(
-                data={'message': 'We`ve sent you an activation link via email.'},
+                data={'data': {'message': 'We`ve sent you an activation link via email.'}},
                 status=status.HTTP_201_CREATED,
             )
         return Response(
-            data={'errors': srz_data.errors},
+            data={'errors': serializer.errors},
             status=status.HTTP_400_BAD_REQUEST
         )
 
@@ -114,7 +112,7 @@ class ChangePasswordAPI(APIView):
         200: MessageSerializer
     })
     def put(self, request):
-        srz_data = self.serializer_class(data=request.data, context={'request': request})
+        srz_data = self.serializer_class(data=request.data, context={'user': request.user})
         if srz_data.is_valid():
             user: User = request.user
             new_password = srz_data.validated_data['new_password']
