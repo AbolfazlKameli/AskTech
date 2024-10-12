@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import jwt
 from django.conf import settings
@@ -11,11 +11,11 @@ from rest_framework.response import Response
 from apps.users.models import User
 
 
-def generate_activation_token(user, lifetime=None):
+def generate_activation_token(user, lifetime: timedelta = None):
     payload = {
         'user_id': user.id,
         'email': user.email,
-        'exp': datetime.now(tz=timezone('Asia/Tehran')) + lifetime
+        'exp': datetime.now(tz=timezone('Asia/Tehran')) + lifetime if lifetime is not None else timedelta(minutes=5)
     }
     token = jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
     return token
