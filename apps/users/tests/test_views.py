@@ -12,6 +12,7 @@ from model_bakery import baker
 from rest_framework import status
 from rest_framework.test import APIRequestFactory, APITestCase
 from rest_framework_simplejwt.tokens import AccessToken
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from apps.users.models import User
 from apps.users.views import UsersListAPI
@@ -187,8 +188,8 @@ class TestChangePasswordAPI(APITestCase):
         self.user = baker.make(User, is_active=True)
         self.user.set_password('kmk13245')
         self.user.save()
-        self.token = JWT_token.generate_token(self.user)['token']
-        self.url = reverse('users:change_password')
+        self.token = str(RefreshToken.for_user(self.user).access_token)
+        self.url = reverse('users:change-password')
         self.valid_data = {
             'old_password': 'kmk13245',
             'new_password': 'asdF@123',
@@ -201,16 +202,16 @@ class TestChangePasswordAPI(APITestCase):
         }
 
     def test_successful_change_password(self):
-        response = self.client.put(self.url, data=self.valid_data, HTTP_AUTHORIZATION='Bearer ' + self.token)
+        response = self.client.put(self.url, data=self.valid_data, HTTP_AUTHORIZATION='Bearer ' + str(self.token))
         self.user.refresh_from_db()
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data['message'], 'Your password changed successfully!')
+        self.assertEqual(response.data['message'], 'Your password changed successfully.')
         self.assertTrue(self.user.check_password(self.valid_data['new_password']))
 
     def test_invalid_old_password(self):
-        response = self.client.put(self.url, data=self.invalid_data, HTTP_AUTHORIZATION='Bearer ' + self.token)
+        response = self.client.put(self.url, data=self.invalid_data, HTTP_AUTHORIZATION='Bearer ' + str(self.token))
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.data['error'], 'Your old password is not correct')
+        self.assertEqual(response.data['errors']['old_password'][0], 'Your old password is not correct.')
 
 
 class TestSetPasswordAPI(APITestCase):
