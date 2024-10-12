@@ -152,16 +152,16 @@ class TestUserRegisterVerificationAPI(APITestCase):
 
 class TestResendVerificationEmailAPI(APITestCase):
     def setUp(self):
-        self.url = reverse('users:user_register_resend_email')
+        self.url = reverse('users:user-register-resend-email')
         self.user = baker.make(User, is_active=False, email='email@gmail.com')
         self.active_user = baker.make(User, is_active=True, email='active_user@gmail.com')
 
     def test_successful_send_email(self):
         data = {'email': 'email@gmail.com'}
         response = self.client.post(self.url, data=data)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 202)
         self.assertIn('message', response.data)
-        self.assertEqual(response.data['message'], 'The activation email has been sent again successfully')
+        self.assertEqual(response.data['message'], 'We`ve resent the activation link to your email.')
 
     @patch('utils.send_email.send_link')
     def test_invalid_email(self, mock_send_email):
