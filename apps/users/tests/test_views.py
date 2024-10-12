@@ -217,15 +217,15 @@ class TestChangePasswordAPI(APITestCase):
 class TestSetPasswordAPI(APITestCase):
     def setUp(self):
         self.user = baker.make(User, is_active=True)
-        self.token = JWT_token.generate_token(self.user)
-        self.url = reverse('users:set_password', args=[self.token['refresh']])
+        self.token = JWT_token.generate_activation_token(self.user, timedelta(minutes=1))
+        self.url = reverse('users:set-password', args=[self.token])
 
     def test_successful_set_password(self):
         data = {'new_password': 'asdF@123', 'confirm_new_password': 'asdF@123'}
         response = self.client.post(self.url, data)
         self.user.refresh_from_db()
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data['message'], 'Password changed successfully')
+        self.assertEqual(response.data['message'], 'Password changed successfully.')
         self.assertTrue(self.user.check_password(data['new_password']))
 
     @patch('apps.users.views.JWT_token.get_object_or_404')
