@@ -260,15 +260,15 @@ class TestResetPasswordAPI(APITestCase):
 class TestBlockTokenAPI(APITestCase):
     def setUp(self):
         self.user = baker.make(User, is_active=True)
-        self.token = JWT_token.generate_token(self.user)['refresh']
+        self.token = str(RefreshToken.for_user(self.user))
         self.invalid_token = 'invalid.token.alksdjfadffeygfhasjf'
-        self.url = reverse('users:token_block')
+        self.url = reverse('users:token-block')
 
     @patch('rest_framework_simplejwt.tokens.BlacklistMixin.blacklist')
     def test_successful_block_token(self, mock_black_list):
         data = {'refresh': self.token}
         response = self.client.post(self.url, data)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 204)
         self.assertEqual(response.data['message'], 'Token blocked successfully!')
         mock_black_list.assert_called_once()
 
@@ -276,7 +276,7 @@ class TestBlockTokenAPI(APITestCase):
         data = {'refresh': self.invalid_token}
         response = self.client.post(self.url, data)
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.data['error'], 'token is invalid!')
+        self.assertEqual(response.data['errors']['refresh'], 'The provided token is invalid or has expired.')
 
 
 class TestUserProfileAPI(APITestCase):
