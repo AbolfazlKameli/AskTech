@@ -59,7 +59,7 @@ class TestUserRegisterAPI(APITestCase):
         baker.make(User, is_active=True, username='username', email='email')
 
     def setUp(self):
-        self.url = reverse('users:user_register')
+        self.url = reverse('users:user-register')
         self.valid_data = {
             'username': 'kevin',
             'email': 'kevin@example.com',
@@ -75,7 +75,7 @@ class TestUserRegisterAPI(APITestCase):
 
     def test_success_register(self):
         response = self.client.post(self.url, data=self.valid_data)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 201)
         self.assertIn('message', response.data['data'])
         self.assertIn('data', response.data)
         self.assertEqual(User.objects.all().count(), 2)
@@ -83,27 +83,27 @@ class TestUserRegisterAPI(APITestCase):
     def test_not_unique_username(self):
         response = self.client.post(self.url, data=self.invalid_data)
         self.assertEqual(response.status_code, 400)
-        self.assertIn('error', response.data)
-        self.assertIn('username', response.data['error'])
+        self.assertIn('errors', response.data)
+        self.assertIn('username', response.data['errors'])
 
     def test_mismatch_password(self):
         self.invalid_data['password'] = '<PASSWORD>'
         self.invalid_data['username'] = 'testuser'
         response = self.client.post(self.url, data=self.invalid_data)
         self.assertEqual(response.status_code, 400)
-        self.assertIn('error', response.data)
+        self.assertIn('errors', response.data)
 
     def test_register_with_avatar(self):
         self.valid_data['avatar'] = 'avatar.png'
         response = self.client.post(self.url, data=self.valid_data)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 201)
 
 
 class TestUserRegisterVerificationAPI(APITestCase):
     def setUp(self):
         self.url = reverse('users:user_register_verify', args=['invalid_token'])
         self.user = baker.make(User, is_active=False)
-        self.token = JWT_token.generate_token(self.user)
+        self.token = JWT_token.generate_activation_token(self.user)
 
     def create_expired_token(self):
         payload = {
