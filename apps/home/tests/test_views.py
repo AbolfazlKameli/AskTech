@@ -171,7 +171,7 @@ class TestAnswerCommentViewSet(APITestCase):
         return str(token)
 
     def test_permissions_denied(self):
-        request = self.factory.put(reverse('home:answer_comments-detail', args=[1]))
+        request = self.factory.put(reverse('home:comments-detail', args=[1]))
         request.user = AnonymousUser()
         response = CommentViewSet.as_view({'put': 'update'})(request, pk=1)
         self.assertEqual(response.status_code, 401)
@@ -191,14 +191,14 @@ class TestAnswerCommentViewSet(APITestCase):
         data = {
             'body': 'update testing body'
         }
-        request = self.factory.put(reverse('home:answer_comments-detail', args=[1]), data=data,
+        request = self.factory.put(reverse('home:comments-detail', args=[1]), data=data,
                                    HTTP_AUTHORIZATION='Bearer ' + self.token)
         response = CommentViewSet.as_view({'put': 'update'})(request, pk=1)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data['message'], 'comment updated successfully.')
 
     def test_comment_delete(self):
-        request = self.factory.delete(reverse('home:answer_comments-detail', args=[1]),
+        request = self.factory.delete(reverse('home:comments-detail', args=[1]),
                                       HTTP_AUTHORIZATION='Bearer ' + self.token)
         response = CommentViewSet.as_view({'delete': 'destroy'})(request, pk=1)
         self.assertEqual(response.status_code, 204)
