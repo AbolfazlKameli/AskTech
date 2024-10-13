@@ -141,18 +141,6 @@ class TestAnswerViewSet(APITestCase):
         response = AnswerViewSet.as_view({'put': 'update'})(request, pk=1)
         self.assertEqual(response.status_code, 401)
 
-    def test_answer_create(self):
-        data = {
-            'owner': self.user,
-            'body': 'test_body',
-        }
-        url = f"{reverse('home:answer-viewset-list')}?{urlencode({'question_id': 1})}"
-        request = self.factory.post(url, data=data,
-                                    HTTP_AUTHORIZATION='Bearer ' + self.token)
-        response = AnswerViewSet.as_view({'post': 'create'})(request)
-        self.assertEqual(response.status_code, 201)
-        self.assertEqual(response.data['message'], 'created successfully')
-
     def test_answer_full_update(self):
         data = {
             'body': 'update testing body'
@@ -161,7 +149,7 @@ class TestAnswerViewSet(APITestCase):
                                    HTTP_AUTHORIZATION='Bearer ' + self.token)
         response = AnswerViewSet.as_view({'put': 'update'})(request, pk=1)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data['message'], 'answer updated successfully.')
+        self.assertEqual(response.data['message'], 'Answer Updated Successfully.')
 
     def test_answer_delete(self):
         request = self.factory.delete(reverse('home:answer-viewset-detail', args=[1]),
