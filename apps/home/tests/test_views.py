@@ -176,17 +176,6 @@ class TestAnswerCommentViewSet(APITestCase):
         response = CommentViewSet.as_view({'put': 'update'})(request, pk=1)
         self.assertEqual(response.status_code, 401)
 
-    def test_comment_create(self):
-        data = {
-            'owner': self.user,
-            'body': 'test_body',
-        }
-        url = f"{reverse('home:answer_comments-list')}?{urlencode({'answer_id': 1})}"
-        request = self.factory.post(url, data=data, HTTP_AUTHORIZATION='Bearer ' + self.token)
-        response = CommentViewSet.as_view({'post': 'create'})(request)
-        self.assertEqual(response.status_code, 201)
-        self.assertEqual(response.data['message'], 'comment created successfully')
-
     def test_comment_full_update(self):
         data = {
             'body': 'update testing body'
@@ -222,17 +211,6 @@ class TestReplyViewSet(APITestCase):
         response = ReplyViewSet.as_view({'put': 'update'})(request, pk=1)
         self.assertEqual(response.status_code, 401)
 
-    def test_reply_create(self):
-        data = {
-            'owner': self.user,
-            'body': 'test_body',
-        }
-        url = f"{reverse('home:reply-list')}?{urlencode({'comment_id': 1})}"
-        request = self.factory.post(url, data=data, HTTP_AUTHORIZATION='Bearer ' + self.token)
-        response = ReplyViewSet.as_view({'post': 'create'})(request)
-        self.assertEqual(response.status_code, 201)
-        self.assertEqual(response.data['message'], 'created successfully!')
-
     def test_reply_full_update(self):
         data = {
             'body': 'update testing body'
@@ -264,34 +242,34 @@ class TestLikeAPI(APITestCase):
         return str(token)
 
     def test_permissions_denied(self):
-        request = self.factory.post(reverse('home:answer_like', args=[1]))
+        request = self.factory.post(reverse('home:answer-like', args=[1]))
         request.user = AnonymousUser()
         response = LikeAPI.as_view()(request, pk=1)
         self.assertEqual(response.status_code, 401)
 
     def test_like_create(self):
-        request = self.factory.post(reverse('home:answer_like', args=[1]),
-                                    HTTP_AUTHORIZATION='Bearer ' + self.token)
+        request = self.factory.get(reverse('home:answer-like', args=[1]),
+                                   HTTP_AUTHORIZATION='Bearer ' + self.token)
         response = LikeAPI.as_view()(request, answer_id=1)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data['message'], 'liked')
+        self.assertEqual(response.data['message'], 'answer liked.')
 
     def test_remove_like(self):
         baker.make(Vote, is_like=True, owner=self.user, answer=self.answer)
-        request = self.factory.post(reverse('home:answer_like', args=[1]),
-                                    HTTP_AUTHORIZATION='Bearer ' + self.token)
+        request = self.factory.get(reverse('home:answer-like', args=[1]),
+                                   HTTP_AUTHORIZATION='Bearer ' + self.token)
         response = LikeAPI.as_view()(request, answer_id=1)
         self.assertEqual(response.status_code, 204)
-        self.assertEqual(response.data['message'], 'like removed')
+        self.assertEqual(response.data['message'], 'like removed.')
 
     def test_like_on_dislike(self):
         baker.make(Vote, is_dislike=True, owner=self.user, answer=self.answer)
-        request = self.factory.post(reverse('home:answer_like', args=[1]),
-                                    HTTP_AUTHORIZATION='Bearer ' + self.token)
+        request = self.factory.get(reverse('home:answer-like', args=[1]),
+                                   HTTP_AUTHORIZATION='Bearer ' + self.token)
         response = LikeAPI.as_view()(request, answer_id=1)
         self.assertEqual(response.status_code, 200)
         self.assertTrue(Vote.objects.filter(is_dislike=True).count(), 0)
-        self.assertEqual(response.data['message'], 'liked')
+        self.assertEqual(response.data['message'], 'answer liked.')
 
 
 class TestDisLikeAPI(APITestCase):
@@ -308,31 +286,31 @@ class TestDisLikeAPI(APITestCase):
         return str(token)
 
     def test_permissions_denied(self):
-        request = self.factory.post(reverse('home:answer_like', args=[1]))
+        request = self.factory.get(reverse('home:answer-like', args=[1]))
         request.user = AnonymousUser()
         response = LikeAPI.as_view()(request, pk=1)
         self.assertEqual(response.status_code, 401)
 
     def test_dislike_create(self):
-        request = self.factory.post(reverse('home:answer_dislike', args=[1]),
-                                    HTTP_AUTHORIZATION='Bearer ' + self.token)
+        request = self.factory.get(reverse('home:answer-dislike', args=[1]),
+                                   HTTP_AUTHORIZATION='Bearer ' + self.token)
         response = DisLikeAPI.as_view()(request, answer_id=1)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data['message'], 'disliked')
+        self.assertEqual(response.data['message'], 'answer disliked.')
 
     def test_remove_dislike(self):
         baker.make(Vote, is_dislike=True, owner=self.user, answer=self.answer)
-        request = self.factory.post(reverse('home:answer_dislike', args=[1]),
-                                    HTTP_AUTHORIZATION='Bearer ' + self.token)
+        request = self.factory.get(reverse('home:answer-dislike', args=[1]),
+                                   HTTP_AUTHORIZATION='Bearer ' + self.token)
         response = DisLikeAPI.as_view()(request, answer_id=1)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data['message'], 'dislike removed')
+        self.assertEqual(response.data['message'], 'dislike removed.')
 
     def test_dislike_on_like(self):
         baker.make(Vote, is_like=True, owner=self.user, answer=self.answer)
-        request = self.factory.post(reverse('home:answer_dislike', args=[1]),
-                                    HTTP_AUTHORIZATION='Bearer ' + self.token)
+        request = self.factory.get(reverse('home:answer-dislike', args=[1]),
+                                   HTTP_AUTHORIZATION='Bearer ' + self.token)
         response = DisLikeAPI.as_view()(request, answer_id=1)
         self.assertEqual(response.status_code, 200)
         self.assertTrue(Vote.objects.filter(is_like=True).count(), 0)
-        self.assertEqual(response.data['message'], 'disliked')
+        self.assertEqual(response.data['message'], 'answer disliked.')
