@@ -93,7 +93,7 @@ class TestQuestionViewSet(APITestCase):
         request = self.factory.post(reverse('home:question-list'), data=data, HTTP_AUTHORIZATION='Bearer ' + self.token)
         response = QuestionViewSet.as_view({'post': 'create'})(request)
         self.assertEqual(response.status_code, 201)
-        self.assertEqual(response.data['message'], 'question created successfully!')
+        self.assertEqual(response.data['message'], 'Question created successfully.')
 
     def test_question_partial_update(self):
         data = {
@@ -103,7 +103,7 @@ class TestQuestionViewSet(APITestCase):
                                      HTTP_AUTHORIZATION='Bearer ' + self.token)
         response = QuestionViewSet.as_view({'patch': 'partial_update'})(request, pk=2)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data['message'], 'question updated successfully.')
+        self.assertEqual(response.data['message'], 'Question updated successfully.')
 
     def test_question_full_update(self):
         data = {
@@ -114,7 +114,7 @@ class TestQuestionViewSet(APITestCase):
                                    HTTP_AUTHORIZATION='Bearer ' + self.token)
         response = QuestionViewSet.as_view({'put': 'update'})(request, pk=2)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data['message'], 'question updated successfully.')
+        self.assertEqual(response.data['message'], 'Question updated successfully.')
 
     def test_question_delete(self):
         request = self.factory.delete(reverse('home:question-detail', args=[2]),
