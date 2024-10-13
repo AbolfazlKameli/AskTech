@@ -12,8 +12,9 @@ from model_bakery import baker
 from rest_framework import status
 from rest_framework.test import APIRequestFactory, APITestCase
 from rest_framework_simplejwt.tokens import AccessToken
+from rest_framework_simplejwt.tokens import RefreshToken
 
-from apps.users.models import User
+from apps.users.models import User, UserProfile
 from apps.users.views import UsersListAPI
 from utils import JWT_token
 
@@ -59,7 +60,7 @@ class TestUserRegisterAPI(APITestCase):
         baker.make(User, is_active=True, username='username', email='email')
 
     def setUp(self):
-        self.url = reverse('users:user_register')
+        self.url = reverse('users:user-register')
         self.valid_data = {
             'username': 'kevin',
             'email': 'kevin@example.com',
@@ -75,7 +76,7 @@ class TestUserRegisterAPI(APITestCase):
 
     def test_success_register(self):
         response = self.client.post(self.url, data=self.valid_data)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 201)
         self.assertIn('message', response.data['data'])
         self.assertIn('data', response.data)
         self.assertEqual(User.objects.all().count(), 2)
@@ -83,27 +84,27 @@ class TestUserRegisterAPI(APITestCase):
     def test_not_unique_username(self):
         response = self.client.post(self.url, data=self.invalid_data)
         self.assertEqual(response.status_code, 400)
-        self.assertIn('error', response.data)
-        self.assertIn('username', response.data['error'])
+        self.assertIn('errors', response.data)
+        self.assertIn('username', response.data['errors'])
 
     def test_mismatch_password(self):
         self.invalid_data['password'] = '<PASSWORD>'
         self.invalid_data['username'] = 'testuser'
         response = self.client.post(self.url, data=self.invalid_data)
         self.assertEqual(response.status_code, 400)
-        self.assertIn('error', response.data)
+        self.assertIn('errors', response.data)
 
     def test_register_with_avatar(self):
         self.valid_data['avatar'] = 'avatar.png'
         response = self.client.post(self.url, data=self.valid_data)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 201)
 
 
 class TestUserRegisterVerificationAPI(APITestCase):
     def setUp(self):
-        self.url = reverse('users:user_register_verify', args=['invalid_token'])
+        self.url = reverse('users:user-register-verify', args=['invalid_token'])
         self.user = baker.make(User, is_active=False)
-        self.token = JWT_token.generate_token(self.user)
+        self.token = JWT_token.generate_activation_token(self.user, timedelta(minutes=1))
 
     def create_expired_token(self):
         payload = {
@@ -113,25 +114,25 @@ class TestUserRegisterVerificationAPI(APITestCase):
         return jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
 
     def test_account_activation_success(self):
-        response = self.client.get(self.url.replace('invalid_token', self.token['token']))
+        response = self.client.get(self.url.replace('invalid_token', self.token))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn('message', response.data)
-        self.assertEqual(response.data['message'], 'Account activated successfully')
+        self.assertEqual(response.data['message'], 'Account activated successfully.')
         self.user.refresh_from_db()
         self.assertTrue(self.user.is_active)
 
     def test_account_already_active(self):
         self.user.is_active = True
         self.user.save()
-        response = self.client.get(self.url.replace('invalid_token', self.token['token']))
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        response = self.client.get(self.url.replace('invalid_token', self.token))
+        self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
         self.assertIn('message', response.data)
-        self.assertEqual(response.data['message'], 'this account already is active')
+        self.assertEqual(response.data['message'], 'this account already is active.')
 
     @patch('apps.users.views.JWT_token.get_object_or_404')
     def test_activation_url_invalid(self, mock_jwt_decode_token):
         mock_jwt_decode_token.side_effect = Http404
-        response = self.client.get(self.url.replace('invalid_token', self.token['token']))
+        response = self.client.get(self.url.replace('invalid_token', self.token))
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertIn('error', response.data)
         self.assertEqual(response.data['error'], 'Activation URL is invalid')
@@ -152,16 +153,16 @@ class TestUserRegisterVerificationAPI(APITestCase):
 
 class TestResendVerificationEmailAPI(APITestCase):
     def setUp(self):
-        self.url = reverse('users:user_register_resend_email')
+        self.url = reverse('users:user-register-resend-email')
         self.user = baker.make(User, is_active=False, email='email@gmail.com')
         self.active_user = baker.make(User, is_active=True, email='active_user@gmail.com')
 
     def test_successful_send_email(self):
         data = {'email': 'email@gmail.com'}
         response = self.client.post(self.url, data=data)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 202)
         self.assertIn('message', response.data)
-        self.assertEqual(response.data['message'], 'The activation email has been sent again successfully')
+        self.assertEqual(response.data['message'], 'We`ve resent the activation link to your email.')
 
     @patch('utils.send_email.send_link')
     def test_invalid_email(self, mock_send_email):
@@ -187,8 +188,8 @@ class TestChangePasswordAPI(APITestCase):
         self.user = baker.make(User, is_active=True)
         self.user.set_password('kmk13245')
         self.user.save()
-        self.token = JWT_token.generate_token(self.user)['token']
-        self.url = reverse('users:change_password')
+        self.token = str(RefreshToken.for_user(self.user).access_token)
+        self.url = reverse('users:change-password')
         self.valid_data = {
             'old_password': 'kmk13245',
             'new_password': 'asdF@123',
@@ -201,30 +202,30 @@ class TestChangePasswordAPI(APITestCase):
         }
 
     def test_successful_change_password(self):
-        response = self.client.put(self.url, data=self.valid_data, HTTP_AUTHORIZATION='Bearer ' + self.token)
+        response = self.client.put(self.url, data=self.valid_data, HTTP_AUTHORIZATION='Bearer ' + str(self.token))
         self.user.refresh_from_db()
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data['message'], 'Your password changed successfully!')
+        self.assertEqual(response.data['message'], 'Your password changed successfully.')
         self.assertTrue(self.user.check_password(self.valid_data['new_password']))
 
     def test_invalid_old_password(self):
-        response = self.client.put(self.url, data=self.invalid_data, HTTP_AUTHORIZATION='Bearer ' + self.token)
+        response = self.client.put(self.url, data=self.invalid_data, HTTP_AUTHORIZATION='Bearer ' + str(self.token))
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.data['error'], 'Your old password is not correct')
+        self.assertEqual(response.data['errors']['old_password'][0], 'Your old password is not correct.')
 
 
 class TestSetPasswordAPI(APITestCase):
     def setUp(self):
         self.user = baker.make(User, is_active=True)
-        self.token = JWT_token.generate_token(self.user)
-        self.url = reverse('users:set_password', args=[self.token['refresh']])
+        self.token = JWT_token.generate_activation_token(self.user, timedelta(minutes=1))
+        self.url = reverse('users:set-password', args=[self.token])
 
     def test_successful_set_password(self):
         data = {'new_password': 'asdF@123', 'confirm_new_password': 'asdF@123'}
         response = self.client.post(self.url, data)
         self.user.refresh_from_db()
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data['message'], 'Password changed successfully')
+        self.assertEqual(response.data['message'], 'Password changed successfully.')
         self.assertTrue(self.user.check_password(data['new_password']))
 
     @patch('apps.users.views.JWT_token.get_object_or_404')
@@ -241,35 +242,33 @@ class TestSetPasswordAPI(APITestCase):
 class TestResetPasswordAPI(APITestCase):
     def setUp(self):
         self.user = baker.make(User, is_active=True, email='email@gmail.com')
-        self.url = reverse('users:reset_password')
+        self.url = reverse('users:reset-password')
 
     def test_successful_reset(self):
         data = {'email': 'email@gmail.com'}
         response = self.client.post(self.url, data=data)
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data['message'], 'sent you a change password link!')
+        self.assertEqual(response.status_code, 202)
+        self.assertEqual(response.data['message'], 'A password reset link has been sent to your email.')
 
-    @patch('apps.users.views.get_object_or_404')
-    def test_invalid_email(self, mock_get_object):
-        mock_get_object.side_effect = Http404
-        data = {'email': 'email@gmail.com'}
+    def test_invalid_email(self):
+        data = {'email': 'invalidemail@gmail.com'}
         response = self.client.post(self.url, data=data)
-        self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.data['error'], 'user with this Email not found!')
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.data['errors'], 'user with this Email not found.')
 
 
 class TestBlockTokenAPI(APITestCase):
     def setUp(self):
         self.user = baker.make(User, is_active=True)
-        self.token = JWT_token.generate_token(self.user)['refresh']
+        self.token = str(RefreshToken.for_user(self.user))
         self.invalid_token = 'invalid.token.alksdjfadffeygfhasjf'
-        self.url = reverse('users:token_block')
+        self.url = reverse('users:token-block')
 
     @patch('rest_framework_simplejwt.tokens.BlacklistMixin.blacklist')
     def test_successful_block_token(self, mock_black_list):
         data = {'refresh': self.token}
         response = self.client.post(self.url, data)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 204)
         self.assertEqual(response.data['message'], 'Token blocked successfully!')
         mock_black_list.assert_called_once()
 
@@ -277,23 +276,24 @@ class TestBlockTokenAPI(APITestCase):
         data = {'refresh': self.invalid_token}
         response = self.client.post(self.url, data)
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.data['error'], 'token is invalid!')
+        self.assertEqual(response.data['errors']['refresh'], 'The provided token is invalid or has expired.')
 
 
 class TestUserProfileAPI(APITestCase):
     def setUp(self):
         self.user = baker.make(User, is_active=True)
-        self.token = JWT_token.generate_token(self.user)['token']
+        baker.make(UserProfile, owner=self.user)
+        self.token = str(RefreshToken.for_user(self.user).access_token)
 
     def test_retrieve_user_profile_GET(self):
-        url = reverse('users:user_profile', args=[self.user.id])
+        url = reverse('users:user-profile', args=[self.user.id])
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data['username'], self.user.username)
         self.assertEqual(response.data['score'], 0)
 
     def test_retrieve_user_profile_not_found(self):
-        url = reverse('users:user_profile', args=[23])
+        url = reverse('users:user-profile', args=[23])
         response = self.client.get(url)
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.data['detail'], 'No User matches the given query.')
@@ -310,7 +310,7 @@ class TestUserProfileAPI(APITestCase):
                 content_type='image/png'
             )
         data = {'username': 'new_username', 'avatar': avatar}
-        url = reverse('users:user_profile', args=[1])
+        url = reverse('users:user-profile', args=[1])
         response = self.client.patch(url, data, HTTP_AUTHORIZATION='Bearer ' + self.token)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['message'], 'Updated profile successfully.')
@@ -321,7 +321,7 @@ class TestUserProfileAPI(APITestCase):
     @patch('apps.users.views.send_verification_email.delay_on_commit')
     def test_update_email(self, mock_send_email_task):
         data = {'email': 'email@email.com'}
-        url = reverse('users:user_profile', args=[1])
+        url = reverse('users:user-profile', args=[1])
         response = self.client.patch(url, data, HTTP_AUTHORIZATION='Bearer ' + self.token)
         mock_send_email_task.assert_called_once()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -329,9 +329,9 @@ class TestUserProfileAPI(APITestCase):
         self.assertFalse(self.user.is_active)
         self.assertEqual(self.user.email, 'email@email.com')
 
-    @patch('apps.users.views.bucket.bucket.delete_object')
+    @patch('apps.users.views.Bucket.delete_object')
     def test_delete_account(self, mock_delete_avatar):
-        url = reverse('users:user_profile', args=[1])
+        url = reverse('users:user-profile', args=[1])
         response = self.client.delete(url, HTTP_AUTHORIZATION='Bearer ' + self.token)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 204)
         self.assertNotIn(self.user, User.objects.all())

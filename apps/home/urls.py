@@ -20,7 +20,7 @@ urlpatterns = [
 
     # Replies
     path('comments/<int:comment_id>/replies/', views.CreateReplyAPI.as_view(), name='reply-create'),
-    path('comments/<int:comment_id>/replies/<int:reply_id>/', views.CreateReplyAPI.as_view(), name='reply-create'),
+    path('comments/<int:comment_id>/replies/<int:reply_id>/', views.CreateReplyAPI.as_view(), name='reply-create-reply'),
 ]
 
 router = DefaultRouter()

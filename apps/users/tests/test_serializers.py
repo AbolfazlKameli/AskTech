@@ -202,4 +202,4 @@ class TestSetPasswordSerializer(APITestCase):
         serializer = SetPasswordSerializer(data=data)
         self.assertFalse(serializer.is_valid())
         self.assertEqual(len(serializer.errors), 1)
-        self.assertEqual(serializer.errors['non_field_errors'][0], 'Passwords must match')
+        self.assertEqual(serializer.errors['new_password'][0], 'Passwords must match.')
