@@ -124,12 +124,11 @@ class CreateAnswerAPI(CreateAPIView):
     http_method_names = ['post']
 
     def create(self, request, *args, **kwargs):
-        srz_data = self.get_serializer(data=self.request.data)
-        if srz_data.is_valid():
-            question = get_object_or_404(Question, id=kwargs.get('question_id'))
-            srz_data.save(question=question, owner=self.request.user)
-            return Response(data={'message': 'answer created successfully.'}, status=status.HTTP_201_CREATED)
-        return Response(data={'error': srz_data.errors}, status=status.HTTP_400_BAD_REQUEST)
+        serializer = self.get_serializer(data=self.request.data)
+        serializer.is_valid(raise_exception=True)
+        question = get_object_or_404(Question, id=kwargs.get('question_id'))
+        serializer.save(question=question, owner=self.request.user)
+        return Response(data={'message': 'answer created successfully.'}, status=status.HTTP_201_CREATED)
 
 
 @extend_schema_view(
@@ -169,15 +168,14 @@ class CreateCommentAPI(CreateAPIView):
 
     def create(self, request, *args, **kwargs):
         """creates a comment object."""
-        srz_data = self.get_serializer(data=self.request.data)
-        if srz_data.is_valid():
-            answer = get_object_or_404(Answer, id=kwargs.get('answer_id'))
-            srz_data.save(owner=self.request.user, answer=answer)
-            return Response(
-                data={'message': 'comment created successfully.'},
-                status=status.HTTP_201_CREATED
-            )
-        return Response(data={'error': srz_data.errors}, status=status.HTTP_400_BAD_REQUEST)
+        serializer = self.get_serializer(data=self.request.data)
+        serializer.is_valid(raise_exception=True)
+        answer = get_object_or_404(Answer, id=kwargs.get('answer_id'))
+        serializer.save(owner=self.request.user, answer=answer)
+        return Response(
+            data={'message': 'comment created successfully.'},
+            status=status.HTTP_201_CREATED
+        )
 
 
 @extend_schema_view(
@@ -217,16 +215,15 @@ class CreateReplyAPI(CreateAPIView):
 
     def create(self, request, *args, **kwargs):
         """creates a reply object."""
-        srz_data = self.get_serializer(data=self.request.data)
-        if srz_data.is_valid():
-            comment = get_object_or_404(Comment, id=kwargs.get('comment_id'))
-            try:
-                reply = CommentReply.objects.get(id=kwargs.get('reply_id'))
-            except CommentReply.DoesNotExist:
-                reply = None
-            srz_data.save(owner=self.request.user, comment=comment, reply=reply)
-            return Response(data={'message': 'reply created successfully.'}, status=status.HTTP_201_CREATED)
-        return Response(data={'error': srz_data.errors}, status=status.HTTP_400_BAD_REQUEST)
+        serializer = self.get_serializer(data=self.request.data)
+        serializer.is_valid(raise_exception=True)
+        comment = get_object_or_404(Comment, id=kwargs.get('comment_id'))
+        try:
+            reply = CommentReply.objects.get(id=kwargs.get('reply_id'))
+        except CommentReply.DoesNotExist:
+            reply = None
+        serializer.save(owner=self.request.user, comment=comment, reply=reply)
+        return Response(data={'message': 'reply created successfully.'}, status=status.HTTP_201_CREATED)
 
 
 class LikeAPI(APIView):
