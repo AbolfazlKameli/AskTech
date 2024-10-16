@@ -93,7 +93,7 @@ class QuestionViewSet(ModelViewSet):
 class AnswerViewSet(ModelViewSet):
     serializer_class = serializers.AnswerSerializer
     queryset = Answer.objects.select_related('owner', 'question').all()
-    http_method_names = ['put', 'delete']
+    http_method_names = ['put', 'delete', 'head', 'options']
     permission_classes = [permissions.IsOwnerOrReadOnly]
 
     def update(self, request, *args, **kwargs):
@@ -121,7 +121,7 @@ class CreateAnswerAPI(CreateAPIView):
     serializer_class = serializers.AnswerSerializer
     queryset = Answer.objects.select_related('owner', 'question').all()
     permission_classes = [IsAuthenticated]
-    http_method_names = ['post']
+    http_method_names = ['post', 'head', 'options']
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=self.request.data)
@@ -139,7 +139,7 @@ class CreateAnswerAPI(CreateAPIView):
 class CommentViewSet(ModelViewSet):
     serializer_class = serializers.CommentSerializer
     queryset = Comment.objects.select_related('owner', 'answer').all()
-    http_method_names = ['put', 'delete']
+    http_method_names = ['put', 'delete', 'head', ]
     permission_classes = [permissions.IsOwnerOrReadOnly]
 
     def update(self, request, *args, **kwargs):
@@ -164,7 +164,7 @@ class CreateCommentAPI(CreateAPIView):
     serializer_class = serializers.CommentSerializer
     queryset = Comment.objects.select_related('owner', 'answer').all()
     permission_classes = [IsAuthenticated]
-    http_method_names = ['post']
+    http_method_names = ['post', 'head', 'options']
 
     def create(self, request, *args, **kwargs):
         """creates a comment object."""
@@ -186,7 +186,7 @@ class CreateCommentAPI(CreateAPIView):
 class ReplyViewSet(ModelViewSet):
     serializer_class = serializers.ReplyCommentSerializer
     queryset = CommentReply.objects.select_related('owner', 'comment', 'reply').all()
-    http_method_names = ['put', 'delete']
+    http_method_names = ['put', 'delete', 'head', 'options']
     permission_classes = [permissions.IsOwnerOrReadOnly]
 
     def update(self, request, *args, **kwargs):
@@ -211,7 +211,7 @@ class CreateReplyAPI(CreateAPIView):
     serializer_class = serializers.ReplyCommentSerializer
     queryset = CommentReply.objects.select_related('owner', 'comment', 'reply').all()
     permission_classes = [IsAuthenticated]
-    http_method_names = ['post']
+    http_method_names = ['post', 'head', 'options']
 
     def create(self, request, *args, **kwargs):
         """creates a reply object."""

@@ -61,7 +61,7 @@ class UserRegisterVerifyAPI(APIView):
     allowed methods: GET.
     """
     permission_classes = [permissions.NotAuthenticated, ]
-    http_method_names = ['get']
+    http_method_names = ['get', 'head', 'options']
     serializer_class = MessageSerializer
 
     def get(self, request, token):
@@ -214,7 +214,7 @@ class UserProfileAPI(RetrieveUpdateDestroyAPIView):
     lookup_url_kwarg = 'id'
     lookup_field = 'id'
     queryset = User.objects.filter(is_active=True)
-    http_method_names = ['get', 'patch', 'delete']
+    http_method_names = ['get', 'patch', 'delete', 'head', 'options']
 
     def patch(self, request, *args, **kwargs):
         user: User = self.get_object()
