@@ -1,0 +1,48 @@
+services:
+  redis:
+    container_name: redis1
+    image: redis
+    restart: always
+    ports:
+      - "6379:6379"
+
+  app:
+    container_name: app
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    command: sh -c "python manage.py runserver 0.0.0.0:8000"
+    restart: always
+    depends_on:
+      - redis
+
+  rabbitMQ:
+    container_name: rabbitmq
+    image: rabbitmq:latest
+    restart: always
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+  celery:
+    container_name: celery_worker
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: celery -A core worker -l INFO
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    depends_on:
+      - redis
+      - app
+    restart: always
+    environment:
+      - C_FORCE_ROOT="true"
