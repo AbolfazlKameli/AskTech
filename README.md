@@ -7,6 +7,12 @@ the back-end of this site.
 
 - [@AbolfazlKameli](https://github.com/AbolfazlKameli/) (back-end dev)
 
+## Run with Docker
+
+```shell
+docker compose up
+```
+
 ## Run Locally
 
 install required packages
